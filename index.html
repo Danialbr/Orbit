@@ -196,17 +196,16 @@ form{display:flex;flex-direction:column;gap:12px}
 .steps i{font:600 12px/24px var(--mono);font-style:normal;width:24px;height:24px;flex:none;border-radius:8px;text-align:center;color:var(--ion);border:1px solid rgba(70,227,198,.35)}
 #toast{position:fixed;left:50%;bottom:calc(86px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;z-index:60;background:var(--raise);border:1px solid var(--line-2);padding:10px 16px;border-radius:12px;font-size:13.5px;font-weight:600;pointer-events:none;white-space:nowrap}
 #toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(60% 45% at 50% 45%,#0F1F26 0%,#080B11 70%);transition:opacity .45s ease}
+#splash{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:radial-gradient(60% 45% at 50% 45%,#0E1622 0%,#06080D 75%);transition:opacity .45s ease}
 #splash.out{opacity:0;pointer-events:none}
 .sp-in{display:flex;flex-direction:column;align-items:center;gap:14px}
 .sp-word{font:700 28px/1 var(--display);letter-spacing:.5em;margin-right:-.5em;color:var(--fg);animation:spw 1s .55s both}
 .sp-sub{font:600 10px/1 var(--body);letter-spacing:.32em;text-transform:uppercase;color:var(--muted);animation:spw 1s .8s both}
-#splash .bh-halo{transform-origin:60px 60px;animation:halo 1.8s ease-out both}
-#splash .bh-ring{transform-origin:60px 60px;animation:ringin 1.2s .15s cubic-bezier(.2,.7,.2,1) both}
-#splash .bh-disk{transform-origin:60px 60px;animation:disk 1.1s .35s cubic-bezier(.2,.8,.2,1) both}
-@keyframes halo{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}
-@keyframes ringin{from{opacity:0;transform:scale(.4)}}
-@keyframes disk{from{opacity:0;transform:scaleX(.1)}}
+#splash .o-ring{stroke-dasharray:100;stroke-dashoffset:100;animation:draw 1s .1s cubic-bezier(.65,0,.25,1) forwards}
+#splash .o-trail{stroke-dasharray:100;stroke-dashoffset:100;animation:draw .7s .7s ease-out forwards}
+#splash .o-sat{transform-origin:78px 21px;animation:pop .45s 1s cubic-bezier(.3,1.6,.5,1) both}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{from{transform:scale(0)}}
 @keyframes spw{from{opacity:0;transform:translateY(6px)}}
 .brand{width:30px;height:30px;flex:none;border-radius:9px;overflow:hidden;background:#080B11;border:1px solid var(--line)}
 .brand svg{width:100%;height:100%;display:block}
@@ -262,35 +261,18 @@ const maxISO=(a,b)=>a>b?a:b;
 /* ============ logo: pixel-star spiral galaxy + orbital ring ============ */
 function logoSVG(o={}){
   const id=o.id||'lg';
-  // black hole: lensed photon ring, accretion disk passing behind (top) and in front (bottom), brighter on the approaching side
-  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" ${o.size?`width="${o.size}" height="${o.size}"`:''} aria-hidden="true">
+  // "O" with a gap, a satellite at the gap and a fading trail behind it
+  return `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" ${o.size?`width="${o.size}" height="${o.size}"`:''} aria-hidden="true">
   <defs>
-    <radialGradient id="${id}h" cx="60" cy="60" r="58" gradientUnits="userSpaceOnUse"><stop offset=".28" stop-color="#46E3C6" stop-opacity=".55"/><stop offset=".5" stop-color="#2F7FD0" stop-opacity=".18"/><stop offset="1" stop-color="#080B11" stop-opacity="0"/></radialGradient>
-    <linearGradient id="${id}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".45" stop-color="#9FF5E4"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient>
-    <linearGradient id="${id}d" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#46E3C6" stop-opacity="0"/><stop offset=".18" stop-color="#7FF0DA"/><stop offset=".42" stop-color="#FFFFFF"/><stop offset=".62" stop-color="#BFEFFF"/><stop offset=".85" stop-color="#4FA8FF" stop-opacity=".7"/><stop offset="1" stop-color="#4FA8FF" stop-opacity="0"/></linearGradient>
-    <filter id="${id}b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3"/></filter>
-    <filter id="${id}s" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="1.1"/></filter>
+    <linearGradient id="${id}t" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#46E3C6" stop-opacity="0"/><stop offset="1" stop-color="#46E3C6"/></linearGradient>
+    <linearGradient id="${id}o" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE4EF"/></linearGradient>
+    <linearGradient id="${id}bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#121A28"/><stop offset="1" stop-color="#06080D"/></linearGradient>
   </defs>
-  ${o.bg?`<rect width="120" height="120" fill="#06080D"/>`:''}
-  <circle class="bh-halo" cx="60" cy="60" r="58" fill="url(#${id}h)"/>
-  <g transform="rotate(-10 60 60)">
-    <g class="bh-ring">
-      <path d="M31,60 A29,29 0 0 1 89,60" fill="none" stroke="url(#${id}d)" stroke-width="9" opacity=".45" filter="url(#${id}b)"/>
-      <path d="M33,60 A27,27 0 0 1 87,60" fill="none" stroke="url(#${id}d)" stroke-width="3.4" stroke-linecap="round"/>
-      <path d="M35,60 A25,25 0 0 0 85,60" fill="none" stroke="url(#${id}d)" stroke-width="1.6" opacity=".7" stroke-linecap="round"/>
-      <circle cx="60" cy="60" r="25" fill="none" stroke="url(#${id}r)" stroke-width="6" opacity=".55" filter="url(#${id}b)"/>
-      <circle cx="60" cy="60" r="24.2" fill="none" stroke="url(#${id}r)" stroke-width="2.6" filter="url(#${id}s)"/>
-      <circle cx="60" cy="60" r="21.6" fill="none" stroke="#FFFFFF" stroke-width=".9" opacity=".9"/>
-    </g>
-    <g class="bh-disk">
-      <ellipse cx="60" cy="60" rx="55" ry="8.5" fill="none" stroke="url(#${id}d)" stroke-width="5" opacity=".5" filter="url(#${id}b)"/>
-      <ellipse cx="60" cy="60" rx="55" ry="8.5" fill="none" stroke="url(#${id}d)" stroke-width="2.2"/>
-    </g>
-    <circle cx="60" cy="60" r="20.4" fill="#010204"/>
-    <g class="bh-disk">
-      <path d="M5,60 A55,8.5 0 0 0 115,60" fill="none" stroke="url(#${id}d)" stroke-width="6" opacity=".55" filter="url(#${id}b)"/>
-      <path d="M5,60 A55,8.5 0 0 0 115,60" fill="none" stroke="url(#${id}d)" stroke-width="2.6"/>
-    </g>
+  ${o.bg?`<rect width="100" height="100" fill="url(#${id}bg)"/>`:''}
+  <g ${o.bg?'transform="translate(50 50) scale(.82) translate(-50 -50)"':''}>
+    <path class="o-ring" d="M77 33 A31 31 0 1 1 62 21.5" fill="none" stroke="url(#${id}o)" stroke-width="10" stroke-linecap="round" pathLength="100"/>
+    <path class="o-trail" d="M14 52 A38 38 0 0 1 70 15" fill="none" stroke="url(#${id}t)" stroke-width="3.2" stroke-linecap="round" pathLength="100"/>
+    <circle class="o-sat" cx="78" cy="21" r="7" fill="#46E3C6"/>
   </g>
 </svg>`;
 }
@@ -298,7 +280,7 @@ let LOGO_PNG=null;
 function prepLogoPNG(){try{const img=new Image();img.onload=()=>{try{const c=document.createElement('canvas');c.width=c.height=256;c.getContext('2d').drawImage(img,0,0,256,256);LOGO_PNG=c.toDataURL('image/png')}catch(e){}};img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(logoSVG({id:'pdf',bg:true}))}catch(e){}}
 function splash(){
   const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const el=document.createElement('div');el.id='splash';el.innerHTML=`<div class="sp-in">${logoSVG({id:'sp',size:150})}<div class="sp-word">ORBIT</div><div class="sp-sub">Private Capital</div></div>`;
+  const el=document.createElement('div');el.id='splash';el.innerHTML=`<div class="sp-in">${logoSVG({id:'sp',size:120})}<div class="sp-word">ORBIT</div><div class="sp-sub">Private Capital</div></div>`;
   document.body.appendChild(el);
   const done=()=>{el.classList.add('out');setTimeout(()=>el.remove(),500)};
   el.addEventListener('click',done);setTimeout(done,reduce?600:1900);
@@ -565,7 +547,7 @@ function viewHome(){
   const others=db.investors.filter(i=>!i.owner&&dividend(i,ym)>0);
   const frac=t.expectedM?t.collected/t.expectedM:0;
   const lb=db.settings.lastBackup,stale=!lb||(Date.now()-new Date(lb).getTime())>14*864e5;
-  return {eyebrow:dLong(today()),title:'Resumen',action:`<div style="display:flex;gap:8px">${eyeBtn()}${addBtn('newLoan','Préstamo')}</div>`,html:`
+  return {eyebrow:dShort(today())+' '+today().slice(0,4),title:'Resumen',action:`<div style="display:flex;gap:8px">${eyeBtn()}${addBtn('newLoan','Préstamo')}</div>`,html:`
   <div class="card hero">
     <div class="eyebrow">Capital administrado</div>
     <div class="big ion">${fmt(t.capital)}</div>
