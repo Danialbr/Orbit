@@ -658,13 +658,29 @@ function myCard(){
 }
 /* ============ cars in stock ============ */
 // original low-slung hypercar profile (not any real model)
-function carSVG(id){return `<svg class="car-svg" viewBox="0 0 320 92" aria-hidden="true"><defs><linearGradient id="${id}b" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF" stop-opacity=".95"/><stop offset="1" stop-color="#9FB3CC" stop-opacity=".55"/></linearGradient><linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient></defs>
-  <ellipse cx="162" cy="80" rx="150" ry="6" fill="#000" opacity=".45"/>
-  <path d="M6,66 C7,61 18,58 44,55 L108,49 C128,38 156,31 192,30 C216,30 236,34 252,40 L276,43 L300,44 C310,42 315,47 316,55 L316,64 C316,67 313,69 309,69 L272,69 A24,24 0 0 0 226,69 L100,69 A24,24 0 0 0 54,69 L12,69 C8,69 6,68 6,66 Z" fill="url(#${id}b)"/>
-  <path d="M126,48 C142,38 164,34 190,34 C206,34 220,37 234,42 L212,48 Z" fill="#0B1220" opacity=".85"/>
-  <path d="M44,57 L102,52 M250,47 L300,47" stroke="url(#${id}g)" stroke-width="2.4" stroke-linecap="round"/>
-  <path d="M278,43 L298,36 L313,37 L305,44 Z" fill="url(#${id}b)" opacity=".8"/>
-  ${[77,249].map(x=>`<circle cx="${x}" cy="68" r="19" fill="#0A0E15"/><circle cx="${x}" cy="68" r="13" fill="none" stroke="#C9D3E0" stroke-width="2"/><circle cx="${x}" cy="68" r="4" fill="#C9D3E0"/>${[0,72,144,216,288].map(a=>`<line x1="${x}" y1="68" x2="${(x+11*Math.cos(a*Math.PI/180)).toFixed(1)}" y2="${(68+11*Math.sin(a*Math.PI/180)).toFixed(1)}" stroke="#C9D3E0" stroke-width="1.6"/>`).join('')}`).join('')}
+function carSVG(id){
+  const W=(cx)=>{const cy=86;let sp='';for(let k=0;k<5;k++)for(const d of[-7,7]){const a=(k*72-90+d)*Math.PI/180;sp+=`<line x1="${(cx+4*Math.cos(a)).toFixed(1)}" y1="${(cy+4*Math.sin(a)).toFixed(1)}" x2="${(cx+19*Math.cos(a)).toFixed(1)}" y2="${(cy+19*Math.sin(a)).toFixed(1)}" stroke="url(#${id}rim)" stroke-width="2" stroke-linecap="round"/>`}
+    return `<circle cx="${cx}" cy="${cy}" r="27" fill="#06080C"/><circle cx="${cx}" cy="${cy}" r="21" fill="#0F131A" stroke="#2A313D" stroke-width="1.5"/><path d="M${cx-11},${cy-12} A16,16 0 0 1 ${cx+12},${cy-11}" stroke="#46E3C6" stroke-width="4" fill="none" stroke-linecap="round"/>${sp}<circle cx="${cx}" cy="${cy}" r="4" fill="#D9E1EC"/>`};
+  return `<svg class="car-svg" viewBox="0 0 400 122" aria-hidden="true"><defs>
+  <linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7FAFD"/><stop offset=".35" stop-color="#C3CEDC"/><stop offset=".7" stop-color="#6F7D92"/><stop offset="1" stop-color="#2A3240"/></linearGradient>
+  <linearGradient id="${id}gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2A3A52"/><stop offset="1" stop-color="#05070B"/></linearGradient>
+  <linearGradient id="${id}rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F1F4F8"/><stop offset="1" stop-color="#7C8798"/></linearGradient>
+  <linearGradient id="${id}hl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/><stop offset=".5" stop-color="#FFFFFF" stop-opacity=".85"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
+  <radialGradient id="${id}sh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".8"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  </defs>
+  <ellipse cx="202" cy="113" rx="196" ry="8" fill="url(#${id}sh)"/>
+  <path d="M398,80 C396,74 384,70 360,66 C338,62 318,58 300,54 C290,52 282,48 272,44 C252,38 228,32 204,32 C182,32 164,36 150,42 C136,46 122,46 110,46 C90,46 72,44 54,44 C40,44 26,47 18,54 L12,70 C11,80 15,86 22,86 L68,86 A30,30 0 0 1 128,86 L276,86 A30,30 0 0 1 336,86 L388,86 C394,86 398,84 398,80 Z" fill="url(#${id}p)"/>
+  <path d="M158,42 C172,37 188,35 206,35 C228,35 248,39 266,45 L236,47 L168,47 Z" fill="url(#${id}gl)"/>
+  <path d="M186,37 C202,36 220,36 238,38" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="1.2" fill="none"/>
+  <path d="M146,60 C166,54 190,54 210,59 L204,70 C186,67 166,68 150,73 Z" fill="#0A0D13"/>
+  <path d="M154,63 C172,58 190,58 204,61" stroke="#46E3C6" stroke-opacity=".55" stroke-width="1" fill="none"/>
+  <path d="M28,56 C120,50 230,50 300,57 C340,61 370,68 394,77" stroke="url(#${id}hl)" stroke-width="1.5" fill="none"/>
+  <path d="M130,82 L274,82" stroke="#1A2029" stroke-width="4" stroke-linecap="round"/>
+  <path d="M18,30 L78,26 L80,32 L22,36 Z" fill="#1D232E"/><path d="M42,35 L46,45 M64,32 L66,44" stroke="#1D232E" stroke-width="3"/>
+  <path d="M362,66 L394,75" stroke="#BDF7EC" stroke-width="2.4" stroke-linecap="round"/><path d="M362,66 L394,75" stroke="#46E3C6" stroke-width="7" stroke-linecap="round" opacity=".25"/>
+  <path d="M9,60 L16,57" stroke="#FF7A7A" stroke-width="3" stroke-linecap="round"/>
+  <path d="M336,86 L384,86 L388,91 L340,91 Z" fill="#141922"/><path d="M12,86 L66,86 L64,91 L14,91 Z" fill="#141922"/>
+  ${W(98)}${W(306)}
 </svg>`}
 function carsSection(){const st=carsStock(),sold=(db.cars||[]).filter(c=>c.sold),inv=st.reduce((s,c)=>s+carCost(c),0),exp=st.reduce((s,c)=>s+((+c.ask||0)-carCost(c)),0);
   return `<section class="an"><div class="sec-h"><h2>Carros en stock</h2><button class="muted" style="font-size:13px" data-act="car">+ Carro</button></div>
