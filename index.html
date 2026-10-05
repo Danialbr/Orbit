@@ -226,22 +226,33 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .metal-sub{font-size:11.5px;opacity:.65;margin-top:6px;line-height:1.35}
 .mode{margin-left:auto;font:700 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:#EAF7F4;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18)}
 .mode .m-liquid{display:none;align-items:center;gap:5px}.metal.is-liquid .m-liquid{display:inline-flex}.metal.is-liquid .m-solid{display:none}
-.water{position:absolute;inset:auto 0 0 0;height:0;z-index:-1;transition:height 1.6s cubic-bezier(.4,0,.2,1);background:linear-gradient(180deg,rgba(38,104,150,.75) 0%,rgba(12,48,82,.92) 45%,#04101E 100%)}
-.water::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(170deg,rgba(255,255,255,.035) 0 1px,transparent 1px 14px);animation:drift 18s linear infinite;mix-blend-mode:screen}
-.metal.is-liquid .water{height:78%}
-.metal.is-liquid{background:linear-gradient(180deg,#0E2234,#0A1828 40%,#050C16)}
+.water{position:absolute;inset:auto 0 0 0;height:0;z-index:-1;transition:height 1.8s cubic-bezier(.4,0,.2,1);background:linear-gradient(180deg,#1F5F86 0%,#0E3A5E 22%,#082640 55%,#030B16 100%);overflow:visible}
+.water::before{content:"";position:absolute;inset:0;background:radial-gradient(60% 40% at 72% 0%,rgba(190,230,255,.22),transparent 70%)}
+.water::after{content:"";position:absolute;inset:0;opacity:.5;background:repeating-linear-gradient(172deg,rgba(255,255,255,.03) 0 1px,transparent 1px 11px),repeating-linear-gradient(8deg,rgba(255,255,255,.025) 0 1px,transparent 1px 17px);animation:drift 26s linear infinite;mix-blend-mode:screen}
+.metal.is-liquid .water{height:80%}
+.metal.is-liquid{background:radial-gradient(70% 50% at 72% 10%,rgba(160,210,255,.18),transparent 70%),linear-gradient(180deg,#0B1A2A,#081422 40%,#040910)}
 .metal.is-liquid::before{opacity:0}
-.metal:not(.is-liquid) .wave,.metal:not(.is-liquid) .glint{opacity:0}.wave,.glint{transition:opacity .8s}
-.wave{position:absolute;left:0;bottom:100%;width:225%;height:16px;margin-bottom:-1px}
-.wave path{fill:rgba(38,104,150,.75)}.w1{animation:waveX 22s linear infinite}.w2{animation:waveX 34s linear infinite reverse;opacity:.5}.w2 path{fill:rgba(70,150,200,.35)}
-@keyframes waveX{to{transform:translateX(-44%)}}
-@keyframes drift{to{background-position:0 140px}}
-.glint{position:absolute;top:2px;left:-30%;width:30%;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(200,235,255,.55),transparent);animation:glint 7s ease-in-out infinite}
+.metal:not(.is-liquid) .wave,.metal:not(.is-liquid) .glint,.metal:not(.is-liquid) .rays,.metal:not(.is-liquid) .moon{opacity:0}.wave,.glint,.rays,.moon{transition:opacity 1.2s}
+.wave{position:absolute;left:0;bottom:100%;width:240%;height:14px;margin-bottom:-1px}
+.w1 path{fill:#1F5F86}.w1{animation:waveX 26s linear infinite}
+.w2{animation:waveX 38s linear infinite reverse;height:18px;filter:blur(.6px)}.w2 path{fill:rgba(31,95,134,.55)}
+.w3{animation:waveX 54s linear infinite;height:22px;filter:blur(1.2px)}.w3 path{fill:rgba(60,130,180,.25)}
+@keyframes waveX{to{transform:translateX(-45%)}}
+@keyframes drift{to{background-position:0 160px,0 -120px}}
+.rays{position:absolute;inset:0;overflow:hidden;mix-blend-mode:screen}
+.rays i{position:absolute;top:0;width:18%;height:120%;background:linear-gradient(180deg,rgba(170,220,255,.18),transparent 75%);transform:skewX(-14deg);filter:blur(6px);animation:ray 9s ease-in-out infinite}
+.rays i:nth-child(1){left:12%}.rays i:nth-child(2){left:38%;width:10%;animation-delay:-3s}.rays i:nth-child(3){left:60%;animation-delay:-5s}.rays i:nth-child(4){left:82%;width:8%;animation-delay:-7s}
+@keyframes ray{0%,100%{opacity:.25;transform:skewX(-14deg) translateX(0)}50%{opacity:.8;transform:skewX(-10deg) translateX(10px)}}
+.moon{position:absolute;left:66%;top:6px;width:20%;height:70%;display:flex;flex-direction:column;align-items:center;gap:9px;mix-blend-mode:screen}
+.moon i{display:block;height:2px;border-radius:2px;background:rgba(220,240,255,.75);filter:blur(.4px);animation:shim 2.6s ease-in-out infinite}
+.moon i:nth-child(1){width:70%}.moon i:nth-child(2){width:46%;animation-delay:-.5s}.moon i:nth-child(3){width:58%;animation-delay:-1s;opacity:.7}.moon i:nth-child(4){width:30%;animation-delay:-1.5s;opacity:.55}.moon i:nth-child(5){width:40%;animation-delay:-2s;opacity:.4}.moon i:nth-child(6){width:18%;animation-delay:-2.3s;opacity:.3}
+@keyframes shim{0%,100%{transform:scaleX(.6) translateX(-6px);opacity:.25}50%{transform:scaleX(1) translateX(6px);opacity:.9}}
+.glint{position:absolute;top:1px;left:-30%;width:30%;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(210,240,255,.7),transparent);animation:glint 8s ease-in-out infinite}
 @keyframes glint{0%{left:-30%}60%,100%{left:110%}}
 .wc-i{width:18px;height:18px;margin-right:10px;vertical-align:-4px;opacity:.85}
 .lev-flow{display:flex;align-items:center;gap:10px}.lev-flow>div{flex:1}.lev-flow small{display:block;font:600 9.5px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.lev-flow b{font:700 18px var(--display)}
 .lev-arrow{width:54px;flex:none;animation:flow 2s ease-in-out infinite}@keyframes flow{50%{transform:translateX(4px)}}
-.house-svg{max-height:130px;margin:4px auto 0!important}
+.house-svg{max-height:160px;margin:0 auto!important}
 /* panel */
 .step{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:7px;margin-right:8px;font:700 11px var(--mono);color:var(--ion);border:1px solid rgba(70,227,198,.35)}
 .tipdot{width:6px;height:6px;border-radius:50%;background:var(--ion);flex:none;align-self:flex-start;margin-top:8px;box-shadow:0 0 8px var(--ion)}
@@ -713,23 +724,33 @@ function carSVG(id){
   ${wheel(52,158,19,27)}${wheel(170,164,25,32)}
 </svg>`}
 function houseSVG(id){
-  // true isometric: near faces are x=max (right) and y=max (left); z is up
-  const C=.866,S=.5,P=(x,y,z)=>[(200+(x-y)*C).toFixed(1),(128+(x+y)*S-z).toFixed(1)].join(','),M=(...q)=>'M'+q.map(v=>P(...v)).join(' L');
-  const box=(x0,x1,y0,y1,z0,z1,step)=>{let d=M([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],[x0,y0,z1])+' '+M([x0,y1,z1],[x0,y1,z0],[x1,y1,z0],[x1,y0,z0],[x1,y0,z1])+' '+M([x1,y1,z0],[x1,y1,z1]),h='';
-    for(let z=z0+step;z<z1-1;z+=step)h+=M([x0,y1,z],[x1,y1,z],[x1,y0,z])+' ';return `<path d="${d}"/><path d="${h}" opacity=".22"/>`};
-  const win=(face,a0,a1,z0,z1)=>face.x!=null?M([face.x,a0,z0],[face.x,a1,z0],[face.x,a1,z1],[face.x,a0,z1],[face.x,a0,z0]):M([a0,face.y,z0],[a1,face.y,z0],[a1,face.y,z1],[a0,face.y,z1],[a0,face.y,z0]);
-  return `<svg class="car-svg house-svg" viewBox="90 40 220 172" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
-  <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  <radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#9FB3CC" stop-opacity=".25"/><stop offset="1" stop-color="#9FB3CC" stop-opacity="0"/></radialGradient></defs>
-  <ellipse cx="200" cy="200" rx="110" ry="9" fill="url(#${id}fl)"/>
-  <g stroke="#EEF3F9" stroke-width="1.3" filter="url(#${id}f)">
-    <path d="${M([-12,-12,0],[104,-12,0],[104,66,0],[-12,66,0],[-12,-12,0])}" opacity=".3"/>
-    ${box(0,92,0,54,0,38,5)}
-    ${box(-6,62,8,58,38,66,5)}
-    <path d="${M([-10,4,66],[66,4,66],[66,62,66],[-10,62,66],[-10,4,66])}" stroke-width="1.8"/>
-    <path d="${win({y:54},12,44,6,30)} ${win({x:92},10,40,6,30)} ${win({y:58},6,48,44,60)}" stroke="#FFE7B0" opacity=".8"/>
-    <path d="${win({y:54},56,72,0,28)}"/>
+  // isometric modern mansion: stacked cantilevered slabs, glass walls, infinity pool
+  const C=.866,S=.5,P=(x,y,z)=>[(200+(x-y)*C).toFixed(1),(116+(x+y)*S-z).toFixed(1)].join(','),M=(...q)=>'M'+q.map(v=>P(...v)).join(' L');
+  const slab=(x0,x1,y0,y1,z,t)=>`<path d="${M([x0,y0,z+t],[x1,y0,z+t],[x1,y1,z+t],[x0,y1,z+t],[x0,y0,z+t])} ${M([x0,y1,z+t],[x0,y1,z],[x1,y1,z],[x1,y0,z],[x1,y0,z+t])} ${M([x1,y1,z],[x1,y1,z+t])}" stroke-width="1.6"/>`;
+  const solid=(x0,x1,y0,y1,z0,z1)=>{let h='';for(let z=z0+3;z<z1;z+=3)h+=M([x0,y1,z],[x1,y1,z],[x1,y0,z])+' ';return `<path d="${M([x0,y1,z1],[x0,y1,z0],[x1,y1,z0],[x1,y0,z0],[x1,y0,z1])} ${M([x1,y1,z0],[x1,y1,z1])}"/><path d="${h}" opacity=".2"/>`};
+  const glassY=(x0,x1,y,z0,z1,n)=>{let d=M([x0,y,z0],[x1,y,z0],[x1,y,z1],[x0,y,z1],[x0,y,z0]);for(let k=1;k<n;k++){const x=x0+(x1-x0)*k/n;d+=' '+M([x,y,z0],[x,y,z1])}return `<path d="${d}" stroke="#BFE9FF" opacity=".75"/><path d="${M([x0,y,z0],[x1,y,z0],[x1,y,z1],[x0,y,z1])}Z" fill="url(#${id}gl)" stroke="none"/>`};
+  const glassX=(x,y0,y1,z0,z1,n)=>{let d=M([x,y0,z0],[x,y1,z0],[x,y1,z1],[x,y0,z1],[x,y0,z0]);for(let k=1;k<n;k++){const y=y0+(y1-y0)*k/n;d+=' '+M([x,y,z0],[x,y,z1])}return `<path d="${d}" stroke="#BFE9FF" opacity=".75"/><path d="${M([x,y0,z0],[x,y1,z0],[x,y1,z1],[x,y0,z1])}Z" fill="url(#${id}gl)" stroke="none"/>`};
+  return `<svg class="car-svg house-svg" viewBox="50 30 300 205" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
+  <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <linearGradient id="${id}gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE7B0" stop-opacity=".28"/><stop offset="1" stop-color="#FFB869" stop-opacity=".08"/></linearGradient>
+  <linearGradient id="${id}pool" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#46E3C6" stop-opacity=".55"/><stop offset="1" stop-color="#4FA8FF" stop-opacity=".25"/></linearGradient>
+  <radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#46E3C6" stop-opacity=".22"/><stop offset="1" stop-color="#46E3C6" stop-opacity="0"/></radialGradient></defs>
+  <ellipse cx="205" cy="222" rx="150" ry="12" fill="url(#${id}fl)"/>
+  <g stroke="#EEF3F9" stroke-width="1.1" filter="url(#${id}f)">
+    <path d="${M([-30,-20,0],[130,-20,0],[130,96,0],[-30,96,0],[-30,-20,0])}" opacity=".25"/>
+    <path d="${M([60,62,0],[124,62,0],[124,92,0],[60,92,0],[60,62,0])}" stroke="#7FF0DA" fill="url(#${id}pool)" stroke-width="1.4"/>
+    <path d="${M([66,70,0],[118,70,0])} ${M([66,78,0],[118,78,0])} ${M([66,86,0],[118,86,0])}" stroke="#BFF8EE" opacity=".35"/>
+    ${solid(0,40,0,56,0,30)}
+    ${glassY(40,96,56,0,30,7)}${glassX(96,0,56,0,30,6)}
+    <path d="${M([40,0,0],[96,0,0],[96,0,30])} ${M([40,0,30],[40,56,30])}" opacity=".5"/>
+    ${slab(-8,108,-6,64,30,4)}
+    ${glassY(10,74,48,34,58,6)}${glassX(74,-2,48,34,58,4)}
+    ${solid(-2,10,-2,48,34,58)}
+    ${slab(-20,90,-12,58,58,4)}
+    ${slab(30,70,6,40,62,3)}
+    <path d="${M([100,90,4],[124,90,4])}" stroke="#7FF0DA" opacity=".7"/>
   </g>
+  <g stroke="#FFE7B0" stroke-width="1.2" opacity=".6" filter="url(#${id}f)"><path d="${M([-20,58,58],[90,58,58])}"/><path d="${M([-8,64,30],[108,64,30])}"/></g>
 </svg>`}
 function leverageSection(){const F=finances(),fund=F.src.tarjetas;if(!fund)return '';
   const cards=db.cards.filter(c=>F.src.byCard[c.id]),bal=cards.reduce((s,c)=>s+(+c.balance||0),0),paid=Math.max(0,Math.min(fund,fund-bal)),fr=fund?paid/fund:0;
@@ -1238,7 +1259,7 @@ function viewMe(){
   const kv=(k,v,cls='')=>`<div class="kv"><span>${k}</span><span class="num ${cls}">${v}</span></div>`;
   return {eyebrow:'Solo para ti',title:'Mi panel',action:`<div style="display:flex;gap:8px">${eyeBtn()}<button class="iconbtn" data-act="settings" aria-label="Ajustes">${ico('gear')}</button></div>`,html:`
   <div class="metal an ${db.settings.heroMode==='liquid'?'is-liquid':''}" id="hero">
-    <div class="water" aria-hidden="true"><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w1"><path d="M0,30 C150,22 300,38 450,30 C600,22 750,38 900,30 C1050,22 1200,38 1350,30 L1350,60 L0,60 Z"/></svg><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w2"><path d="M0,34 C200,26 400,42 600,34 C800,26 1000,42 1200,34 C1400,26 1600,42 1800,34 L1800,60 L0,60 Z"/></svg><i class="glint"></i></div>
+    <div class="water" aria-hidden="true"><div class="rays"><i></i><i></i><i></i><i></i></div><div class="moon"><i></i><i></i><i></i><i></i><i></i><i></i></div><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w3"><path d="M0,32 C120,26 240,38 360,32 C480,26 600,38 720,32 C840,26 960,38 1080,32 C1200,26 1320,38 1440,32 L1440,60 L0,60 Z"/></svg><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w2"><path d="M0,34 C200,26 400,42 600,34 C800,26 1000,42 1200,34 C1400,26 1600,42 1800,34 L1800,60 L0,60 Z"/></svg><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w1"><path d="M0,30 C150,22 300,38 450,30 C600,22 750,38 900,30 C1050,22 1200,38 1350,30 L1350,60 L0,60 Z"/></svg><i class="glint"></i></div>
     <div class="metal-top"><span class="metal-logo">${logoSVG({id:'mt'})}</span><span class="metal-brand">ORBIT</span>
       <button class="mode" data-act="heroMode" aria-label="Cambiar entre net worth y liquidez"><span class="m-solid">◆ Net worth</span><span class="m-liquid"><svg viewBox="0 0 24 24" width="13" height="13"><path d="M12 3C9 7.5 6 10.6 6 14a6 6 0 0 0 12 0c0-3.4-3-6.5-6-11z" fill="currentColor"/></svg> Líquido</span></button></div>
     <div class="face f-solid"><div class="metal-l">Net worth</div><div class="metal-v">${cnt(F.worthAll)}</div><div class="metal-sub">Todo lo que tienes: banco, Orbit, garage y casa, menos deudas</div></div>
