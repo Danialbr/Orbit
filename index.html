@@ -152,8 +152,8 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .carc-bot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.carc-bot small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.16em;opacity:.6;margin-bottom:5px}.carc-bot b{font:700 14px var(--display)}
 .wc-house{background:linear-gradient(135deg,#3A3226,#1A1610);color:#F6EFE3}.wc-house .wc-a{color:#F2C980}
 .wc-k401{background:linear-gradient(135deg,#2E2A1C,#141209);color:#F5EED9}.wc-k401 .wc-a{color:#E9C46A}
-.k401c{background:radial-gradient(80% 70% at 50% 45%,rgba(233,196,106,.16),transparent 70%),linear-gradient(160deg,#1A2130,#090C12)}
-.cat-svg{max-height:140px;margin:0 auto!important}.kret{text-align:center;font:600 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:2px 0 10px}
+.k401c{background:radial-gradient(80% 70% at 50% 45%,rgba(70,180,255,.14),transparent 70%),linear-gradient(160deg,#1A2130,#090C12)}
+.catcv{display:block;width:100%;height:150px}.kret{text-align:center;font:600 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:2px 0 10px}
 .k67{height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .k67 span{font:800 104px/1 var(--display);letter-spacing:-.06em;background:linear-gradient(180deg,#FFF6DA,#E9C46A 55%,#8C6A2F);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(233,196,106,.35))}
 .k67 small{font:700 9.5px/1 var(--body);letter-spacing:.24em;opacity:.6;margin-top:4px}
@@ -652,7 +652,7 @@ function render(){
   $('#eyebrow').textContent=out.eyebrow||'';
   $('#title').textContent=out.title;
   $('#topAct').innerHTML=out.action||'';
-  setTimeout(()=>{if(ui.anim){ui.anim=false;animateIn()}},0);
+  setTimeout(()=>{if(ui.anim){ui.anim=false;animateIn()}startCat()},0);
   $('#backBtn').hidden=!v;$('#brand').hidden=!!v;
   $('#view').innerHTML=(db.settings.sample?`<div class="banner"><span>Estás viendo datos de ejemplo</span><button data-act="clearSample">Empezar con mis datos</button></div>`:'')+out.html;
 }
@@ -777,7 +777,7 @@ function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db
     <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
     ${hv?`<div class="ccf-bar" style="background:rgba(255,255,255,.12)"><i style="--w:${ef*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div>`:''}</button>
   <button class="carc k401c" data-act="asset401"><div class="carc-top"><span>401K</span><span class="carc-d">Retiro</span></div>
-    ${catSVG('kc')}<div class="kret">${(()=>{const by=+db.settings.birthYear||2002,ra=+db.settings.retireAge||67,y=by+ra,left=y-new Date().getFullYear();return `Retiro a los ${ra} · ${y} · faltan ${left} años`})()}</div>
+    <canvas id="catcv" class="catcv"></canvas><div class="kret">${(()=>{const by=+db.settings.birthYear||2002,ra=+db.settings.retireAge||67,y=by+ra,left=y-new Date().getFullYear();return `Retiro a los ${ra} · ${y} · faltan ${left} años`})()}</div>
     <div class="carc-bot"><div><small>NETO</small><b class="num" style="color:var(--ion)">${fmt(F.k401)}</b></div><div><small>SALDO</small><b class="num">${fmt(+db.settings.k401||0)}</b></div><div style="text-align:right"><small>PRÉSTAMO</small><b class="num debt">${fmt(+db.settings.k401Loan||0)}</b></div></div>
     ${+db.settings.k401Loan?`<div class="muted" style="font-size:11.5px;margin-top:8px">Préstamo al ${pct(+db.settings.k401Rate||0)} · pagas ${fmt(+db.settings.k401Pay||0)}/mes</div>`:''}</button>
   </div></section>`}
@@ -796,6 +796,34 @@ function catSVG(id){return `<svg class="car-svg cat-svg" viewBox="0 0 200 150" a
 <path d="M126,118 C142,124 156,118 158,104 C160,92 150,86 144,94" />
 <path d="M94,84 C98,82 102,82 106,84 M92,96 C98,93 102,93 108,96" stroke-width=".9" opacity=".45"/>
 </g></svg>`}
+// particle-network cat drawn on canvas; silhouette is an original crouching cat facing left
+const CAT_PATH='M38,74 C36,66 38,58 44,52 L42,34 L54,46 C60,44 66,44 72,46 L82,34 L82,52 C88,58 90,66 88,74 C96,70 108,66 124,66 C146,66 166,72 178,86 C186,96 186,108 180,116 C190,116 198,110 202,100 C204,94 210,96 208,104 C204,118 192,126 176,126 L150,128 C150,132 146,134 140,134 L120,134 C116,134 114,130 116,126 L96,126 C92,132 84,134 70,134 L52,134 C46,134 46,128 52,126 L64,124 C60,116 58,104 62,94 C52,92 42,86 38,74 Z';
+function drawCat(cv,t){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height,s=Math.min(W/220,H/150),ox=(W-220*s)/2,oy=(H-150*s)/2;
+  if(!cv._pts){const p=new Path2D(CAT_PATH),pts=[];let seed=3;const r=()=>(seed=(seed*16807)%2147483647)/2147483647;
+    const off=document.createElement('canvas').getContext('2d');
+    let n=0;while(pts.length<420&&n<20000){n++;const x=30+r()*182,y=28+r()*110;if(off.isPointInPath(p,x,y))pts.push({x,y,ph:r()*6.28,sp:.5+r()})}
+    // outline points for a crisp edge
+    const L=document.createElementNS('http://www.w3.org/2000/svg','path');L.setAttribute('d',CAT_PATH);const len=L.getTotalLength?L.getTotalLength():0;
+    const edge=[];if(len)for(let k=0;k<len;k+=5){const q=L.getPointAtLength(k);edge.push({x:q.x,y:q.y,ph:r()*6.28,sp:1,e:1})}
+    cv._pts=pts.concat(edge);cv._path=p}
+  const P=cv._pts;ctx.clearRect(0,0,W,H);ctx.save();ctx.translate(ox,oy);ctx.scale(s,s);
+  // soft body glow
+  ctx.shadowColor='rgba(70,200,255,.9)';ctx.shadowBlur=18;ctx.fillStyle='rgba(30,120,180,.10)';ctx.fill(cv._path);ctx.shadowBlur=8;ctx.strokeStyle='rgba(150,230,255,.85)';ctx.lineWidth=.8;ctx.stroke(cv._path);ctx.shadowBlur=0;
+  ctx.lineWidth=.35;
+  for(let i=0;i<P.length;i++){const a=P[i];for(let j=i+1;j<P.length;j++){const b=P[j],dx=a.x-b.x,dy=a.y-b.y,d=dx*dx+dy*dy;if(d<120){ctx.strokeStyle=`rgba(110,215,255,${(1-d/120)*.5})`;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke()}}}
+  ctx.shadowColor='#7FE3FF';ctx.shadowBlur=6;
+  for(const a of P){const tw=.55+.45*Math.sin(t*.002*a.sp+a.ph);ctx.fillStyle=a.e?`rgba(200,245,255,${.6+.4*tw})`:`rgba(120,220,255,${.35+.55*tw})`;ctx.beginPath();ctx.arc(a.x,a.y,a.e?.55:.45+tw*.45,0,6.283);ctx.fill()}
+  // eye
+  ctx.shadowBlur=10;ctx.fillStyle='#BFF4FF';ctx.beginPath();ctx.ellipse(54,61,3.2,1.8,-.25,0,6.283);ctx.fill();ctx.fillStyle='#0A2030';ctx.beginPath();ctx.ellipse(54.6,61,.8,1.5,0,0,6.283);ctx.fill();ctx.fillStyle='#BFF4FF';ctx.beginPath();ctx.moveTo(40,70);ctx.lineTo(43,69);ctx.lineTo(41.5,71.5);ctx.fill();
+  // whiskers
+  ctx.shadowBlur=4;ctx.strokeStyle='rgba(200,240,255,.7)';ctx.lineWidth=.5;[[40,70,12,64],[40,72,10,72],[40,74,14,80]].forEach(([a,b,c,d])=>{ctx.beginPath();ctx.moveTo(a,b);ctx.lineTo(c,d);ctx.stroke()});
+  ctx.restore();
+  // floating bokeh
+  for(let k=0;k<14;k++){const x=(k*73+t*.01*(k%3+1))%W,y=H*.15+((k*37)%(H*.7)),r=(k%4+1)*s*.9,a=.12+.12*Math.sin(t*.001+k);ctx.fillStyle=`rgba(80,200,255,${a})`;ctx.beginPath();ctx.arc(x,y,r,0,6.283);ctx.fill()}
+}
+
+let catRAF;function startCat(){cancelAnimationFrame(catRAF);const cv=document.getElementById('catcv');if(!cv)return;const dpr=Math.min(2,devicePixelRatio||1);cv.width=cv.clientWidth*dpr;cv.height=cv.clientHeight*dpr;cv._pts=null;const still=matchMedia('(prefers-reduced-motion: reduce)').matches;const loop=t=>{if(!document.body.contains(cv))return;drawCat(cv,t);if(!still)catRAF=requestAnimationFrame(loop)};catRAF=requestAnimationFrame(loop)}
 function sheetAsset401(){const st=db.settings;openSheet(`<h3>401K</h3><div class="sub">Cuenta en tu net worth: saldo menos lo que le debes.</div><form data-form="asset401">
   <div class="grid2">${fld('Saldo del 401K',money('k401',st.k401||''))}${fld('Edad de retiro',`<input id="rage" name="retireAge" inputmode="numeric" value="${st.retireAge||67}">`,'Nacido en 2002')}</div>
   <div class="grid2">${fld('Préstamo pendiente',money('k401Loan',st.k401Loan||''))}${fld('Interés %',`<input id="krate" name="k401Rate" inputmode="decimal" value="${st.k401Rate||''}" placeholder="Ej. 8.5">`)}</div>
