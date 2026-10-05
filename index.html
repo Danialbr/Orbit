@@ -148,6 +148,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .carc-top{display:flex;justify-content:space-between;align-items:baseline;font:700 15px var(--display)}.carc-d{font:600 10px var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.6}
 .car-svg{width:100%;height:auto;display:block;margin:8px 0 4px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 .carc-bot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.carc-bot small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.16em;opacity:.6;margin-bottom:5px}.carc-bot b{font:700 14px var(--display)}
+.wc-house{background:linear-gradient(135deg,#3A3226,#1A1610);color:#F6EFE3}.wc-house .wc-a{color:#F2C980}
 .wc-carbon{background:radial-gradient(120% 120% at 100% 0%,rgba(79,168,255,.18),transparent 55%),repeating-linear-gradient(45deg,#1B1F27 0 4px,#14171D 4px 8px);color:#EEF3F9}
 .an-in .car-svg{animation:drive .9s .2s cubic-bezier(.2,.8,.2,1) both}@keyframes drive{from{transform:translateX(-40px);opacity:0}}
 /* credit cards: stack + face */
@@ -194,6 +195,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .metal-v{font:700 38px/1.1 var(--display);letter-spacing:-.03em;margin-top:6px;background:linear-gradient(90deg,#FFFFFF,#BFF6EA 60%,#9CCBFF);-webkit-background-clip:text;background-clip:text;color:transparent}
 .metal-v .num{font:inherit}
 .metal-bot{display:flex;justify-content:space-between;align-items:flex-end}.metal-name{font:500 12px/1 var(--code);letter-spacing:.22em;opacity:.8}
+.metal-all{display:block;font:600 10.5px/1 var(--body);letter-spacing:.06em;opacity:.7;margin-top:8px}
 .metal-net{text-align:right;font:700 15px/1.1 var(--display)}.metal-net small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.2em;opacity:.6;margin-bottom:4px}
 .wallet{display:flex;flex-direction:column;margin-top:-6px}
 .wc{position:relative;border-radius:14px;padding:0 18px;margin-top:-14px;cursor:pointer;border:1px solid rgba(255,255,255,.1);box-shadow:0 -10px 24px -14px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.12) inset;transition:transform .35s cubic-bezier(.2,.8,.2,1),margin .35s}
@@ -486,9 +488,11 @@ function ownSources(){const o=owner();if(!o)return {ahorro:0,tarjetas:0,byCard:{
   return {ahorro:r2(ahorro),tarjetas:r2(tar),byCard}}
 const debtApr=c=>c.promoEnd&&c.promoEnd>=today()?0:(+c.apr||0);
 const carsStock=()=>(db.cars||[]).filter(c=>!c.sold);
+const carsValue=()=>db.settings.carsValue!=null?+db.settings.carsValue:r2(carsStock().reduce((s,c)=>s+carCost(c),0));
+const houseEq=()=>Math.max(-1e12,r2((+db.settings.houseValue||0)-(+db.settings.mortgage||0)));
 const carCost=c=>r2((+c.buy||0)+(c.costs||[]).reduce((s,x)=>s+(+x.amount||0),0));
 function finances(){const debt=r2(db.cards.reduce((s,c)=>s+(+c.balance||0),0)),cost=r2(db.cards.reduce((s,c)=>s+(+c.balance||0)*debtApr(c)/1200,0)),o=owner(),capOwn=o?capitalOf(o):0,sav=+db.settings.savings||0,m=myMonth(curYM());
-  const cars=r2(carsStock().reduce((s,c)=>s+carCost(c),0));return {debt,cost,capOwn,sav,cars,net:r2(m.est-cost),worth:r2(sav+capOwn+cars-debt),src:ownSources()}}
+  const cars=carsValue(),house=+db.settings.houseValue?houseEq():0;return {debt,cost,capOwn,sav,cars,house,net:r2(m.est-cost),worth:r2(sav+capOwn+cars-debt),worthAll:r2(sav+capOwn+cars+house-debt),src:ownSources()}}
 const owner=()=>db.investors.find(i=>i.owner);
 const deposits=i=>r2(db.movements.filter(m=>m.investorId===i.id&&m.type==='aporte').reduce((s,m)=>s+(+m.amount||0),0));
 function monthsRange(){const f=db.loans.map(firstYM).sort()[0];const out=[];if(!f)return out;for(let p=f;p<=curYM();p=addM(p,1))out.push(p);return out}
@@ -528,7 +532,7 @@ function sampleDB(){
         mama={id:'inv_mama',name:'Mamá',rate:0,owner:false,phone:'',note:'Participación sin capital'},
         abuela={id:'inv_abuela',name:'Abuela',rate:2,owner:false,phone:'',note:'',payMethod:'Zelle',payDest:'abuela@correo.com'};
   tio.payMethod='Wire';tio.payDest='Chase ****4471';
-  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300,limit:20000,dueDay:18,last4:'4471'},{id:'c_fu',name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta',balance:4000,apr:0,promoEnd:'2027-03-31',apr:21.5,limit:9000,dueDay:3,last4:'2210'},{id:'c_fs',name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta',balance:600,apr:19.9,limit:1500,dueDay:12,last4:'8803'},{id:'c_hd',name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta',balance:1200,apr:0,limit:3500,dueDay:25,last4:'1937'}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});d.cars=[{id:'car1',name:'2019 BMW M4',buy:38500,date:'2026-09-02',ask:46900,costs:[{concept:'Llantas',amount:1200},{concept:'Detallado',amount:350}],sold:false},{id:'car2',name:'2021 Tesla Model 3',buy:24800,date:'2026-09-20',ask:29500,costs:[{concept:'Título',amount:180}],sold:false}];d.goals=[{id:'g1',type:'sindeuda',title:'Libre de tarjetas',target:0,date:'2027-06-30',startVal:24000},{id:'g2',type:'prestado',title:'$100k prestados',target:100000,date:'2027-12-31'}];
+  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300,limit:20000,dueDay:18,last4:'4471'},{id:'c_fu',name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta',balance:4000,apr:0,promoEnd:'2027-03-31',apr:21.5,limit:9000,dueDay:3,last4:'2210'},{id:'c_fs',name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta',balance:600,apr:19.9,limit:1500,dueDay:12,last4:'8803'},{id:'c_hd',name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta',balance:1200,apr:0,limit:3500,dueDay:25,last4:'1937'}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});d.cars=[];Object.assign(d.settings,{carsValue:65000,houseValue:240000,mortgage:185000});d.goals=[{id:'g1',type:'sindeuda',title:'Libre de tarjetas',target:0,date:'2027-06-30',startVal:24000},{id:'g2',type:'prestado',title:'$100k prestados',target:100000,date:'2027-12-31'}];
   d.movements.push({id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-10',note:'Ahorros',source:'ahorro'},{id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-12',note:'Chase Sapphire',source:'c_chase'},{id:uid(),investorId:abuela.id,type:'aporte',amount:10000,date:'2026-03-14',note:'Aporte inicial'},
     {id:uid(),investorId:tio.id,type:'aporte',amount:34000,date:'2026-03-15',note:'Aporte inicial'},
     {id:uid(),investorId:ana.id,type:'aporte',amount:8000,date:'2026-07-01',note:''});
@@ -682,6 +686,32 @@ function carSVG(id){
   <path d="M336,86 L384,86 L388,91 L340,91 Z" fill="#141922"/><path d="M12,86 L66,86 L64,91 L14,91 Z" fill="#141922"/>
   ${W(98)}${W(306)}
 </svg>`}
+function houseSVG(id){return `<svg class="car-svg" viewBox="0 0 400 122" aria-hidden="true"><defs>
+  <linearGradient id="${id}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F7FB"/><stop offset="1" stop-color="#8C99AD"/></linearGradient>
+  <linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE7B0" stop-opacity=".95"/><stop offset="1" stop-color="#F2A64A" stop-opacity=".75"/></linearGradient>
+  <radialGradient id="${id}sh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
+  <ellipse cx="200" cy="114" rx="190" ry="7" fill="url(#${id}sh)"/>
+  <path d="M70,110 L70,52 L230,40 L230,110 Z" fill="url(#${id}w)"/>
+  <path d="M60,54 L240,38 L240,32 L60,48 Z" fill="#1D232E"/>
+  <path d="M230,110 L230,66 L340,60 L340,110 Z" fill="url(#${id}w)" opacity=".92"/>
+  <path d="M224,68 L350,58 L350,52 L224,62 Z" fill="#1D232E"/>
+  <rect x="88" y="62" width="62" height="40" rx="2" fill="url(#${id}g)"/><path d="M119,62 L119,102 M88,82 L150,82" stroke="#1D232E" stroke-width="2"/>
+  <rect x="164" y="58" width="50" height="52" rx="2" fill="#0F141C"/><rect x="200" y="82" width="4" height="10" rx="2" fill="#D9E1EC"/>
+  <rect x="248" y="72" width="76" height="30" rx="2" fill="url(#${id}g)" opacity=".9"/><path d="M286,72 L286,102" stroke="#1D232E" stroke-width="2"/>
+  <path d="M20,110 L380,110" stroke="#2A313D" stroke-width="2"/>
+  <path d="M30,110 C30,90 40,78 50,78 C60,78 66,92 64,110 Z" fill="#1B3B36"/><path d="M356,110 C354,94 362,84 370,84 C378,84 384,96 382,110 Z" fill="#1B3B36"/>
+  <path d="M164,110 L214,110 L222,118 L156,118 Z" fill="#2A313D"/>
+</svg>`}
+function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db.settings.mortgage||0,eq=hv-mg,ef=hv?Math.max(0,Math.min(1,eq/hv)):0;
+  return `<section class="an"><div class="sec-h"><h2>Mis activos</h2></div><div class="cars">
+  <button class="carc" data-act="assetCars"><div class="carc-top"><span>Carros en stock</span><span class="carc-d">Toca para editar</span></div>${carSVG('cv')}
+    <div class="carc-bot" style="grid-template-columns:1fr"><div><small>VALOR INVERTIDO</small><b class="num" style="font-size:22px">${fmt(F.cars)}</b></div></div></button>
+  <button class="carc" data-act="assetHouse"><div class="carc-top"><span>Mi casa</span><span class="carc-d">${hv?'Aparte de tu dinero real':'Toca para agregar'}</span></div>${houseSVG('hv')}
+    <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
+    ${hv?`<div class="ccf-bar" style="background:rgba(255,255,255,.12)"><i style="--w:${ef*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div>`:''}</button>
+  </div></section>`}
+function sheetAssetCars(){openSheet(`<h3>Carros en stock</h3><div class="sub">Cuánto dinero tienes metido en carros ahora mismo.</div><form data-form="assetCars">${fld('Valor total invertido',money('carsValue',db.settings.carsValue??carsValue()))}<button class="btn pri" type="submit">Guardar</button></form>`)}
+function sheetAssetHouse(){const st=db.settings;openSheet(`<h3>Mi casa</h3><div class="sub">Tu equity es lo que vale menos lo que debes de la hipoteca. Se muestra aparte y no cuenta en tu dinero real.</div><form data-form="assetHouse"><div class="grid2">${fld('Valor de la casa',money('houseValue',st.houseValue||''))}${fld('Lo que debes (hipoteca)',money('mortgage',st.mortgage||''))}</div><button class="btn pri" type="submit">Guardar</button></form>`)}
 function carsSection(){const st=carsStock(),sold=(db.cars||[]).filter(c=>c.sold),inv=st.reduce((s,c)=>s+carCost(c),0),exp=st.reduce((s,c)=>s+((+c.ask||0)-carCost(c)),0);
   return `<section class="an"><div class="sec-h"><h2>Carros en stock</h2><button class="muted" style="font-size:13px" data-act="car">+ Carro</button></div>
   ${st.length?`<div class="cars">${st.map((c,k)=>{const d=daysBetween(c.date||today(),today()),pr=(+c.ask||0)-carCost(c);return `<button class="carc" data-act="car" data-id="${c.id}">
@@ -1169,12 +1199,13 @@ function viewMe(){
   <div class="metal an">
     <div class="metal-top"><span class="metal-logo">${logoSVG({id:'mt'})}</span><span class="metal-brand">ORBIT</span><span class="metal-tier">PRIVATE</span></div>
     <div><div class="metal-l">Patrimonio real</div><div class="metal-v">${cnt(F.worth)}</div></div>
-    <div class="metal-bot"><span class="metal-name">${h(holder)}</span><span class="metal-net"><small>NETO / MES</small>${fmt(F.net)}</span></div>
+    <div class="metal-bot"><span class="metal-name">${h(holder)}${F.house?`<small class="metal-all">Con tu casa ${fmt(F.worthAll)}</small>`:""}</span><span class="metal-net"><small>NETO / MES</small>${fmt(F.net)}</span></div>
   </div>
   <div class="wallet an">
     ${wc('bank','wc-teal','Dinero en banco',fmt(F.sav),kv('Ahorros',fmt(F.sav))+`<button class="wc-btn" data-act="savings">Actualizar saldo</button>`)}
     ${wc('orbit','wc-blue','Tu capital en Orbit',fmt(F.capOwn),kv('De tus ahorros',fmt(F.src.ahorro))+kv('De tarjetas',fmt(F.src.tarjetas))+kv('Prestado',fmt(placed))+kv('En espera',fmt(F.capOwn-placed)))}
-    ${wc('cars','wc-carbon','Carros en stock',fmt(F.cars),carsStock().map(c=>kv(h(c.name),fmt(carCost(c)))).join('')+`<button class="wc-btn" data-act="car">Agregar carro</button>`)}
+    ${wc('cars','wc-carbon','Carros en stock',fmt(F.cars),`<button class="wc-btn" data-act="assetCars">Editar valor</button>`)}
+    ${wc('house','wc-house','Casa · equity',fmt(F.house),kv('Valor',fmt(+db.settings.houseValue||0))+kv('Hipoteca','−'+fmt(+db.settings.mortgage||0))+`<button class="wc-btn" data-act="assetHouse">Editar</button>`)}
     ${wc('income','wc-slate','Ingreso mensual',fmt(B.sal+B.orb),kv('Trabajo',fmt(B.sal))+kv('Orbit (bruto)',fmt(B.orb))+kv('Gastos fijos','−'+fmt(B.exp))+kv('Libre para deudas',fmt(Math.max(0,B.free)))+`<button class="wc-btn" data-act="income">Editar presupuesto</button>`)}
     ${wc('debt','wc-graphite','Deudas',fmt(F.debt),(db.cards.length?db.cards.map(cd=>`<button class="kv" style="width:100%" data-act="${(cd.kind||'tarjeta')==='tarjeta'?'ccOpen':'card'}" data-id="${cd.id}"><span>${h(cd.name)} <small style="opacity:.6">${+cd.apr?pct(cd.apr):'0%'}</small></span><span class="num">${fmt(cd.balance)}</span></button>`).join(''):'<div class="kv"><span>Sin deudas</span></div>')+kv('Interés al mes',fmt(F.cost))+`<button class="wc-btn" data-act="card">Agregar deuda</button>`)}
   </div>
@@ -1192,7 +1223,7 @@ function viewMe(){
     <div class="stat"><div class="eyebrow">Prestado</div><div class="v">${cnt(P.lent)}</div></div>
     <div class="stat"><div class="eyebrow">Capital total</div><div class="v">${cnt(t.capital)}</div></div>
   </div></section>
-  ${carsSection()}
+  ${assetsSection()}
   ${goalsSection()}
   ${ccSection()}
   ${debtPlanSection()}
@@ -1460,6 +1491,8 @@ const ACTIONS={
   ccDelTx:e=>{const c=db.cards.find(x=>x.id===e.dataset.id),t=(c.txns||[]).find(x=>x.id===e.dataset.v);if(t){c.balance=r2((+c.balance||0)+(t.type==='pago'?t.amount:-t.amount));c.txns=c.txns.filter(x=>x!==t)}save();render();sheetCC(c.id)},
   goal:e=>sheetGoal(e.dataset.id),
   car:e=>sheetCar(e.dataset.id),
+  assetCars:()=>sheetAssetCars(),
+  assetHouse:()=>sheetAssetHouse(),
   delCar:e=>{db.cars=db.cars.filter(c=>c.id!==e.dataset.id);save();closeSheet();render()},
   excel:()=>exportExcel(),
   preset:e=>{const p=PRESETS.filter(x=>!db.cards.some(c=>c.name===x.name))[+e.dataset.v],f=$('form[data-form=card]');f.name.value=p.name;f.skin.value=p.skin;f.issuer.value=p.issuer;f.kind.value=p.kind;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('on',b===e));f.balance.focus()},
@@ -1508,6 +1541,8 @@ document.addEventListener('submit',ev=>{
     save();render();toast(msg);if(pay.interest>0)sheetOwe([l.id],p);else closeSheet();return;
   }
   if(k==='payout'){savePayout(f);return}
+  if(k==='assetCars'){db.settings.carsValue=r2(num(f.carsValue.value));save();closeSheet();render();return}
+  if(k==='assetHouse'){db.settings.houseValue=r2(num(f.houseValue.value));db.settings.mortgage=r2(num(f.mortgage.value));save();closeSheet();render();return}
   if(k==='car'){const c=f.dataset.id?db.cars.find(x=>x.id===f.dataset.id):null,name=f.name.value.trim();if(!name)return err('Escribe el carro.');const d={name,buy:r2(num(f.buy.value)),date:f.date.value||today(),ask:r2(num(f.ask.value)),note:f.note.value.trim(),costs:readDeds().map(x=>({concept:x.concept,amount:x.amount}))};if(f.soldPrice&&num(f.soldPrice.value)>0){d.sold=true;d.soldPrice=r2(num(f.soldPrice.value));d.soldDate=f.soldDate.value||today()}else{d.sold=false}if(c)Object.assign(c,d);else db.cars.push({id:uid(),...d});save();closeSheet();render();toast(d.sold?'Carro vendido':'Guardado');return}
   if(k==='cctx'){const c=db.cards.find(x=>x.id===f.dataset.id),a=r2(num(f.amount.value)),ty=f.dataset.v;if(a<=0)return err('Escribe el monto.');if(ty==='pago'&&a>c.balance+0.005)return err('El abono es mayor que el saldo.');c.txns=c.txns||[];c.txns.push({id:uid(),type:ty,amount:a,date:f.date.value||today(),note:f.note.value.trim()});c.balance=r2((+c.balance||0)+(ty==='pago'?-a:a));save();render();sheetCC(c.id);toast(ty==='pago'?'Abono registrado':'Cargo registrado');return}
   if(k==='goal'){const g=f.dataset.id?db.goals.find(x=>x.id===f.dataset.id):null,d={type:f.type.value,title:f.title.value.trim()||GOAL_T[f.type.value],target:r2(num(f.target.value)),date:f.date.value||'',manual:r2(num(f.manual?.value||0))};if(g)Object.assign(g,d);else db.goals.push({id:uid(),start:today(),startVal:d.type==='sindeuda'?finances().debt:0,...d});save();closeSheet();render();return}
@@ -1585,7 +1620,7 @@ async function exportExcel(){
   add('Pagos a inversionistas',db.payouts.map(p=>({Persona:inv(p.investorId)?.name,Mes:ymLabel(p.period),Rendimiento:p.gross,Deducciones:(p.deductions||[]).map(d=>d.concept+' '+d.amount).join(', '),Neto:p.net,Estado:STATUS_L[p.status]||p.status,Fecha:p.date,'Método':p.method,Destino:p.dest})));
   add('Movimientos de capital',db.movements.map(m=>({Persona:inv(m.investorId)?.name,Tipo:m.type,Monto:m.amount,Fecha:m.date,Origen:m.source?(m.source==='ahorro'?'Ahorros':db.cards.find(c=>c.id===m.source)?.name||''):'',Nota:m.note||''})));
   add('Deudas',db.cards.map(c=>({Nombre:c.name,Banco:c.issuer||'',Tipo:KIND_L[c.kind||'tarjeta'],Saldo:c.balance,'APR %':c.apr,'Límite':c.limit||'','Pago mínimo':c.minPay||'','Día de pago':c.dueDay||'','Promo 0% hasta':c.promoEnd||''})));
-  add('Carros',(db.cars||[]).map(c=>({Carro:c.name,Compra:c.buy,'Gastos extra':r2(carCost(c)-c.buy),Invertido:carCost(c),'Precio pedido':c.ask||'',Fecha:c.date,Estado:c.sold?'Vendido':'En stock','Vendido en':c.soldPrice||'','Ganancia':c.sold?r2(c.soldPrice-carCost(c)):'',Nota:c.note||''})));
+  {const F=finances();add('Patrimonio',[{Concepto:'Ahorros en banco',Monto:F.sav},{Concepto:'Tu capital en Orbit',Monto:F.capOwn},{Concepto:'Carros en stock',Monto:F.cars},{Concepto:'Casa (valor)',Monto:+db.settings.houseValue||0},{Concepto:'Hipoteca',Monto:-(+db.settings.mortgage||0)},{Concepto:'Deudas',Monto:-F.debt},{Concepto:'Patrimonio real (sin casa)',Monto:F.worth},{Concepto:'Patrimonio con casa',Monto:F.worthAll}])}
   add('Movimientos tarjetas',db.cards.flatMap(c=>(c.txns||[]).map(t=>({Tarjeta:c.name,Tipo:t.type,Monto:t.amount,Fecha:t.date,Nota:t.note||''}))));
   const out=X.write(wb,{bookType:'xlsx',type:'array'});
   shareFile(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Orbit-${today()}.xlsx`);
