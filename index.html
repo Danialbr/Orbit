@@ -156,7 +156,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .ccf-bar{height:3px;border-radius:3px;background:rgba(255,255,255,.22);margin-top:10px;overflow:hidden}.ccf-bar i{display:block;height:100%;width:var(--w);background:#fff}
 .grade{font:800 10.5px/1 var(--body);padding:4px 7px;border-radius:7px;letter-spacing:.04em;vertical-align:2px;margin-left:6px}
 .gradebig{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font:800 24px var(--display);flex:none}
-.g-A{color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}.g-B{color:var(--ion);background:color-mix(in srgb,var(--ion) 15%,transparent)}.g-C{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}.g-D{color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
+.g-N{color:var(--muted);background:var(--raise)}.g-A{color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}.g-B{color:var(--ion);background:color-mix(in srgb,var(--ion) 15%,transparent)}.g-C{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}.g-D{color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
 /* credit cards */
 .cc-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:-16px;padding:2px 16px 8px;scrollbar-width:none}.cc-row::-webkit-scrollbar{display:none}
 .cc{flex:0 0 78%;scroll-snap-align:center;aspect-ratio:1.586;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;text-align:left;color:#fff;position:relative;overflow:hidden;
@@ -663,12 +663,16 @@ function sheetGoal(id){const g=id?db.goals.find(x=>x.id===id):null,t=g?.type||'s
 
 /* ============ client score ============ */
 // 100 = always on time. Each day late on average costs points; partial and unpaid months cost more.
-function clientScore(bid){const ls=db.loans.filter(l=>l.borrowerId===bid);let n=0,late=0,days=0,partial=0,open=0;
-  ls.forEach(l=>periods(l,curYM()).forEach(p=>{const due=dueISO(l,p);if(due>today())return;const st=status(l,p),pay=payOf(l.id,p);n++;
-    let d=pay?Math.max(0,daysBetween(due,pay.date||due)):daysBetween(due,today());if(st==='parcial')partial++;if(st==='atrasado'){open++}if(d>2)late++;days+=d}));
-  if(!n)return null;const avg=days/n,onTime=(n-late)/n,score=Math.max(0,Math.min(100,Math.round(100-avg*2.5-partial*6-open*12-(1-onTime)*25)));
-  const grade=score>=90?'A':score>=75?'B':score>=60?'C':'D';return {score,grade,avg:Math.round(avg*10)/10,onTime:Math.round(onTime*100),n,partial,open}}
-const scoreChip=S=>S?`<span class="grade g-${S.grade}" title="Score ${S.score}">${S.grade} · ${S.score}</span>`:'';
+// Builds over time: needs 3 due payments before it shows a grade; recent months weigh double.
+const SCORE_MIN=3;
+function clientScore(bid){const items=[];db.loans.filter(l=>l.borrowerId===bid).forEach(l=>periods(l,curYM()).forEach(p=>{const due=dueISO(l,p);if(due>today())return;const st=status(l,p),pay=payOf(l.id,p);
+    const d=pay&&st!=='parcial'?Math.max(0,daysBetween(due,pay.date||due)):daysBetween(due,today());items.push({p,d,st})}));
+  const n=items.length;if(!n)return null;if(n<SCORE_MIN)return {pending:true,n};
+  items.sort((a,b)=>a.p<b.p?-1:1);let W=0,pts=0,late=0,partial=0,open=0,days=0;
+  items.forEach((x,k)=>{const w=k>=n-6?2:1;let sc=100-Math.min(60,x.d*2.5);if(x.st==='parcial'){sc-=20;partial++}if(x.st==='atrasado'){sc-=35;open++}if(x.d>2)late++;days+=x.d;pts+=Math.max(0,sc)*w;W+=w});
+  const score=Math.round(pts/W),grade=score>=90?'A':score>=75?'B':score>=60?'C':'D';
+  return {score,grade,avg:Math.round(days/n*10)/10,onTime:Math.round((n-late)/n*100),n,partial,open}}
+const scoreChip=S=>!S?'<span class="grade g-N">Nuevo</span>':S.pending?`<span class="grade g-N">Nuevo · ${S.n}/${SCORE_MIN}</span>`:`<span class="grade g-${S.grade}" title="Score ${S.score}">${S.grade} · ${S.score}</span>`;
 
 /* ============ projection (simple interest, no compounding) ============ */
 function projection(){const F=finances(),o=owner(),capOwn=o?capitalOf(o):0,net=F.net,gross=myMonth(curYM()).est;
@@ -941,7 +945,7 @@ function viewLoan(id){
     </div>
   </div>
   <div class="btns"><button class="btn wide" data-act="editLoan" data-id="${l.id}">${ico('edit')}Editar</button><button class="btn wide" data-act="closeLoan" data-id="${l.id}">${l.closed?'Reabrir':'Liquidar'}</button></div>
-  ${(()=>{const S=clientScore(l.borrowerId);return S?`<div class="card" style="display:flex;gap:14px;align-items:center"><div class="gradebig g-${S.grade}">${S.grade}</div><div style="flex:1"><div style="font-weight:700">Score del cliente · ${S.score}/100</div><div class="muted" style="font-size:12.5px">${S.onTime}% a tiempo · ${S.avg} días de atraso promedio · ${S.n} pagos${S.partial?` · ${S.partial} parciales`:''}${S.open?` · ${S.open} sin pagar`:''}</div></div></div>`:''})()}
+  ${(()=>{const S=clientScore(l.borrowerId);if(!S||S.pending)return `<div class="card" style="display:flex;gap:14px;align-items:center"><div class="gradebig g-N">?</div><div style="flex:1"><div style="font-weight:700">Score en evaluación</div><div class="muted" style="font-size:12.5px">Se calcula después de ${SCORE_MIN} pagos. Lleva ${S?S.n:0}.</div></div></div>`;return `<div class="card" style="display:flex;gap:14px;align-items:center"><div class="gradebig g-${S.grade}">${S.grade}</div><div style="flex:1"><div style="font-weight:700">Score del cliente · ${S.score}/100</div><div class="muted" style="font-size:12.5px">${S.onTime}% a tiempo · ${S.avg} días de atraso promedio · ${S.n} pagos${S.partial?` · ${S.partial} parciales`:''}${S.open?` · ${S.open} sin pagar`:''}</div></div></div>`})()}
   ${repartoCard(l)}
   <section><div class="sec-h"><h2>Partes del préstamo</h2></div><div class="list">
   ${l.funding.map(f=>{const i=inv(f.investorId);if(!i)return '';const now=l.closed?0:f.amount*out/l.principal,ir=rateFor(f,l),pay=now*ir/100;
