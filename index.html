@@ -140,6 +140,9 @@ table.tight th,table.tight td{padding-inline:8px}table.tight{font-size:12.5px}
 tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 
 /* panel */
+.step{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:7px;margin-right:8px;font:700 11px var(--mono);color:var(--ion);border:1px solid rgba(70,227,198,.35)}
+.tipdot{width:6px;height:6px;border-radius:50%;background:var(--ion);flex:none;align-self:flex-start;margin-top:8px;box-shadow:0 0 8px var(--ion)}
+.tips b{color:var(--fg)}.tips .main{color:var(--muted)}
 .debt{color:#F08A8A}
 .comp{display:flex;gap:3px;height:6px;margin-top:16px;border-radius:6px;overflow:hidden;background:var(--raise)}
 .comp i{display:block;height:100%;width:var(--w);border-radius:2px;opacity:.9}
@@ -404,7 +407,8 @@ function viaText(po){if(!po||po.status==='pendiente')return '';if(po.status!=='p
 function ownSources(){const o=owner();if(!o)return {ahorro:0,tarjetas:0,byCard:{}};const byCard={};let ahorro=0,tar=0;
   db.movements.filter(m=>m.investorId===o.id&&m.type==='aporte').forEach(m=>{if(m.source&&m.source!=='ahorro'){byCard[m.source]=(byCard[m.source]||0)+(+m.amount||0);tar+=+m.amount||0}else ahorro+=+m.amount||0});
   return {ahorro:r2(ahorro),tarjetas:r2(tar),byCard}}
-function finances(){const debt=r2(db.cards.reduce((s,c)=>s+(+c.balance||0),0)),cost=r2(db.cards.reduce((s,c)=>s+(+c.balance||0)*(+c.apr||0)/1200,0)),o=owner(),capOwn=o?capitalOf(o):0,sav=+db.settings.savings||0,m=myMonth(curYM());
+const debtApr=c=>c.promoEnd&&c.promoEnd>=today()?0:(+c.apr||0);
+function finances(){const debt=r2(db.cards.reduce((s,c)=>s+(+c.balance||0),0)),cost=r2(db.cards.reduce((s,c)=>s+(+c.balance||0)*debtApr(c)/1200,0)),o=owner(),capOwn=o?capitalOf(o):0,sav=+db.settings.savings||0,m=myMonth(curYM());
   return {debt,cost,capOwn,sav,net:r2(m.est-cost),worth:r2(sav+capOwn-debt),src:ownSources()}}
 const owner=()=>db.investors.find(i=>i.owner);
 const deposits=i=>r2(db.movements.filter(m=>m.investorId===i.id&&m.type==='aporte').reduce((s,m)=>s+(+m.amount||0),0));
@@ -445,7 +449,7 @@ function sampleDB(){
         mama={id:'inv_mama',name:'Mamá',rate:0,owner:false,phone:'',note:'Participación sin capital'},
         abuela={id:'inv_abuela',name:'Abuela',rate:2,owner:false,phone:'',note:'',payMethod:'Zelle',payDest:'abuela@correo.com'};
   tio.payMethod='Wire';tio.payDest='Chase ****4471';
-  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Chase Sapphire',balance:15000,apr:24.9}];d.settings.savings=6000;
+  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Chase Sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300},{id:'c_amex',name:'Amex Blue',kind:'tarjeta',balance:4000,apr:22,minPay:0,promoEnd:'2027-03-31'},{id:'c_auto',name:'Toyota',kind:'auto',balance:9000,apr:5.9,minPay:350}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});
   d.movements.push({id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-10',note:'Ahorros',source:'ahorro'},{id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-12',note:'Chase Sapphire',source:'c_chase'},{id:uid(),investorId:abuela.id,type:'aporte',amount:10000,date:'2026-03-14',note:'Aporte inicial'},
     {id:uid(),investorId:tio.id,type:'aporte',amount:34000,date:'2026-03-15',note:'Aporte inicial'},
     {id:uid(),investorId:ana.id,type:'aporte',amount:8000,date:'2026-07-01',note:''});
@@ -573,6 +577,70 @@ function myCard(){
       <div class="stat"><div class="eyebrow">Tu capital</div><div class="v">${fmt(cap)}</div></div>
     </div></button>`;
 }
+/* ============ debt payoff plan ============ */
+const KIND_L={tarjeta:'Tarjeta',prestamo:'Préstamo',auto:'Auto',otro:'Otra deuda'};
+function budget(){const st=db.settings,F=finances(),sal=+st.salary||0,exp=+st.expenses||0,orb=st.useOrbit===false?0:Math.max(0,F.net+F.cost);
+  // money left each month after living expenses; card interest is handled inside the simulation
+  return {sal,exp,orb,free:r2(sal-exp+orb)}}
+function simulate(strategy,extraTotal){
+  let ds=db.cards.filter(c=>(+c.balance||0)>0).map(c=>({id:c.id,name:c.name,bal:+c.balance,apr:+c.apr||0,promo:c.promoEnd||'',min:Math.min(+c.balance,+c.minPay||Math.max(25,(+c.balance)*.02)),paidOff:null,interest:0}));
+  if(!ds.length)return {months:0,interest:0,order:[],first:[],ok:true};
+  const minSum=ds.reduce((s,d)=>s+d.min,0),pay=Math.max(extraTotal,0);if(pay<minSum-0.01)return {ok:false,minSum,months:null};
+  let ym=curYM(),month=0,total=0;const first={};
+  const order=()=>ds.filter(d=>d.bal>0.005).sort((a,b)=>{if(strategy==='snow')return a.bal-b.bal;const ra=a.promo&&a.promo>=ym+'-31'?0:a.apr,rb=b.promo&&b.promo>=ym+'-31'?0:b.apr;
+    // a promo ending within 3 months goes first so it is cleared before interest starts
+    const soon=d=>d.promo&&d.promo>=ym&&d.promo<=addM(ym,3)+'-31'?1:0;if(soon(a)!==soon(b))return soon(b)-soon(a);return rb-ra||a.bal-b.bal});
+  while(ds.some(d=>d.bal>0.005)&&month<600){
+    ds.forEach(d=>{if(d.bal<=0)return;const r=d.promo&&d.promo>=ym+'-01'?0:d.apr;const i=d.bal*r/1200;d.bal+=i;d.interest+=i;total+=i});
+    let left=pay;const live=order();
+    live.forEach(d=>{const m=Math.min(d.min,d.bal);d.bal-=m;left-=m;if(month===0)first[d.id]=(first[d.id]||0)+m});
+    for(const d of order()){if(left<=0)break;const x=Math.min(left,d.bal);d.bal-=x;left-=x;if(month===0)first[d.id]=(first[d.id]||0)+x}
+    ds.forEach(d=>{if(d.bal<=0.005&&!d.paidOff){d.bal=0;d.paidOff=addM(ym,0)}});
+    month++;ym=addM(ym,1);
+  }
+  return {ok:month<600,months:month,interest:r2(total),end:addM(curYM(),month-1),order:[...ds].sort((a,b)=>(a.paidOff||'9')<(b.paidOff||'9')?-1:1),first,minSum};
+}
+function debtPlan(){
+  const B=budget(),strat=db.settings.strategy||'aval',free=B.free;
+  const plan=simulate(strat,free),alt=simulate(strat==='aval'?'snow':'aval',free),mins=simulate(strat,db.cards.reduce((s,c)=>s+Math.min(+c.balance||0,+c.minPay||Math.max(25,(+c.balance||0)*.02)),0));
+  const tips=[];const F=finances();
+  if(!db.cards.some(c=>+c.balance>0))return {plan,tips,B,strat,none:true};
+  if(!B.sal)tips.push('Agrega tu ingreso mensual del trabajo para calcular cuánto puedes pagar cada mes.');
+  if(plan.ok===false)tips.push(`Con ${fmt(free)} al mes no cubres los pagos mínimos (${fmt(plan.minSum)}). Baja gastos o deja de reinvertir por un tiempo.`);
+  const top=plan.order&&[...plan.order].sort((a,b)=>((plan.first[b.id]||0)-b.min)-((plan.first[a.id]||0)-a.min))[0];
+  if(plan.ok&&top)tips.push(`Pon todo el dinero extra en <b>${h(top.name)}</b> y paga el mínimo en las demás.`);
+  if(plan.ok&&alt.ok&&alt.interest-plan.interest>1)tips.push(`Este orden te ahorra <b>${fmt(alt.interest-plan.interest)}</b> en intereses comparado con el otro método.`);
+  if(plan.ok&&mins.ok&&mins.interest-plan.interest>1)tips.push(`Pagando solo mínimos pagarías <b>${fmt(mins.interest)}</b> de intereses y tardarías ${mins.months} meses. Con este plan, ${fmt(plan.interest)} y ${plan.months} meses.`);
+  db.cards.filter(c=>c.promoEnd&&c.promoEnd>=today()&&+c.balance>0).forEach(c=>{const m=Math.max(1,daysBetween(today(),c.promoEnd)/30.4|0);tips.push(`La promo 0% de <b>${h(c.name)}</b> termina el ${dLong(c.promoEnd)}. Para liquidarla antes necesitas <b>${fmt(c.balance/m)}</b> al mes.`)});
+  // is lending card money worth it?
+  const P=portfolio(),avgM=P.avg,o=owner();
+  db.cards.filter(c=>(+c.apr||0)>0&&F.src.byCard[c.id]).forEach(c=>{const yearly=avgM*12,net=yearly-(+c.apr);tips.push(net>0?`El dinero de <b>${h(c.name)}</b> que prestas rinde ~${pct(r2(yearly))} al año contra ${pct(c.apr)} de la tarjeta: te deja ~${pct(r2(net))} neto, pero es el que más riesgo tiene. Págala primero si un cliente se atrasa.`:`El dinero de <b>${h(c.name)}</b> te cuesta más (${pct(c.apr)}) de lo que rinde prestado. Conviene pagarla ya.`)});
+  return {plan,tips,B,strat,alt};
+}
+function debtPlanSection(){
+  const D=debtPlan(),B=D.B,pl=D.plan;
+  const head=D.none?`<div class="empty">Sin deudas registradas. Agrega tus tarjetas o préstamos para armar el plan.</div>`
+   :pl.ok?`<div class="plan-h"><div><div class="eyebrow">Libre de deudas en</div><div class="big ion" style="font-size:30px">${ymLong(pl.end)}</div><div class="muted" style="font-size:12.5px;margin-top:4px">${pl.months} meses · ${fmt(pl.interest)} de intereses en total</div></div></div>
+     <div class="seg" style="margin-top:14px"><button class="${D.strat==='aval'?'on':''}" data-act="strategy" data-v="aval">Mayor interés primero</button><button class="${D.strat==='snow'?'on':''}" data-act="strategy" data-v="snow">Menor saldo primero</button></div>
+     <div style="margin-top:12px"><div class="eyebrow" style="margin-bottom:6px">Este mes paga</div>${[...pl.order].sort((a,b)=>(pl.first[b.id]||0)-(pl.first[a.id]||0)).map((d,k)=>`<div class="kv"><span><span class="step">${k+1}</span>${h(d.name)} <span class="dim">· libre en ${ymLabel(d.paidOff)}</span></span><span class="num">${fmt(pl.first[d.id]||0)}</span></div>`).join('')}</div>`
+   :`<div class="muted" style="font-size:14px">No alcanza para los mínimos con tu presupuesto actual.</div>`;
+  return `<section class="an"><div class="sec-h"><h2>Plan para salir de deudas</h2><button class="muted" style="font-size:13px" data-act="income">Presupuesto ›</button></div>
+  <div class="card">
+    <div class="stats" style="margin-top:0;margin-bottom:14px">
+      <button class="stat" data-act="income" style="text-align:left"><div class="eyebrow">Trabajo/mes</div><div class="v">${fmt(B.sal)}</div></button>
+      <div class="stat"><div class="eyebrow">+ Orbit/mes</div><div class="v" style="color:var(--ion)">${fmt(B.orb)}</div></div>
+      <div class="stat"><div class="eyebrow">Para deudas</div><div class="v">${fmt(Math.max(0,B.free))}</div></div>
+    </div>
+    ${head}
+  </div>
+  ${D.tips.length?`<div class="list tips">${D.tips.map(t=>`<div class="row"><span class="tipdot"></span><div class="main" style="white-space:normal;font-size:13.5px;line-height:1.45">${t}</div></div>`).join('')}</div>`:''}
+  </section>`;
+}
+function sheetIncome(){const st=db.settings;
+  openSheet(`<h3>Presupuesto mensual</h3><div class="sub">Con esto el plan calcula cuánto puedes pagar de deudas cada mes. Solo lo ves tú.</div><form data-form="income">
+    <div class="grid2">${fld('Ingreso del trabajo (neto)',money('salary',st.salary||''))}${fld('Gastos fijos del mes',money('expenses',st.expenses||''),'Renta, comida, carro…')}</div>
+    <label class="check"><input type="checkbox" id="useOrbit" name="useOrbit" ${st.useOrbit===false?'':'checked'}> Usar mi ganancia de Orbit para pagar deudas</label>
+    <button class="btn pri" type="submit">Guardar</button></form>`)}
 function financesCard(){const F=finances();
   return `<section><div class="sec-h"><h2>Mis finanzas</h2><button class="muted" style="font-size:13px" data-act="card">+ Tarjeta</button></div>
   <div class="card">
@@ -592,9 +660,10 @@ function financesCard(){const F=finances();
   ${db.cards.length?`<div class="list">${db.cards.map(c=>`<button class="row" data-act="card" data-id="${c.id}"><div class="main"><div class="t">${h(c.name)}</div><div class="s">${pct(c.apr)} anual · ${fmt((+c.balance||0)*(+c.apr||0)/1200)}/mes de interés</div></div><div class="r"><span class="num">${fmt(c.balance)}</span></div></button>`).join('')}</div>`:''}
   <div class="muted" style="font-size:12px">"Si pagas TDC hoy" = ahorros + tu capital en Orbit − deuda de tarjetas. Actualiza el saldo de cada tarjeta cuando pagues.</div></section>`}
 function sheetCard(id){const c=id?db.cards.find(x=>x.id===id):null;
-  openSheet(`<h3>${c?'Tarjeta':'Nueva tarjeta'}</h3><div class="sub">Dinero de tarjetas que usaste para prestar.</div><form data-form="card" data-id="${c?.id||''}">
-    ${fld('Nombre',`<input id="cname" name="name" value="${h(c?.name||'')}" placeholder="Ej. Chase Sapphire">`)}
-    <div class="grid2">${fld('Saldo actual',money('balance',c?c.balance:''))}${fld('Tasa anual (APR) %',`<input id="capr" name="apr" inputmode="decimal" value="${c?c.apr:''}" placeholder="24.9">`,'0 si estás en promoción 0%')}</div>
+  openSheet(`<h3>${c?'Deuda':'Nueva deuda'}</h3><div class="sub">Tarjetas, préstamos o cualquier deuda. Tasa 0 si no cobra interés.</div><form data-form="card" data-id="${c?.id||''}">
+    <div class="grid2">${fld('Nombre',`<input id="cname" name="name" value="${h(c?.name||'')}" placeholder="Ej. Chase Sapphire">`)}${fld('Tipo',`<select id="ckind" name="kind">${Object.entries(KIND_L).map(([k,v])=>`<option value="${k}" ${(c?.kind||'tarjeta')===k?'selected':''}>${v}</option>`).join('')}</select>`)}</div>
+    <div class="grid2">${fld('Saldo actual',money('balance',c?c.balance:''))}${fld('Interés anual (APR) %',`<input id="capr" name="apr" inputmode="decimal" value="${c?c.apr:''}" placeholder="0 = sin interés">`)}</div>
+    <div class="grid2">${fld('Pago mínimo/mes',money('minPay',c?.minPay||''),'Vacío: 2% del saldo')}${fld('Promo 0% hasta',`<input id="cpromo" name="promoEnd" type="date" value="${c?.promoEnd||''}">`,'Opcional')}</div>
     <div class="btns"><button class="btn pri wide" type="submit">Guardar</button>${c?`<button type="button" class="btn danger" data-act="delCard" data-id="${c.id}" data-confirm="1">Eliminar</button>`:''}</div></form>`)}
 function sheetSavings(){openSheet(`<h3>Ahorros en el banco</h3><div class="sub">Lo que tienes fuera de Orbit. Solo lo ves tú.</div><form data-form="savings">${fld('Saldo',money('savings',db.settings.savings||''))}<button class="btn pri" type="submit">Guardar</button></form>`)}
 function viewProfit(){
@@ -893,7 +962,7 @@ function viewMe(){
     <div class="stats">
       <button class="stat" data-act="savings" style="text-align:left"><div class="eyebrow">Ahorros ›</div><div class="v">${cnt(sav)}</div></button>
       <div class="stat"><div class="eyebrow">En Orbit</div><div class="v">${cnt(capOwn)}</div></div>
-      <button class="stat" data-act="card" style="text-align:left"><div class="eyebrow">Tarjetas ›</div><div class="v debt">${cnt(debt)}</div></button>
+      <button class="stat" data-act="card" style="text-align:left"><div class="eyebrow">Deudas ›</div><div class="v debt">${cnt(debt)}</div></button>
     </div>
   </div>
   <section class="an"><div class="sec-h"><h2>Este mes</h2><span class="muted" style="font-size:12.5px">${ymLong(curYM())}</span></div>
@@ -901,7 +970,7 @@ function viewMe(){
     <div class="ring"><svg viewBox="0 0 92 92"><defs><linearGradient id="rgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient></defs><circle cx="46" cy="46" r="${r}" fill="none" stroke="rgba(150,175,210,.12)" stroke-width="7"/><circle class="ring-a" cx="46" cy="46" r="${r}" fill="none" stroke="url(#rgm)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c*frac} ${c}" style="--c:${c}"/></svg><div class="c"><div><b>${Math.round(frac*100)}%</b><span>te queda</span></div></div></div>
     <div>
       <div class="kv"><span class="muted">Ganancia bruta</span>${cnt(m.est)}</div>
-      <div class="kv"><span class="muted">Interés de tarjetas</span><span class="num debt">−${fmt(F.cost)}</span></div>
+      <div class="kv"><span class="muted">Interés de deudas</span><span class="num debt">−${fmt(F.cost)}</span></div>
       <div class="kv" style="border-top:1px solid var(--line);margin-top:4px;padding-top:8px"><span style="font-weight:600">Ganancia neta</span><span class="num" style="color:var(--ion);font-weight:700">${fmt(F.net)}</span></div>
     </div>
   </div></section>
@@ -913,10 +982,11 @@ function viewMe(){
   ${srcRows.length?`<section class="an"><div class="sec-h"><h2>De dónde salió tu capital</h2><span class="muted num" style="font-size:12.5px">Prestado ${fmt(placed)}</span></div><div class="list">
     ${srcRows.map(x=>`<div class="row" style="flex-wrap:wrap;row-gap:8px"><div class="main"><div class="t">${h(x.n)}</div><div class="s">${x.sub?x.sub+' · ':''}${Math.round(x.v/srcTot*100)}% de tu capital</div></div><div class="r"><span class="num">${fmt(x.v)}</span></div><div class="meter"><i style="--w:${x.v/srcTot*100}%;background:${x.col}"></i></div></div>`).join('')}
   </div></section>`:''}
-  <section class="an"><div class="sec-h"><h2>Tarjetas de crédito</h2><button class="muted" style="font-size:13px" data-act="card">+ Agregar</button></div>
-  ${db.cards.length?`<div class="list">${db.cards.map(cd=>`<button class="row" data-act="card" data-id="${cd.id}"><div class="main"><div class="t">${h(cd.name)}</div><div class="s">${pct(cd.apr)} anual · ${fmt((+cd.balance||0)*(+cd.apr||0)/1200)} de interés al mes</div></div><div class="r"><span class="num debt">${fmt(cd.balance)}</span></div></button>`).join('')}
+  ${debtPlanSection()}
+  <section class="an"><div class="sec-h"><h2>Deudas</h2><button class="muted" style="font-size:13px" data-act="card">+ Agregar</button></div>
+  ${db.cards.length?`<div class="list">${db.cards.map(cd=>`<button class="row" data-act="card" data-id="${cd.id}"><div class="main"><div class="t">${h(cd.name)}</div><div class="s">${KIND_L[cd.kind||'tarjeta']} · ${+cd.apr?pct(cd.apr)+' anual':'sin interés'}${cd.promoEnd&&cd.promoEnd>=today()?' · 0% hasta '+dShort(cd.promoEnd):''} · ${fmt((+cd.balance||0)*debtApr(cd)/1200)}/mes</div></div><div class="r"><span class="num debt">${fmt(cd.balance)}</span></div></button>`).join('')}
     <div class="row" style="justify-content:space-between;font-size:13px"><span class="muted">${months?'Libre de deuda en':'Con tu ganancia actual'}</span><b>${months?months+' mes'+(months>1?'es':''):debt>0?'no alcanza':'—'}</b></div></div>`
-  :`<div class="list"><div class="empty">Si usaste tarjetas para prestar, agrégalas para ver tu ganancia real.</div></div>`}</section>
+  :`<div class="list"><div class="empty">Agrega tarjetas, préstamos o cualquier deuda, con o sin interés.</div></div>`}</section>
   ${H.length?`<section class="an"><div class="sec-h"><h2>Tu ganancia por mes</h2></div><div class="card">${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capMe')}</div></section>`:''}
   <div class="btns an" style="display:grid;grid-template-columns:1fr 1fr"><button class="btn" data-act="profit">Por préstamo ›</button><button class="btn pri" data-act="adminPdf">${ico('pdf')}Reporte PDF</button></div>`};
 }
@@ -1169,6 +1239,8 @@ const ACTIONS={
   loanFilter:e=>{ui.loanFilter=e.dataset.v;render()},
   pdf:e=>exportPDF(inv(e.dataset.id)),
   settings:()=>push({type:'set'}),
+  income:()=>sheetIncome(),
+  strategy:e=>{db.settings.strategy=e.dataset.v;save();render()},
   adminPdf:()=>exportAdminPDF(),
   profit:()=>push({type:'profit'}),
   bar:e=>{const c=document.getElementById(e.dataset.cap);if(c){c.textContent=e.dataset.v;c.style.color='var(--fg)'}},
@@ -1212,7 +1284,8 @@ document.addEventListener('submit',ev=>{
     save();render();toast(msg);if(pay.interest>0)sheetOwe([l.id],p);else closeSheet();return;
   }
   if(k==='payout'){savePayout(f);return}
-  if(k==='card'){const c=f.dataset.id?db.cards.find(x=>x.id===f.dataset.id):null,d={name:f.name.value.trim()||'Tarjeta',balance:r2(num(f.balance.value)),apr:num(f.apr.value)};if(c)Object.assign(c,d);else db.cards.push({id:'c_'+uid(),...d});save();closeSheet();render();return}
+  if(k==='income'){Object.assign(db.settings,{salary:r2(num(f.salary.value)),expenses:r2(num(f.expenses.value)),useOrbit:f.useOrbit.checked});save();closeSheet();render();return}
+  if(k==='card'){const c=f.dataset.id?db.cards.find(x=>x.id===f.dataset.id):null,d={name:f.name.value.trim()||'Deuda',kind:f.kind.value,balance:r2(num(f.balance.value)),apr:num(f.apr.value),minPay:r2(num(f.minPay.value))||0,promoEnd:f.promoEnd.value||''};if(c)Object.assign(c,d);else db.cards.push({id:'c_'+uid(),...d});save();closeSheet();render();return}
   if(k==='savings'){db.settings.savings=r2(num(f.savings.value));save();closeSheet();render();return}
   if(k==='loan'){
     const principal=r2(num(f.principal.value)),rate=num(f.rate.value),payDay=parseInt(f.payDay.value,10),term=parseInt(f.term.value,10)||0;
