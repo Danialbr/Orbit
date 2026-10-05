@@ -178,6 +178,8 @@ form{display:flex;flex-direction:column;gap:12px}
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .fund{display:grid;grid-template-columns:minmax(0,1fr) 112px 64px;gap:10px;align-items:center;padding:10px 12px;border-top:1px solid var(--line)}
 .fund:first-child{border-top:0}
+.part-h{display:flex;gap:8px;align-items:center;padding:10px 12px 4px}.part-h select{flex:1;min-width:0;background:var(--ink);border:1px solid var(--line-2);border-radius:10px;padding:8px;font-weight:600;font-size:15px;min-height:40px}
+.part-g{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;padding:4px 12px}.part-g label{font-size:9.5px!important}.part-g input{min-height:40px!important;padding:8px!important;font:600 15px var(--mono)!important;text-align:right}.part-g input:disabled{opacity:.5}
 .slice{border-top:1px solid var(--line)}.slice:first-child{border-top:0}.slice .fund{border-top:0}
 .shrow{display:grid;grid-template-columns:auto minmax(0,1fr) 64px 28px;gap:8px;align-items:center;padding:0 12px 8px 24px}
 .shrow select{background:var(--ink);border:1px solid var(--line-2);border-radius:10px;padding:8px;font-size:14px;min-height:38px;min-width:0}
@@ -337,7 +339,10 @@ const payOf=(id,ym)=>db.payments.find(p=>p.loanId===id&&p.period===ym);
 const capBefore=(l,ym)=>db.payments.filter(p=>p.loanId===l.id&&p.period<ym).reduce((s,p)=>s+(+p.capital||0),0);
 const outBefore=(l,ym)=>Math.max(0,r2(l.principal-capBefore(l,ym)));
 const outNow=l=>l.closed?0:Math.max(0,r2(l.principal-db.payments.filter(p=>p.loanId===l.id).reduce((s,p)=>s+(+p.capital||0),0)));
-const expected=(l,ym)=>r2(outBefore(l,ym)*l.rate/100);
+const crate=(f,l)=>f.crate!=null&&f.crate!==''?+f.crate:+l.rate;
+const loanInt=(l,o)=>l.principal?l.funding.reduce((s,f)=>s+f.amount*o/l.principal*crate(f,l)/100,0):0;
+const expected=(l,ym)=>r2(loanInt(l,outBefore(l,ym)));
+function rateLabel(l){const a=[...new Set(l.funding.map(f=>r2(crate(f,l))))].sort((x,y)=>x-y);return a.length?a.map(pct).join(' · '):pct(l.rate)}
 function status(l,ym){
   const p=payOf(l.id,ym),due=expected(l,ym),paid=p?+p.interest||0:0;
   if(p&&paid>=due-0.005)return 'pagado';
@@ -351,14 +356,14 @@ const sliceOf=(l,i)=>l.funding.find(f=>f.investorId===i.id);
 const fShares=f=>f.shares||[];
 const involved=(l,i)=>l.funding.some(f=>f.investorId===i.id||fShares(f).some(x=>x.investorId===i.id));
 // rate the money owner of a slice receives; the owner (me) keeps what's left after partners on that slice
-function rateFor(f,l){const i=inv(f.investorId);if(!i)return 0;const sh=fShares(f).reduce((s,x)=>s+(+x.rate||0),0);if(i.owner)return r2(l.rate-sh);return f.rate!=null&&f.rate!==''?+f.rate:+i.rate}
+function rateFor(f,l){const i=inv(f.investorId);if(!i)return 0;const sh=fShares(f).reduce((s,x)=>s+(+x.rate||0),0);if(i.owner)return r2(crate(f,l)-sh);return f.rate!=null&&f.rate!==''?+f.rate:+i.rate}
 function invRate(i,l){const f=sliceOf(l,i);return f?rateFor(f,l):0}
 const fBase=(l,f,o)=>l.principal?f.amount*o/l.principal:0;
 function linesFor(i,l,o){const out=[];l.funding.forEach(f=>{const b=fBase(l,f,o);
   if(f.investorId===i.id){const r=rateFor(f,l);out.push({kind:'capital',base:b,rate:r,amt:b*r/100,f})}
   fShares(f).forEach(x=>{if(x.investorId===i.id)out.push({kind:'part',base:b,rate:+x.rate,amt:b*x.rate/100,f})})});return out}
 const sumAmt=a=>a.reduce((s,x)=>s+x.amt,0);
-function placedNow(i){return r2(db.loans.reduce((s,l)=>{const f=sliceOf(l,i);return s+(f&&!l.closed?fBase(l,f,outNow(l)):0)},0))}
+function placedNow(i){return r2(db.loans.reduce((s,l)=>l.closed?s:s+l.funding.filter(f=>f.investorId===i.id).reduce((a,f)=>a+fBase(l,f,outNow(l)),0),0))}
 function shareBase(i){return r2(db.loans.reduce((s,l)=>l.closed?s:s+linesFor(i,l,outNow(l)).filter(x=>x.kind==='part').reduce((a,x)=>a+x.base,0),0))}
 function monthlyNow(i){return r2(db.loans.reduce((s,l)=>l.closed?s:s+sumAmt(linesFor(i,l,outNow(l))),0))}
 function dividend(i,ym){return r2(db.loans.reduce((s,l)=>hasPeriod(l,ym)?s+sumAmt(linesFor(i,l,outBefore(l,ym))):s,0))}
@@ -366,7 +371,7 @@ function invPeriods(i,until=curYM()){const set=new Set();db.loans.forEach(l=>{if
 function rateText(i){const set=new Set();db.loans.forEach(l=>{if(!l.closed)linesFor(i,l,outNow(l)).forEach(x=>set.add(r2(x.rate)))});const a=[...set].sort((x,y)=>x-y);if(!a.length)return i.owner?'Interés completo':(+i.rate?pct(i.rate)+' mensual':'Sin tasa');return (a.length>1?pct(a[0])+' a '+pct(a[a.length-1]):pct(a[0]))+' mensual'}
 function summary(i){const cap=capitalOf(i),pl=placedNow(i),base=shareBase(i),mo=monthlyNow(i);return {cap,pl,fr:r2(cap-pl),base,mo,partner:cap<=0&&base>0,n:db.loans.filter(l=>!l.closed&&involved(l,i)).length}}
 function placements(i){const out=[];db.loans.forEach(l=>{if(l.closed||!l.principal)return;linesFor(i,l,outNow(l)).forEach(x=>out.push({l,...x}))});return out}
-function reparto(l){const o=outNow(l),total=o*l.rate/100,parts=[];
+function reparto(l){const o=outNow(l),total=loanInt(l,o),parts=[];
   l.funding.forEach(f=>{const i=inv(f.investorId);if(!i)return;const b=fBase(l,f,o);
     if(!i.owner){const r=rateFor(f,l);parts.push({i,kind:'capital',base:b,rate:r,amt:b*r/100})}
     fShares(f).forEach(x=>{const pi=inv(x.investorId);if(pi)parts.push({i:pi,kind:'part',base:b,rate:+x.rate,amt:b*x.rate/100,of:i})})});
@@ -402,7 +407,7 @@ function myMonth(ym){
 }
 function myHistory(){let acc=0;return monthsRange().map(p=>{const m=myMonth(p);const v=m.current?m.est:m.real;if(!m.current)acc+=m.real;m.value=v;m.acc=r2(acc);return m})}
 function invHistory(i){let acc=0;return invPeriods(i).map(p=>{const a=payoutAmt(i,p);acc+=a;return {p,a,acc:r2(acc),st:payoutStatus(i,p),current:p===curYM()}})}
-function portfolio(){const act=db.loans.filter(l=>!l.closed);const lent=r2(act.reduce((s,l)=>s+outNow(l),0)),interest=r2(act.reduce((s,l)=>s+outNow(l)*l.rate/100,0));
+function portfolio(){const act=db.loans.filter(l=>!l.closed);const lent=r2(act.reduce((s,l)=>s+outNow(l),0)),interest=r2(act.reduce((s,l)=>s+loanInt(l,outNow(l)),0));
   const others=r2(act.reduce((s,l)=>{const R=reparto(l);return s+R.parts.reduce((a,p)=>a+p.amt,0)},0));
   return {lent,interest,others,mine:r2(interest-others),n:act.length,clients:new Set(act.map(l=>l.borrowerId)).size,avg:lent?interest/lent*100:0}}
 function totals(ym=curYM()){
@@ -536,7 +541,7 @@ function itemRow(l,p,opts={}){
   const right=st==='parcial'?`<span class="num">${fmt(paid)} <span class="dim">/ ${fmt(exp)}</span></span>`:`<span class="num">${fmt(exp)}</span>`;
   return `<button class="row" data-act="pay" data-l="${l.id}" data-p="${p}">
     <span class="bar" style="color:${borColor(l)}"></span>
-    <div class="main"><div class="t">${h(borName(l))} <span class="dim priv" style="font-weight:500">· ${pct(l.rate)}</span></div>
+    <div class="main"><div class="t">${h(borName(l))} <span class="dim priv" style="font-weight:500">· ${rateLabel(l)}</span></div>
     <div class="s">${opts.month?ymLabel(p)+' · ':''}Día ${l.payDay} · capital ${fmt(outBefore(l,p))}</div></div>
     <div class="r">${right}${chip(st)}</div></button>`;
 }
@@ -669,7 +674,7 @@ function viewCal(){
   <div class="card">
     <div class="calnav"><button class="iconbtn" data-act="calMove" data-v="-1" aria-label="Mes anterior">${ico('chevL')}</button><h2>${ymLong(ym)}</h2><button class="iconbtn" data-act="calMove" data-v="1" aria-label="Mes siguiente">${ico('chevR')}</button></div>
     <div class="cal">${cells}</div>
-    ${bors.length?`<div class="legend" style="margin-top:12px">${bors.map(l=>{const rates=[...new Set(items.filter(x=>x.l.borrowerId===l.borrowerId).map(x=>pct(x.l.rate)))].join(' / ');return `<span><i class="dot" style="color:${borColor(l)}"></i>${h(borName(l))}<span class="priv"> · ${rates}</span></span>`}).join('')}</div>`:''}
+    ${bors.length?`<div class="legend" style="margin-top:12px">${bors.map(l=>{const rates=[...new Set(items.filter(x=>x.l.borrowerId===l.borrowerId).map(x=>rateLabel(x.l)))].join(' / ');return `<span><i class="dot" style="color:${borColor(l)}"></i>${h(borName(l))}<span class="priv"> · ${rates}</span></span>`}).join('')}</div>`:''}
     <div class="legend"><span>● cobrado</span><span>○ por cobrar</span><span style="color:var(--bad)">▢ atrasado</span></div>
   </div>
   <div class="stats card" style="margin-top:0">
@@ -698,10 +703,10 @@ function viewLoans(){
     </div>
   </div>
   <div class="seg"><button class="${f==='activos'?'on':''}" data-act="loanFilter" data-v="activos">Activos · ${db.loans.filter(l=>!l.closed).length}</button><button class="${f==='liquidados'?'on':''}" data-act="loanFilter" data-v="liquidados">Liquidados · ${db.loans.filter(l=>l.closed).length}</button></div>
-  ${groups.size?[...groups].map(([bid,ls])=>{const b=bor(bid);const tot=r2(ls.reduce((s,l)=>s+outNow(l),0)),mo=r2(ls.reduce((s,l)=>s+(l.closed?0:outNow(l)*l.rate/100),0));
+  ${groups.size?[...groups].map(([bid,ls])=>{const b=bor(bid);const tot=r2(ls.reduce((s,l)=>s+outNow(l),0)),mo=r2(ls.reduce((s,l)=>s+(l.closed?0:loanInt(l,outNow(l))),0));
     return `<section><div class="sec-h"><h2 style="display:flex;align-items:center;gap:8px"><i class="dot" style="color:${b?.color}"></i>${h(b?.name)} <span class="dim" style="font:400 12px var(--body)">${ls.length} préstamo${ls.length>1?'s':''}</span></h2><span style="display:flex;gap:14px;align-items:center">${f==='activos'&&ls.some(l=>hasPeriod(l,ym)&&status(l,ym)!=='pagado')?`<button style="font-size:12.5px;font-weight:700;color:var(--ion)" data-act="collect" data-id="${bid}" data-confirm="1">Cobrar ${shortM(ym)}</button>`:''}<button class="muted" style="font-size:13px" data-act="editBor" data-id="${bid}">Editar</button></span></div>
-    <div class="list">${ls.map(l=>{const p=hasPeriod(l,ym)?ym:null;return `<button class="row" data-act="openLoan" data-id="${l.id}"><div class="main"><div class="t"><span class="num">${fmt(l.closed?l.principal:outNow(l))}</span> <span class="dim priv" style="font-weight:500">· ${pct(l.rate)}/mes</span></div><div class="s">Día ${l.payDay} · ${l.funding.map(f=>h(inv(f.investorId)?.name)).join(', ')}${+l.term?` · ${l.term} meses`:''}</div></div>
-      <div class="r">${l.closed?chip('liquidado'):`<span class="num priv">${fmt(outNow(l)*l.rate/100)}</span>${p?chip(status(l,p)):'<span class="chip s-pendiente">Inicia</span>'}`}</div></button>`}).join('')}
+    <div class="list">${ls.map(l=>{const p=hasPeriod(l,ym)?ym:null;return `<button class="row" data-act="openLoan" data-id="${l.id}"><div class="main"><div class="t"><span class="num">${fmt(l.closed?l.principal:outNow(l))}</span> <span class="dim priv" style="font-weight:500">· ${rateLabel(l)}/mes</span></div><div class="s">Día ${l.payDay} · ${l.funding.map(f=>h(inv(f.investorId)?.name)).join(', ')}${+l.term?` · ${l.term} meses`:''}</div></div>
+      <div class="r">${l.closed?chip('liquidado'):`<span class="num priv">${fmt(loanInt(l,outNow(l)))}</span>${p?chip(status(l,p)):'<span class="chip s-pendiente">Inicia</span>'}`}</div></button>`}).join('')}
     ${f==='activos'?`<div class="row" style="justify-content:space-between;font-size:12.5px"><span class="muted">Subtotal</span><span class="num">${fmt(tot)}<span class="priv"> · <span style="color:var(--ion)">${fmt(mo)}/mes</span></span></span></div>`:''}</div></section>`}).join('')
   :`<div class="list"><div class="empty"><b>${f==='activos'?'Sin préstamos activos':'Nada liquidado aún'}</b>${f==='activos'?'Crea el primero con el botón “Préstamo”.':''}</div></div>`}`;
   return {eyebrow:`${db.borrowers.length} clientes`,title:'Préstamos',action:addBtn('newLoan','Préstamo'),html};
@@ -710,7 +715,7 @@ function viewLoans(){
 function repartoCard(l){
   const R=reparto(l);if(l.closed||!R.o)return '';
   const segs=[...R.parts.map((p,k)=>({w:p.amt,c:p.kind==='part'?'var(--warn)':['var(--ion-2)','var(--reinv)','#5ED0FF','#FF7A9C'][k%4],p})),{w:Math.max(0,R.mine),c:'var(--ion)'}];
-  return `<section class="priv"><div class="sec-h"><h2>Reparto del interés</h2><span class="muted num" style="font-size:12.5px">${pct(l.rate)} · ${fmt(R.total)}/mes</span></div>
+  return `<section class="priv"><div class="sec-h"><h2>Reparto del interés</h2><span class="muted num" style="font-size:12.5px">${rateLabel(l)} · ${fmt(R.total)}/mes</span></div>
   <div class="card" style="padding:14px">
     <div class="split" style="margin-top:0;height:10px;gap:2px;background:none">${segs.filter(x=>x.w>0).map(x=>`<i style="width:${x.w/R.total*100}%;background:${x.c};border-radius:3px"></i>`).join('')}</div>
     <div style="margin-top:10px">
@@ -728,9 +733,9 @@ function viewLoan(id){
     <div class="eyebrow" style="display:flex;align-items:center;gap:8px"><i class="dot" style="color:${borColor(l)};width:8px;height:8px"></i>${l.closed?'Liquidado el '+dLong(l.closed):'Capital pendiente'}</div>
     <div class="big ion">${fmt(l.closed?l.principal:out)}</div>
     <div class="stats">
-      <div class="stat priv"><div class="eyebrow">Tasa cliente</div><div class="v">${pct(l.rate)} mensual</div></div>
+      <div class="stat priv"><div class="eyebrow">Tasa cliente</div><div class="v">${rateLabel(l)}</div></div>
       <div class="stat"><div class="eyebrow">Cobro</div><div class="v">Día ${l.payDay}</div></div>
-      <div class="stat priv"><div class="eyebrow">Interés/mes</div><div class="v" style="color:var(--ion)">${fmt(out*l.rate/100)}</div></div>
+      <div class="stat priv"><div class="eyebrow">Interés/mes</div><div class="v" style="color:var(--ion)">${fmt(loanInt(l,out))}</div></div>
       <div class="stat"><div class="eyebrow">Inicio</div><div class="v">${dShort(l.start)} ${l.start.slice(2,4)}</div></div>
       <div class="stat"><div class="eyebrow">Plazo</div><div class="v">${+l.term?l.term+' meses':'Indefinido'}</div></div>
       <div class="stat"><div class="eyebrow">Abonado</div><div class="v">${fmt(capPaid)}</div></div>
@@ -738,9 +743,9 @@ function viewLoan(id){
   </div>
   <div class="btns"><button class="btn wide" data-act="editLoan" data-id="${l.id}">${ico('edit')}Editar</button><button class="btn wide" data-act="closeLoan" data-id="${l.id}">${l.closed?'Reabrir':'Liquidar'}</button></div>
   ${repartoCard(l)}
-  <section><div class="sec-h"><h2>De quién es el dinero</h2></div><div class="list">
-  ${l.funding.map(f=>{const i=inv(f.investorId);if(!i)return '';const now=l.closed?0:f.amount*out/l.principal,ir=invRate(i,l),pay=now*ir/100;
-    return `<button class="row" data-act="openInv" data-id="${i.id}"><div class="main"><div class="t">${h(i.name)}${i.owner?'<span class="tag">Tú</span>':''}</div><div class="s">${Math.round(f.amount/l.principal*100)}% del préstamo<span class="priv"> · recibe ${pct(ir)}</span></div></div><div class="r"><span class="num">${fmt(l.closed?f.amount:now)}</span><span class="num muted priv" style="font-size:12px">${fmt(pay)}/mes</span></div></button>`}).join('')}
+  <section><div class="sec-h"><h2>Partes del préstamo</h2></div><div class="list">
+  ${l.funding.map(f=>{const i=inv(f.investorId);if(!i)return '';const now=l.closed?0:f.amount*out/l.principal,ir=rateFor(f,l),pay=now*ir/100;
+    return `<button class="row" data-act="openInv" data-id="${i.id}"><div class="main"><div class="t">${h(i.name)}${i.owner?'<span class="tag">Tú</span>':''}</div><div class="s">${Math.round(f.amount/l.principal*100)}% del préstamo<span class="priv"> · cliente ${pct(crate(f,l))} · recibe ${pct(ir)}</span></div></div><div class="r"><span class="num">${fmt(l.closed?f.amount:now)}</span><span class="num muted priv" style="font-size:12px">${fmt(pay)}/mes</span></div></button>`}).join('')}
   ${l.funding.flatMap(f=>fShares(f).map(x=>({x,f}))).map(({x,f})=>{const i=inv(x.investorId),of=inv(f.investorId);if(!i)return '';const b=fBase(l,f,out);return `<button class="row priv" data-act="openInv" data-id="${i.id}"><div class="main"><div class="t">${h(i.name)}<span class="tag" style="color:var(--warn);border-color:rgba(242,184,75,.4)">Socio</span></div><div class="s">${pct(x.rate)} sobre la parte de ${h(of?.name)} (${fmt(b)})</div></div><div class="r"><span class="num">—</span><span class="num muted" style="font-size:12px">${fmt(b*x.rate/100)}/mes</span></div></button>`}).join('')}
   </div></section>
   <section><div class="sec-h"><h2>Pagos por mes</h2><span class="muted" style="font-size:12px">Toca para registrar</span></div>
@@ -890,7 +895,7 @@ const num=v=>{const n=parseFloat(String(v).replace(/[$,\s]/g,''));return isFinit
 function sheetPay(lid,p){
   const l=loanById(lid),pay=payOf(lid,p),exp=expected(l,p),st=status(l,p);
   openSheet(`<h3>${h(borName(l))} · ${ymLabel(p)}</h3>
-  <div class="sub">Vence el ${dLong(dueISO(l,p))} · ${pct(l.rate)} sobre ${fmt(outBefore(l,p))} ${chip(st)}</div>
+  <div class="sub">Vence el ${dLong(dueISO(l,p))} · ${rateLabel(l)} sobre ${fmt(outBefore(l,p))} ${chip(st)}</div>
   <form data-form="pay" data-l="${lid}" data-p="${p}">
     <button type="button" class="btn pri" data-act="fillFull" data-v="${exp}">Pagó completo · ${fmt(exp)}</button>
     <div class="grid2">${fld('Interés pagado',money('interest',pay?pay.interest:''))}${fld('Abono a capital',money('capital',pay?pay.capital:''),'Opcional')}</div>
@@ -904,23 +909,30 @@ function shareRow(sliceId,x={}){
   const opts=db.investors.filter(i=>!i.owner&&i.id!==sliceId);
   return `<div class="shrow"><span class="dim" style="font-size:12px">Socio</span><select data-sp aria-label="Socio">${opts.map(i=>`<option value="${i.id}" ${x.investorId===i.id?'selected':''}>${h(i.name)}</option>`).join('')}</select><input data-sr inputmode="decimal" value="${x.rate??''}" placeholder="%" aria-label="Porcentaje del socio"><button type="button" class="dim" data-act="rmShare" aria-label="Quitar">✕</button></div>`;
 }
+function partRow(f={},l=null){
+  const sel=f.investorId||owner()?.id;
+  return `<div class="slice"><div class="part-h"><select data-pi aria-label="De quién es el dinero">${db.investors.map(i=>`<option value="${i.id}" ${sel===i.id?'selected':''}>${h(i.name)}${i.owner?' (tú)':''}</option>`).join('')}</select><button type="button" class="dim" data-act="rmPart" aria-label="Quitar parte">✕</button></div>
+    <div class="part-g">
+      <div class="field"><label>Monto</label><input data-fund inputmode="decimal" value="${f.amount?r2(f.amount):''}" placeholder="0.00"></div>
+      <div class="field"><label>Cliente %</label><input data-crate inputmode="decimal" value="${f.crate??''}" placeholder="general"></div>
+      <div class="field"><label>Le pagas %</label><input data-frate inputmode="decimal" value="${f.rate??''}" placeholder="—"></div>
+    </div>
+    <div class="hint part-av" style="padding:0 12px 6px"></div>
+    <div class="shares">${fShares(f).map(x=>shareRow(f.investorId,x)).join('')}</div>
+    <button type="button" class="addshare" data-act="addShare">＋ Socio en esta parte</button></div>`;
+}
 function sheetLoan(id){
-  const l=id?loanById(id):null,invs=db.investors;
-  const avail=i=>r2(capitalOf(i)-placedNow(i)+(l&&!l.closed&&sliceOf(l,i)?fBase(l,sliceOf(l,i),outNow(l)):0));
-  const fr=i=>{const f=l&&sliceOf(l,i);return f&&f.rate!=null&&f.rate!==''?f.rate:''};
-  const canShare=i=>db.investors.some(x=>!x.owner&&x.id!==i.id);
-  openSheet(`<h3>${l?'Editar préstamo':'Nuevo préstamo'}</h3><div class="sub">Interés simple mensual sobre el capital pendiente.</div>
+  const l=id?loanById(id):null;
+  openSheet(`<h3>${l?'Editar préstamo':'Nuevo préstamo'}</h3><div class="sub">Un préstamo por cliente y día de cobro. Divídelo en partes si el dinero es de varias personas o tiene tasas distintas.</div>
   <form data-form="loan" data-id="${l?.id||''}">
     ${fld('Cliente',`<select id="borrower" name="borrower">${db.borrowers.map(b=>`<option value="${b.id}" ${l?.borrowerId===b.id?'selected':''}>${h(b.name)}</option>`).join('')}<option value="__new" ${!db.borrowers.length?'selected':''}>+ Nuevo cliente…</option></select>`)}
     <div class="field" id="newBorWrap" ${db.borrowers.length?'hidden':''}><label>Nombre del cliente</label><input id="newBor" name="newBor" placeholder="Ej. Tony"></div>
-    <div class="grid2">${fld('Monto prestado',money('principal',l?l.principal:''))}${fld('Tasa del cliente %',`<input id="rate" name="rate" inputmode="decimal" value="${l?l.rate:''}" placeholder="4">`)}</div>
+    <div class="grid2">${fld('Monto total',money('principal',l?l.principal:''))}${fld('Tasa general del cliente %',`<input id="rate" name="rate" inputmode="decimal" value="${l?l.rate:''}" placeholder="4">`)}</div>
     <div class="grid2">${fld('Día de cobro',`<input id="payDay" name="payDay" inputmode="numeric" value="${l?l.payDay:''}" placeholder="1–31">`)}${fld('Fecha de inicio',`<input id="start" name="start" type="date" value="${l?.start||today()}">`)}</div>
     ${fld('Plazo en meses',`<input id="term" name="term" inputmode="numeric" value="${l&&+l.term?l.term:''}" placeholder="Vacío = indefinido">`)}
-    <div class="field"><label>De quién es el dinero · monto · % que le pagas</label><div class="list">
-      ${invs.map(i=>{const f=l&&sliceOf(l,i);return `<div class="slice" data-slice="${i.id}"><div class="fund"><div style="min-width:0"><div style="font-weight:600;font-size:14px">${h(i.name)}${i.owner?'<span class="tag">Tú</span>':''}</div><div class="hint">Disponible ${fmt(avail(i))}</div></div><input data-fund="${i.id}" inputmode="decimal" value="${f?r2(f.amount):''}" placeholder="0.00" aria-label="Monto de ${h(i.name)}">${i.owner?'<span class="hint" style="text-align:center">resto</span>':`<input data-frate="${i.id}" inputmode="decimal" value="${fr(i)}" placeholder="${+i.rate?i.rate:'%'}" aria-label="Porcentaje para ${h(i.name)}">`}</div>
-        <div class="shares" data-shares="${i.id}">${f?fShares(f).map(x=>shareRow(i.id,x)).join(''):''}</div>
-        ${canShare(i)?`<button type="button" class="addshare" data-act="addShare" data-id="${i.id}">＋ Socio en la parte de ${h(i.name)}</button>`:''}</div>`}).join('')}
-    </div><div class="hint" id="fundHint"></div></div>
+    <div class="field"><label>Partes del préstamo</label><div class="list" id="parts">${(l?l.funding:[{}]).map(f=>partRow(f,l)).join('')}</div>
+      <button type="button" class="btn" style="height:38px;margin-top:8px" data-act="addPart">＋ Agregar parte</button>
+      <div class="hint" id="fundHint"></div></div>
     <div class="card" id="splitHint" style="padding:12px;font-size:13px"></div>
     ${fld('Nota',`<input id="lnote" name="note" value="${h(l?.note||'')}" placeholder="Opcional">`)}
     <div class="err" id="err"></div>
@@ -928,24 +940,28 @@ function sheetLoan(id){
   </form>`);
   fundHint();
 }
-function readSlices(f){return [...f.querySelectorAll('[data-slice]')].map(el=>{const id=el.dataset.slice,a=r2(num(el.querySelector('[data-fund]').value)),ri=el.querySelector('[data-frate]');
-  const shares=[...el.querySelectorAll('.shrow')].map(r=>({investorId:r.querySelector('[data-sp]').value,rate:num(r.querySelector('[data-sr]').value)})).filter(x=>x.rate>0&&x.investorId);
-  return {investorId:id,amount:a,rate:ri&&ri.value.trim()!==''?num(ri.value):null,shares}}).filter(x=>x.amount>0)}
+function readSlices(f){return [...f.querySelectorAll('#parts .slice')].map(el=>{const id=el.querySelector('[data-pi]').value,a=r2(num(el.querySelector('[data-fund]').value)),ci=el.querySelector('[data-crate]').value.trim(),ri=el.querySelector('[data-frate]').value.trim(),o=inv(id)?.owner;
+  const shares=[...el.querySelectorAll('.shrow')].map(r=>({investorId:r.querySelector('[data-sp]').value,rate:num(r.querySelector('[data-sr]').value)})).filter(x=>x.rate>0&&x.investorId&&x.investorId!==id);
+  return {investorId:id,amount:a,crate:ci!==''?num(ci):null,rate:!o&&ri!==''?num(ri):null,shares}}).filter(x=>x.amount>0)}
 function fundHint(){
   const f=$('form[data-form=loan]');if(!f)return;
-  const p=num(f.principal.value),rate=num(f.rate.value),sl=readSlices(f);
+  const p=num(f.principal.value),rate=num(f.rate.value),sl=readSlices(f),lid=f.dataset.id,l=lid?loanById(lid):null;
+  // per-part helpers: investor % box and available capital
+  f.querySelectorAll('#parts .slice').forEach(el=>{const i=inv(el.querySelector('[data-pi]').value),fr=el.querySelector('[data-frate]');if(!i)return;
+    fr.disabled=!!i.owner;fr.placeholder=i.owner?'resto':(+i.rate?String(i.rate):'%');if(i.owner)fr.value='';
+    const mine=l&&!l.closed?l.funding.filter(x=>x.investorId===i.id).reduce((s,x)=>s+fBase(l,x,outNow(l)),0):0;
+    el.querySelector('.part-av').textContent=`${i.name}: disponible ${fmt(capitalOf(i)-placedNow(i)+mine)}`});
   const sum=sl.reduce((s,x)=>s+x.amount,0),d=r2(p-sum);
-  $('#fundHint').innerHTML=!p?'Asigna el monto entre los inversionistas.':d===0?'<span style="color:var(--ok)">Monto completo asignado ✓</span>':d>0?`Falta asignar <b class="num">${fmt(d)}</b> · <button type="button" style="color:var(--ion);font-weight:600" data-act="fundRest">Asignar a mí</button>`:`<span style="color:var(--bad)">Te pasaste por ${fmt(-d)}</span>`;
-  if(!p||!rate||!sl.length){$('#splitHint').innerHTML='<span class="muted">Escribe monto, tasa y de quién es el dinero para ver el reparto.</span>';return}
-  let mineT=0;
-  const blocks=sl.map(x=>{const i=inv(x.investorId),tot=x.amount*rate/100,shr=x.shares.reduce((s,y)=>s+y.rate,0),ir=i.owner?rate-shr:(x.rate??+i.rate),mine=i.owner?x.amount*ir/100:x.amount*(rate-ir-shr)/100;mineT+=mine;
+  $('#fundHint').innerHTML=!p?'Escribe el monto total y repártelo en partes.':d===0?'<span style="color:var(--ok)">Monto completo asignado ✓</span>':d>0?`Falta asignar <b class="num">${fmt(d)}</b> · <button type="button" style="color:var(--ion);font-weight:600" data-act="fundRest">Ponerlo a mi nombre</button>`:`<span style="color:var(--bad)">Te pasaste por ${fmt(-d)}</span>`;
+  if(!sl.length||(!rate&&sl.some(x=>x.crate==null))){$('#splitHint').innerHTML='<span class="muted">Escribe montos y tasas para ver el reparto.</span>';return}
+  let mineT=0,totT=0;
+  const blocks=sl.map(x=>{const i=inv(x.investorId),cr=x.crate??rate,tot=x.amount*cr/100,shr=x.shares.reduce((s,y)=>s+y.rate,0),ir=i.owner?cr-shr:(x.rate??+i.rate),myR=i.owner?ir:cr-ir-shr,mine=x.amount*myR/100;mineT+=mine;totT+=tot;
     const parts=[...(i.owner?[]:[[i.name,ir,x.amount*ir/100]]),...x.shares.map(y=>[inv(y.investorId)?.name,y.rate,x.amount*y.rate/100])];
-    return `<div style="padding:6px 0;border-top:1px solid var(--line)"><div class="kv" style="padding-block:2px"><b>Parte de ${h(i.name)} · ${fmt(x.amount)}</b><span class="num">${fmt(tot)}/mes</span></div>
+    return `<div style="padding:6px 0;border-top:1px solid var(--line)"><div class="kv" style="padding-block:2px"><b>${h(i.name)} · ${fmt(x.amount)} al ${pct(cr)}</b><span class="num">${fmt(tot)}/mes</span></div>
       ${parts.map(([n,r,a])=>`<div class="kv" style="padding-block:1px"><span class="muted">${h(n)} · ${pct(r)}</span><span class="num muted">−${fmt(a)}</span></div>`).join('')}
-      <div class="kv" style="padding-block:1px"><span style="color:${mine<0?'var(--bad)':'var(--ion)'}">Tú · ${pct(r2(i.owner?ir:rate-ir-shr))}</span><span class="num" style="color:${mine<0?'var(--bad)':'var(--ion)'}">${fmt(mine)}</span></div></div>`}).join('');
-  $('#splitHint').innerHTML=`<div class="kv" style="padding-top:0"><span>Cliente paga ${pct(rate)}</span><span class="num">${fmt(p*rate/100)}/mes</span></div>${blocks}<div class="kv" style="border-top:1px solid var(--line-2);padding-top:8px"><b>Te queda en total</b><span class="num" style="font-weight:700;color:${mineT<0?'var(--bad)':'var(--ion)'}">${fmt(mineT)}/mes</span></div>`;
+      <div class="kv" style="padding-block:1px"><span style="color:${mine<0?'var(--bad)':'var(--ion)'}">Tú · ${pct(r2(myR))}</span><span class="num" style="color:${mine<0?'var(--bad)':'var(--ion)'}">${fmt(mine)}</span></div></div>`}).join('');
+  $('#splitHint').innerHTML=`<div class="kv" style="padding-top:0"><span>Cliente paga en total</span><span class="num">${fmt(totT)}/mes</span></div>${blocks}<div class="kv" style="border-top:1px solid var(--line-2);padding-top:8px"><b>Te queda en total</b><span class="num" style="font-weight:700;color:${mineT<0?'var(--bad)':'var(--ion)'}">${fmt(mineT)}/mes</span></div>`;
 }
-
 function sheetInv(id){
   const i=id?inv(id):null;
   openSheet(`<h3>${i?'Editar inversionista':'Nuevo inversionista'}</h3><div class="sub">${i?.owner?'Este perfil eres tú: te queda el interés después de pagar a los demás.':'Inversionista: pone capital y le pagas un %. Socio: no pone dinero y le das un % del préstamo. Para un socio deja el aporte vacío.'}</div>
@@ -1060,7 +1076,7 @@ const ACTIONS={
   editLoan:e=>sheetLoan(e.dataset.id),
   closeLoan:e=>sheetClose(e.dataset.id),
   delLoan:e=>{const id=e.dataset.id;db.loans=db.loans.filter(l=>l.id!==id);db.payments=db.payments.filter(p=>p.loanId!==id);save();back();toast('Préstamo eliminado')},
-  fundRest:()=>{const f=$('form[data-form=loan]'),o=db.investors.find(i=>i.owner)||db.investors[0];const x=f.querySelector(`[data-fund="${o.id}"]`);const sum=[...f.querySelectorAll('[data-fund]')].reduce((s,y)=>s+num(y.value),0);x.value=r2(num(x.value)+num(f.principal.value)-sum);fundHint()},
+  fundRest:()=>{const f=$('form[data-form=loan]'),o=owner();const sum=readSlices(f).reduce((s,x)=>s+x.amount,0),rest=r2(num(f.principal.value)-sum);if(rest<=0)return;$('#parts').insertAdjacentHTML('beforeend',partRow({investorId:o.id,amount:rest}));fundHint()},
   newInv:()=>sheetInv(), editInv:e=>sheetInv(e.dataset.id),
   delInv:e=>{const id=e.dataset.id;if(db.loans.some(l=>l.funding.some(f=>f.investorId===id))){toast('Tiene préstamos asignados');return}db.investors=db.investors.filter(i=>i.id!==id);db.movements=db.movements.filter(m=>m.investorId!==id);db.payouts=db.payouts.filter(p=>p.investorId!==id);save();back();toast('Inversionista eliminado')},
   move:e=>sheetMove(e.dataset.id,e.dataset.v),
@@ -1069,7 +1085,9 @@ const ACTIONS={
   poSt:e=>{const f=$('form[data-form=payout]');f.status.value=e.dataset.v;f.querySelectorAll('#poSt button').forEach(b=>b.classList.toggle('on',b===e));poUpdate()},
   addDed:()=>{$('#deds').insertAdjacentHTML('beforeend',dedRow());poUpdate()},
   rmDed:e=>{e.closest('.ded').remove();poUpdate()},
-  addShare:e=>{$(`[data-shares="${e.dataset.id}"]`).insertAdjacentHTML('beforeend',shareRow(e.dataset.id));fundHint()},
+  addShare:e=>{const el=e.closest('.slice');el.querySelector('.shares').insertAdjacentHTML('beforeend',shareRow(el.querySelector('[data-pi]').value));fundHint()},
+  addPart:()=>{$('#parts').insertAdjacentHTML('beforeend',partRow({investorId:db.investors.find(i=>!i.owner)?.id}));fundHint()},
+  rmPart:e=>{if(document.querySelectorAll('#parts .slice').length>1)e.closest('.slice').remove();fundHint()},
   rmShare:e=>{e.closest('.shrow').remove();fundHint()},
   collect:e=>collectAll(e.dataset.id),
   ics:()=>exportICS(),
@@ -1130,10 +1148,11 @@ document.addEventListener('submit',ev=>{
   if(k==='loan'){
     const principal=r2(num(f.principal.value)),rate=num(f.rate.value),payDay=parseInt(f.payDay.value,10),term=parseInt(f.term.value,10)||0;
     if(principal<=0)return err('Escribe el monto prestado.');
-    if(rate<=0)return err('Escribe la tasa mensual.');
+
     if(!(payDay>=1&&payDay<=31))return err('El día de cobro va de 1 a 31.');
     if(!f.start.value)return err('Elige la fecha de inicio.');
     const funding=readSlices(f),shares=[];
+    if(rate<=0&&funding.some(x=>x.crate==null))return err('Escribe la tasa general o la tasa de cada parte.');
     const sum=r2(funding.reduce((s,x)=>s+x.amount,0));
     if(Math.abs(sum-principal)>0.009)return err(`Lo asignado (${fmt(sum)}) debe sumar ${fmt(principal)}.`);
     let bid=f.borrower.value;
@@ -1177,7 +1196,7 @@ function exportICS(){
   const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Orbit//Prestamos//ES','CALSCALE:GREGORIAN','X-WR-CALNAME:Orbit'];
   const ev=(uidv,title,day,desc)=>{L.push('BEGIN:VEVENT','UID:'+uidv+'@orbit','DTSTAMP:'+stamp,'DTSTART:'+next(day)+'T090000','DURATION:PT30M',`RRULE:FREQ=MONTHLY;BYMONTHDAY=${day>28?-1:day}`,'SUMMARY:'+esc(title),'DESCRIPTION:'+esc(desc),'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+esc(title),'TRIGGER:PT0M','END:VALARM','END:VEVENT')};
   let n=0;
-  db.loans.filter(l=>!l.closed).forEach(l=>{ev('cobro-'+l.id,`Orbit · Cobrar a ${borName(l)} ${fmt(outNow(l)*l.rate/100)}`,+l.payDay,'Marca el cobro en Orbit');n++});
+  db.loans.filter(l=>!l.closed).forEach(l=>{ev('cobro-'+l.id,`Orbit · Cobrar a ${borName(l)} ${fmt(loanInt(l,outNow(l)))}`,+l.payDay,'Marca el cobro en Orbit');n++});
   db.investors.filter(i=>!i.owner&&monthlyNow(i)>0).forEach(i=>{const days=db.loans.filter(l=>!l.closed&&involved(l,i)).map(l=>+l.payDay);const d=+i.payDay||Math.max(...days);ev('pago-'+i.id,`Orbit · Pagar a ${i.name} ${fmt(monthlyNow(i))}`,d,'Registra el pago en Orbit');n++});
   if(!n){toast('No hay préstamos activos');return}
   shareFile(new Blob([L.concat('END:VCALENDAR').join('\r\n')],{type:'text/calendar'}),'orbit-recordatorios.ics');
@@ -1313,7 +1332,7 @@ function exportAdminPDF(){
   k.chart('Tu ganancia por mes',Hh.map(x=>({short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),
     [[fmt(acc),'Acumulado real',C.ion],[fmt(avg),'Promedio mensual'],[pct(r2(P.avg)),'Tasa promedio cartera'],[`${P.n} / ${P.clients}`,'Préstamos / clientes']]);
   const act=db.loans.filter(l=>!l.closed);
-  const rows=act.map(l=>{const R=reparto(l);return {cells:[{t:`${borName(l)}  ·  Día ${l.payDay}`,b:true},fmt(R.o),pct(l.rate),fmt(R.total),{t:'-'+fmt(R.total-R.mine),c:C.muted},{t:fmt(R.mine),b:true,c:R.mine<0?C.bad:C.ion}]}});
+  const rows=act.map(l=>{const R=reparto(l);return {cells:[{t:`${borName(l)}  ·  Día ${l.payDay}`,b:true},fmt(R.o),rateLabel(l),fmt(R.total),{t:'-'+fmt(R.total-R.mine),c:C.muted},{t:fmt(R.mine),b:true,c:R.mine<0?C.bad:C.ion}]}});
   rows.push({total:true,cells:['Total',fmt(P.lent),pct(r2(P.avg)),fmt(P.interest),'-'+fmt(P.others),{t:fmt(P.mine),c:C.ion}]});
   k.table('Por préstamo',[{h:'Cliente',w:134},{h:'Capital',w:84,a:'r'},{h:'Tasa',w:52,a:'r'},{h:'Interés/mes',w:84,a:'r'},{h:'Pagas',w:84,a:'r'},{h:'Tu parte',w:86,a:'r'}],rows);
   const SC={pagado:C.ok,reinvertido:C.reinv,enespera:C.blue,pendiente:C.muted};
