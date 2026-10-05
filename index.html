@@ -473,7 +473,8 @@ const bor=id=>db.borrowers.find(x=>x.id===id);
 const loanById=id=>db.loans.find(x=>x.id===id);
 const borName=l=>bor(l.borrowerId)?.name||'—';
 const borColor=l=>bor(l.borrowerId)?.color||COLORS[0];
-function dueISO(l,ym){const[y,m]=ym.split('-').map(Number);return `${ym}-${pad(Math.min(+l.payDay,dim(y,m)))}`}
+const mgrDay=n=>+((db.settings.managers||{})[n]||0);
+function dueISO(l,ym){const[y,m]=ym.split('-').map(Number),d=l.manager&&mgrDay(l.manager)?mgrDay(l.manager):+l.payDay;return `${ym}-${pad(Math.min(d,dim(y,m)))}`}
 const firstYM=l=>addM(ymOf(l.start),1);
 function lastYM(l){
   let end=null;
@@ -495,9 +496,9 @@ function status(l,ym){
   const p=payOf(l.id,ym),due=expected(l,ym),paid=p?+p.interest||0:0;
   if(p&&paid>=due-0.005)return 'pagado';
   if(paid>0)return 'parcial';
-  return dueISO(l,ym)<today()?'atrasado':'pendiente';
+  return !l.manager&&dueISO(l,ym)<today()?'atrasado':'pendiente';
 }
-const isLate=(l,ym)=>{const s=status(l,ym);return s==='atrasado'||(s==='parcial'&&dueISO(l,ym)<today())};
+const isLate=(l,ym)=>{if(l.manager)return false;const s=status(l,ym);return s==='atrasado'||(s==='parcial'&&dueISO(l,ym)<today())};
 
 function capitalOf(i){return r2(db.movements.filter(m=>m.investorId===i.id).reduce((s,m)=>s+(m.type==='retiro'?-1:1)*(+m.amount||0),0))}
 const sliceOf=(l,i)=>l.funding.find(f=>f.investorId===i.id);
@@ -882,7 +883,7 @@ function sheetGoal(id){const g=id?db.goals.find(x=>x.id===id):null,t=g?.type||'s
 // 100 = always on time. Each day late on average costs points; partial and unpaid months cost more.
 // Builds over time: needs 3 due payments before it shows a grade; recent months weigh double.
 const SCORE_MIN=3;
-function clientScore(bid){const items=[];db.loans.filter(l=>l.borrowerId===bid).forEach(l=>periods(l,curYM()).forEach(p=>{const due=dueISO(l,p);if(due>today())return;const st=status(l,p),pay=payOf(l.id,p);
+function clientScore(bid){const items=[];db.loans.filter(l=>l.borrowerId===bid&&!l.manager).forEach(l=>periods(l,curYM()).forEach(p=>{const due=dueISO(l,p);if(due>today())return;const st=status(l,p),pay=payOf(l.id,p);
     const d=pay&&st!=='parcial'?Math.max(0,daysBetween(due,pay.date||due)):daysBetween(due,today());items.push({p,d,st})}));
   const n=items.length;if(!n)return null;if(n<SCORE_MIN)return {pending:true,n};
   items.sort((a,b)=>a.p<b.p?-1:1);let W=0,pts=0,late=0,partial=0,open=0,days=0;
@@ -1106,6 +1107,10 @@ function viewCal(){
   ${shown.length?`<div class="list">${shown.map(x=>itemRow(x.l,x.p)).join('')}</div>`:`<div class="list"><div class="empty">Sin cobros ${ui.calDay?'este día':'este mes'}.</div></div>`}</section>`};
 }
 
+function mgrCards(){const ym=curYM(),names=[...new Set(db.loans.filter(l=>l.manager&&!l.closed).map(l=>l.manager))];
+  return names.map(n=>{const ls=db.loans.filter(l=>l.manager===n&&!l.closed),tot=ls.reduce((s,l)=>s+outNow(l),0),mo=ls.reduce((s,l)=>s+loanInt(l,outNow(l)),0),pend=ls.filter(l=>hasPeriod(l,ym)&&status(l,ym)!=='pagado'),d=mgrDay(n);
+    return `<div class="card" style="display:flex;flex-direction:column;gap:8px"><div style="display:flex;justify-content:space-between;align-items:center"><div><div class="eyebrow">Los tiene</div><div style="font:700 17px var(--display)">${h(n)}</div></div>${pend.length?`<button class="btn pri" style="height:36px" data-act="collectMgr" data-id="${h(n)}" data-confirm="1">Me pagó ${shortM(ym)}</button>`:'<span class="chip s-pagado">Al día</span>'}</div>
+    <div class="kv"><span class="muted">${ls.length} préstamo${ls.length>1?'s':''} · ${fmt(tot)}</span><span class="num priv">${fmt(mo)}/mes</span></div><div class="muted" style="font-size:12px">${d?`Te paga el día ${d}. `:''}No cuenta como atraso de los clientes.</div></div>`}).join('')}
 function viewLoans(){
   const f=ui.loanFilter,loans=db.loans.filter(l=>f==='activos'?!l.closed:!!l.closed);
   const groups=new Map();loans.forEach(l=>{if(!groups.has(l.borrowerId))groups.set(l.borrowerId,[]);groups.get(l.borrowerId).push(l)});
@@ -1122,10 +1127,11 @@ function viewLoans(){
       <div class="stat"><div class="eyebrow">En espera</div><div class="v">${fmt(totals().free)}</div></div>
     </div>
   </div>
+  ${mgrCards()}
   <div class="seg"><button class="${f==='activos'?'on':''}" data-act="loanFilter" data-v="activos">Activos · ${db.loans.filter(l=>!l.closed).length}</button><button class="${f==='liquidados'?'on':''}" data-act="loanFilter" data-v="liquidados">Liquidados · ${db.loans.filter(l=>l.closed).length}</button></div>
   ${groups.size?[...groups].map(([bid,ls])=>{const b=bor(bid);const tot=r2(ls.reduce((s,l)=>s+outNow(l),0)),mo=r2(ls.reduce((s,l)=>s+(l.closed?0:loanInt(l,outNow(l))),0));
     return `<section><div class="sec-h"><h2 style="display:flex;align-items:center;gap:8px"><i class="dot" style="color:${b?.color}"></i>${h(b?.name)} ${scoreChip(clientScore(bid))}</h2><span style="display:flex;gap:14px;align-items:center">${f==='activos'&&ls.some(l=>hasPeriod(l,ym)&&status(l,ym)!=='pagado')?`<button style="font-size:12.5px;font-weight:700;color:var(--ion)" data-act="collect" data-id="${bid}" data-confirm="1">Cobrar ${shortM(ym)}</button>`:''}<button class="muted" style="font-size:13px" data-act="editBor" data-id="${bid}">Editar</button></span></div>
-    <div class="list">${ls.map(l=>{const p=hasPeriod(l,ym)?ym:null;return `<button class="row" data-act="openLoan" data-id="${l.id}"><div class="main"><div class="t"><span class="num">${fmt(l.closed?l.principal:outNow(l))}</span> <span class="dim priv" style="font-weight:500">· ${rateLabel(l)}/mes</span></div><div class="s">Día ${l.payDay} · ${l.funding.map(f=>h(inv(f.investorId)?.name)).join(', ')}${+l.term?` · ${l.term} meses`:''}</div></div>
+    <div class="list">${ls.map(l=>{const p=hasPeriod(l,ym)?ym:null;return `<button class="row" data-act="openLoan" data-id="${l.id}"><div class="main"><div class="t"><span class="num">${fmt(l.closed?l.principal:outNow(l))}</span> <span class="dim priv" style="font-weight:500">· ${rateLabel(l)}/mes</span></div><div class="s">${l.manager?`Con ${h(l.manager)} · `:''}Día ${l.payDay} · ${l.funding.map(f=>h(inv(f.investorId)?.name)).join(', ')}${+l.term?` · ${l.term} meses`:''}</div></div>
       <div class="r">${l.closed?chip('liquidado'):`<span class="num priv">${fmt(loanInt(l,outNow(l)))}</span>${p?chip(status(l,p)):'<span class="chip s-pendiente">Inicia</span>'}`}</div></button>`}).join('')}
     ${f==='activos'?`<div class="row" style="justify-content:space-between;font-size:12.5px"><span class="muted">Subtotal</span><span class="num">${fmt(tot)}<span class="priv"> · <span style="color:var(--ion)">${fmt(mo)}/mes</span></span></span></div>`:''}</div></section>`}).join('')
   :`<div class="list"><div class="empty"><b>${f==='activos'?'Sin préstamos activos':'Nada liquidado aún'}</b>${f==='activos'?'Crea el primero con el botón “Préstamo”.':''}</div></div>`}`;
@@ -1447,6 +1453,7 @@ function sheetLoan(id){
     <div class="field" id="newBorWrap" ${db.borrowers.length?'hidden':''}><label>Nombre del cliente</label><input id="newBor" name="newBor" placeholder="Ej. Tony"></div>
     <div class="grid2">${fld('Monto total',money('principal',l?l.principal:''))}${fld('Tasa general del cliente %',`<input id="rate" name="rate" inputmode="decimal" value="${l?l.rate:''}" placeholder="4">`)}</div>
     <div class="grid2">${fld('Día de cobro',`<input id="payDay" name="payDay" inputmode="numeric" value="${l?l.payDay:''}" placeholder="1–31">`)}${fld('Fecha de inicio',`<input id="start" name="start" type="date" value="${l?.start||today()}">`)}</div>
+    <div class="grid2">${fld('¿Quién tiene el préstamo?',`<input id="mgr" name="manager" list="mgrs" value="${h(l?.manager||'')}" placeholder="Vacío = tú"><datalist id="mgrs">${Object.keys(db.settings.managers||{}).map(n=>`<option value="${h(n)}">`).join('')}</datalist>`,'Ej. Jorge: él cobra y te paga una vez al mes')}${fld('Día que te paga',`<input id="mgrday" name="mgrDay" inputmode="numeric" value="${l?.manager?mgrDay(l.manager)||'':''}" placeholder="1–31">`)}</div>
     ${fld('Plazo en meses',`<input id="term" name="term" inputmode="numeric" value="${l&&+l.term?l.term:''}" placeholder="Vacío = indefinido">`)}
     <div class="field"><label>Partes del préstamo</label><div class="list" id="parts">${(l?l.funding:[{}]).map(f=>partRow(f,l)).join('')}</div>
       <button type="button" class="btn" style="height:38px;margin-top:8px" data-act="addPart">＋ Agregar parte</button>
@@ -1576,6 +1583,7 @@ function sheetOwe(loanIds,p){
   ${people.map(i=>{const po=payoutOf(i,p),late=payoutDelay(i,p);return `<button class="row" data-act="payout" data-id="${i.id}" data-p="${p}"><div class="main"><div class="t">${h(i.name)}</div><div class="s">${ymLabel(p)} · vence ${dShort(payoutDue(i,p))}${po?' · '+h(viaText(po)):''}</div></div><div class="r"><span class="num">${fmt(payoutAmt(i,p))}</span>${po?chip(po.status):late>0?`<span class="chip s-atrasado">${late} días</span>`:chip('pendiente')}</div></button>`}).join('')}
   </div><button class="btn" style="margin-top:12px;width:100%" data-act="closeSheet">Después</button>`);
 }
+function collectMgr(name){const ym=curYM(),ids=[];db.loans.filter(l=>l.manager===name&&!l.closed&&hasPeriod(l,ym)&&status(l,ym)!=='pagado').forEach(l=>{let pay=payOf(l.id,ym);if(!pay){pay={id:uid(),loanId:l.id,period:ym,capital:0,note:''};db.payments.push(pay)}pay.interest=expected(l,ym);pay.date=today();pay.note='Vía '+name;ids.push(l.id)});save();render();if(ids.length){toast(`${name}: ${ids.length} cobro${ids.length>1?'s':''} marcado${ids.length>1?'s':''}`);sheetOwe(ids,ym)}}
 function collectAll(bid){
   const ym=curYM(),ids=[];
   db.loans.filter(l=>l.borrowerId===bid&&!l.closed&&hasPeriod(l,ym)&&status(l,ym)!=='pagado').forEach(l=>{let pay=payOf(l.id,ym);if(!pay){pay={id:uid(),loanId:l.id,period:ym,capital:0,note:''};db.payments.push(pay)}pay.interest=expected(l,ym);pay.date=today();ids.push(l.id)});
@@ -1608,6 +1616,7 @@ const ACTIONS={
   rmPart:e=>{if(document.querySelectorAll('#parts .slice').length>1)e.closest('.slice').remove();fundHint()},
   rmShare:e=>{e.closest('.shrow').remove();fundHint()},
   collect:e=>collectAll(e.dataset.id),
+  collectMgr:e=>collectMgr(e.dataset.id),
   ics:()=>exportICS(),
   card:e=>sheetCard(e.dataset.id),
   delGoal:e=>{db.goals=db.goals.filter(g=>g.id!==e.dataset.id);save();closeSheet();render()},
@@ -1706,7 +1715,8 @@ document.addEventListener('submit',ev=>{
     if(Math.abs(sum-principal)>0.009)return err(`Lo asignado (${fmt(sum)}) debe sumar ${fmt(principal)}.`);
     let bid=f.borrower.value;
     if(bid==='__new'){const n=f.newBor.value.trim();if(!n)return err('Escribe el nombre del cliente.');const b={id:'b_'+uid(),name:n,phone:'',color:COLORS[db.borrowers.length%COLORS.length],note:''};db.borrowers.push(b);bid=b.id}
-    const data={borrowerId:bid,principal,rate,payDay,start:f.start.value,term,funding,shares,note:f.note.value.trim()};
+    const manager=f.manager.value.trim();if(manager){db.settings.managers=db.settings.managers||{};const md=parseInt(f.mgrDay.value,10);if(md>=1&&md<=31)db.settings.managers[manager]=md;else if(!db.settings.managers[manager])db.settings.managers[manager]=0}
+    const data={manager,borrowerId:bid,principal,rate,payDay,start:f.start.value,term,funding,shares,note:f.note.value.trim()};
     let l=f.dataset.id?loanById(f.dataset.id):null;
     if(l)Object.assign(l,data);else{l={id:'l_'+uid(),closed:null,...data};db.loans.push(l)}
     save();closeSheet();if(!f.dataset.id){ui.tab='loans';ui.stack=[{type:'loan',id:l.id}]}render();toast(f.dataset.id?'Cambios guardados':'Préstamo creado');return;
