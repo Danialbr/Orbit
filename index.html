@@ -146,6 +146,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
   background:radial-gradient(80% 70% at 50% 62%,rgba(79,168,255,.22),transparent 70%),linear-gradient(160deg,#1A2130,#090C12);border:1px solid rgba(255,255,255,.12);box-shadow:0 22px 40px -24px #000,0 1px 0 rgba(255,255,255,.14) inset}
 .carc::before{content:"";position:absolute;inset:auto 0 0 0;height:40%;background:repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 18px);pointer-events:none}
 .carc-top{display:flex;justify-content:space-between;align-items:baseline;font:700 15px var(--display)}.carc-d{font:600 10px var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.6}
+.car-img{width:100%;height:150px;object-fit:contain;display:block;margin:6px 0 2px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.6))}
 .car-svg{width:100%;height:auto;display:block;margin:8px 0 4px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 .carc-bot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.carc-bot small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.16em;opacity:.6;margin-bottom:5px}.carc-bot b{font:700 14px var(--display)}
 .wc-house{background:linear-gradient(135deg,#3A3226,#1A1610);color:#F6EFE3}.wc-house .wc-a{color:#F2C980}
@@ -706,13 +707,13 @@ function houseSVG(id){return `<svg class="car-svg" viewBox="0 0 400 170" aria-hi
 </svg>`}
 function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db.settings.mortgage||0,eq=hv-mg,ef=hv?Math.max(0,Math.min(1,eq/hv)):0;
   return `<section class="an"><div class="sec-h"><h2>Assets</h2></div><div class="cars">
-  <button class="carc" data-act="assetCars"><div class="carc-top"><span>Carros</span><span class="carc-d">En stock</span></div>${carSVG('cv')}
+  <button class="carc" data-act="assetCars"><div class="carc-top"><span>Carros</span><span class="carc-d">En stock</span></div>${db.settings.carImg?`<img class="car-img" src="${db.settings.carImg}" alt="">`:carSVG('cv')}
     <div class="carc-bot" style="grid-template-columns:1fr"><div><small>INVERTIDO</small><b class="num" style="font-size:22px">${fmt(F.cars)}</b></div></div></button>
   <button class="carc" data-act="assetHouse"><div class="carc-top"><span>Casa</span><span class="carc-d">${hv?'Aparte':'Toca para agregar'}</span></div>${houseSVG('hv')}
     <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
     ${hv?`<div class="ccf-bar" style="background:rgba(255,255,255,.12)"><i style="--w:${ef*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div>`:''}</button>
   </div></section>`}
-function sheetAssetCars(){openSheet(`<h3>Carros en stock</h3><div class="sub">Cuánto dinero tienes metido en carros ahora mismo.</div><form data-form="assetCars">${fld('Valor total invertido',money('carsValue',db.settings.carsValue??carsValue()))}<button class="btn pri" type="submit">Guardar</button></form>`)}
+function sheetAssetCars(){openSheet(`<h3>Carros en stock</h3><div class="sub">Cuánto dinero tienes metido en carros ahora mismo.</div><form data-form="assetCars">${fld('Valor total invertido',money('carsValue',db.settings.carsValue??carsValue()))}<div class="field"><label>Imagen de la tarjeta</label><div class="btns"><button type="button" class="btn wide" data-act="carImgPick">${db.settings.carImg?'Cambiar imagen':'Usar una imagen mía'}</button>${db.settings.carImg?'<button type="button" class="btn" data-act="carImgClear">Quitar</button>':''}</div><div class="hint">Mejor un PNG con fondo transparente. Se guarda solo en este iPhone.</div><input type="file" id="carImgFile" accept="image/*" hidden></div><button class="btn pri" type="submit">Guardar</button></form>`)}
 function sheetAssetHouse(){const st=db.settings;openSheet(`<h3>Mi casa</h3><div class="sub">Tu equity es lo que vale menos lo que debes de la hipoteca. Se muestra aparte y no cuenta en tu dinero real.</div><form data-form="assetHouse"><div class="grid2">${fld('Valor de la casa',money('houseValue',st.houseValue||''))}${fld('Lo que debes (hipoteca)',money('mortgage',st.mortgage||''))}</div><button class="btn pri" type="submit">Guardar</button></form>`)}
 function carsSection(){const st=carsStock(),sold=(db.cars||[]).filter(c=>c.sold),inv=st.reduce((s,c)=>s+carCost(c),0),exp=st.reduce((s,c)=>s+((+c.ask||0)-carCost(c)),0);
   return `<section class="an"><div class="sec-h"><h2>Carros en stock</h2><button class="muted" style="font-size:13px" data-act="car">+ Carro</button></div>
@@ -1494,6 +1495,8 @@ const ACTIONS={
   goal:e=>sheetGoal(e.dataset.id),
   car:e=>sheetCar(e.dataset.id),
   assetCars:()=>sheetAssetCars(),
+  carImgPick:()=>$('#carImgFile').click(),
+  carImgClear:()=>{delete db.settings.carImg;save();closeSheet();render()},
   assetHouse:()=>sheetAssetHouse(),
   delCar:e=>{db.cars=db.cars.filter(c=>c.id!==e.dataset.id);save();closeSheet();render()},
   excel:()=>exportExcel(),
@@ -1525,6 +1528,7 @@ document.addEventListener('change',ev=>{
   if(ev.target.id==='msource'){$('#newCardWrap').hidden=ev.target.value!=='__new'}
   if(ev.target.id==='method'&&ev.target.value==='Wire'&&!document.querySelector('#deds .ded')){$('#deds').insertAdjacentHTML('beforeend',dedRow({concept:'Wire fee',amount:25}));poUpdate()}
   if(ev.target.closest&&ev.target.closest('form[data-form=loan]'))fundHint()
+  if(ev.target.id==='carImgFile'){const file=ev.target.files[0];if(!file)return;const img=new Image(),url=URL.createObjectURL(file);img.onload=()=>{const k=Math.min(1,900/img.width),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);db.settings.carImg=c.toDataURL(file.type==='image/png'?'image/png':'image/webp',.85);save();closeSheet();render();toast('Imagen guardada')};img.src=url}
   if(ev.target.id==='restoreFile'){const file=ev.target.files[0];if(!file)return;const rd=new FileReader();rd.onload=()=>{try{const d=JSON.parse(rd.result);if(!Array.isArray(d.loans)||!Array.isArray(d.investors))throw 0;d.payouts=d.payouts||[];d.movements=d.movements||[];d.payments=d.payments||[];d.borrowers=d.borrowers||[];d.settings=d.settings||{};db=d;migrate();save();go('home');toast('Respaldo importado')}catch(e){toast('Ese archivo no es un respaldo de Orbit')}};rd.readAsText(file);ev.target.value=''}
 });
 document.addEventListener('input',ev=>{if(ev.target.closest('form[data-form=loan]'))fundHint();if(ev.target.closest('form[data-form=payout]'))poUpdate()});
