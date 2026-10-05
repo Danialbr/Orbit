@@ -18,7 +18,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <style>
 /* Layout: one phone column, glass header, fixed tab bar. Manrope throughout, tabular figures. Single dark look by design. */
 :root{
@@ -27,10 +27,10 @@
   --fg:#E9EEF5; --muted:#8693A8; --dim:#5A6577;
   --ion:#46E3C6; --ion-2:#4FA8FF; --ion-ink:#04140F;
   --ok:#3DD68C; --warn:#F2B84B; --bad:#FF6B6B; --reinv:#A08CFF; --idle:#7D8AA0;
-  --display:'Geist',ui-sans-serif,-apple-system,system-ui,sans-serif;
-  --body:'Geist',-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;
-  --mono:'Geist',-apple-system,system-ui,sans-serif;
-  --code:'Geist Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --display:'Manrope',ui-sans-serif,-apple-system,system-ui,sans-serif;
+  --body:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;
+  --mono:'Manrope',-apple-system,system-ui,sans-serif;
+  --code:ui-monospace,'SF Mono',Menlo,monospace;
   --r:14px;
   color-scheme:dark;
 }
@@ -75,7 +75,7 @@ section{display:flex;flex-direction:column;gap:10px}
 .hero{position:relative;overflow:hidden;border:1px solid transparent;
   background:linear-gradient(160deg,#121A27,#0B1018) padding-box,linear-gradient(135deg,rgba(70,227,198,.6),rgba(79,168,255,.18) 45%,rgba(150,175,210,.14)) border-box}
 .hero::after{content:"";position:absolute;right:-60px;top:-70px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(70,227,198,.18);box-shadow:0 0 0 26px rgba(70,227,198,.03),0 0 0 54px rgba(79,168,255,.025);pointer-events:none}
-.big{font:600 34px/1.05 var(--display);letter-spacing:-.045em;font-variant-numeric:tabular-nums;margin-top:6px}
+.big{font:600 34px/1.05 var(--display);letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-top:6px}
 .big.ion{background:linear-gradient(90deg,var(--ion),var(--ion-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
 .stat .v{font:500 14.5px/1.2 var(--mono);font-variant-numeric:tabular-nums;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -140,6 +140,23 @@ tr:first-child td{border-top:0}
 table.tight th,table.tight td{padding-inline:8px}table.tight{font-size:12.5px}
 tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 
+/* credit cards: stack + face */
+.ccstack{display:flex;flex-direction:column}
+.ccs{position:relative;display:block;width:100%;text-align:left;color:#fff;border-radius:14px;margin-top:-10px;padding:0 16px;background:radial-gradient(120% 140% at 100% 0%,rgba(255,255,255,.16),transparent 55%),linear-gradient(135deg,var(--a),var(--b));border:1px solid rgba(255,255,255,.16);box-shadow:0 -8px 20px -12px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.22) inset}
+.ccs:first-child{margin-top:0}
+.ccs-h{display:flex;justify-content:space-between;align-items:center;height:62px;gap:10px}
+.ccs-h span{display:flex;flex-direction:column;font:700 15px/1.15 var(--display)}.ccs-h small{font:600 9.5px/1 var(--body);letter-spacing:.16em;text-transform:uppercase;opacity:.75;margin-bottom:4px}
+.ccs-r{align-items:flex-end;text-align:right}.ccs-r b{font:700 17px var(--display)}.ccs-r small{margin:4px 0 0!important;letter-spacing:.04em!important;text-transform:none!important}
+.ccf{position:relative;aspect-ratio:1.586;border-radius:16px;padding:18px 20px;color:#fff;display:flex;flex-direction:column;overflow:hidden;background:radial-gradient(120% 90% at 100% 0%,rgba(255,255,255,.2),transparent 55%),linear-gradient(135deg,var(--a),var(--b));border:1px solid rgba(255,255,255,.18);box-shadow:0 24px 40px -22px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.28) inset}
+.ccf::after{content:"";position:absolute;top:-60%;left:-60%;width:50%;height:220%;transform:rotate(18deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.16),transparent);animation:sheen 5s .4s ease-in-out infinite}
+.ccf-top{display:flex;justify-content:space-between;align-items:baseline}.ccf-iss{font:700 11px/1 var(--body);letter-spacing:.2em;text-transform:uppercase;opacity:.85}.ccf-name{font:700 15px/1 var(--display)}
+.ccf-chip{width:40px;height:30px;border-radius:6px;margin-top:16px;background:linear-gradient(135deg,#F2F4F7,#A9B1BC 60%,#D7DCE2);display:grid;grid-template-rows:repeat(3,1fr);padding:4px 6px;gap:3px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}.ccf-chip i{border-top:1px solid rgba(0,0,0,.18)}
+.ccf-num{font:500 15px/1 var(--code);letter-spacing:.06em;margin-top:auto;opacity:.92;text-shadow:0 1px 0 rgba(0,0,0,.3)}
+.ccf-bot{display:flex;justify-content:space-between;margin-top:12px}.ccf-bot small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.18em;opacity:.7;margin-bottom:4px}.ccf-bot b{font:700 18px/1 var(--display);letter-spacing:-.02em}
+.ccf-bar{height:3px;border-radius:3px;background:rgba(255,255,255,.22);margin-top:10px;overflow:hidden}.ccf-bar i{display:block;height:100%;width:var(--w);background:#fff}
+.grade{font:800 10.5px/1 var(--body);padding:4px 7px;border-radius:7px;letter-spacing:.04em;vertical-align:2px;margin-left:6px}
+.gradebig{width:48px;height:48px;border-radius:12px;display:grid;place-items:center;font:800 24px var(--display);flex:none}
+.g-A{color:var(--ok);background:color-mix(in srgb,var(--ok) 15%,transparent)}.g-B{color:var(--ion);background:color-mix(in srgb,var(--ion) 15%,transparent)}.g-C{color:var(--warn);background:color-mix(in srgb,var(--warn) 15%,transparent)}.g-D{color:var(--bad);background:color-mix(in srgb,var(--bad) 15%,transparent)}
 /* credit cards */
 .cc-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:-16px;padding:2px 16px 8px;scrollbar-width:none}.cc-row::-webkit-scrollbar{display:none}
 .cc{flex:0 0 78%;scroll-snap-align:center;aspect-ratio:1.586;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;text-align:left;color:#fff;position:relative;overflow:hidden;
@@ -164,7 +181,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .metal-top{display:flex;align-items:center;gap:10px}.metal-logo{width:30px;height:30px;display:block}.metal-logo svg{width:100%;height:100%}
 .metal-brand{font:800 15px/1 var(--display);letter-spacing:.42em}.metal-tier{margin-left:auto;font:700 9.5px/1 var(--body);letter-spacing:.3em;opacity:.65}
 .metal-l{font:600 10.5px/1 var(--body);letter-spacing:.2em;text-transform:uppercase;opacity:.7}
-.metal-v{font:600 38px/1.1 var(--display);letter-spacing:-.05em;margin-top:6px;background:linear-gradient(90deg,#FFFFFF,#BFF6EA 60%,#9CCBFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.metal-v{font:700 38px/1.1 var(--display);letter-spacing:-.03em;margin-top:6px;background:linear-gradient(90deg,#FFFFFF,#BFF6EA 60%,#9CCBFF);-webkit-background-clip:text;background-clip:text;color:transparent}
 .metal-v .num{font:inherit}
 .metal-bot{display:flex;justify-content:space-between;align-items:flex-end}.metal-name{font:500 12px/1 var(--code);letter-spacing:.22em;opacity:.8}
 .metal-net{text-align:right;font:700 15px/1.1 var(--display)}.metal-net small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.2em;opacity:.6;margin-bottom:4px}
@@ -304,6 +321,7 @@ form{display:flex;flex-direction:column;gap:12px}
 </div>
 
 <script src="jspdf.umd.min.js"></script>
+<script>window.XLSX_SRC='xlsx.full.min.js'</script>
 <script>
 (()=>{
 'use strict';
@@ -371,6 +389,7 @@ function load(){
 }
 // v2: partner shares live on each slice of money (funding row) instead of the whole loan; payouts carry payment details
 function migrate(){
+  db.goals=db.goals||[];
   db.settings=db.settings||{};db.cards=db.cards||[];db.payouts=db.payouts||[];db.movements=db.movements||[];
   db.loans.forEach(l=>{l.funding.forEach(f=>{f.shares=f.shares||[]});
     if(l.shares&&l.shares.length){l.funding.forEach(f=>l.shares.forEach(x=>{if(x.investorId!==f.investorId&&!f.shares.some(y=>y.investorId===x.investorId))f.shares.push({investorId:x.investorId,rate:+x.rate})}))}
@@ -497,7 +516,7 @@ function sampleDB(){
         mama={id:'inv_mama',name:'Mamá',rate:0,owner:false,phone:'',note:'Participación sin capital'},
         abuela={id:'inv_abuela',name:'Abuela',rate:2,owner:false,phone:'',note:'',payMethod:'Zelle',payDest:'abuela@correo.com'};
   tio.payMethod='Wire';tio.payDest='Chase ****4471';
-  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300,limit:20000,dueDay:18,last4:'4471'},{id:'c_fu',name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta',balance:4000,apr:0,promoEnd:'2027-03-31',apr:21.5,limit:9000,dueDay:3,last4:'2210'},{id:'c_fs',name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta',balance:600,apr:19.9,limit:1500,dueDay:12,last4:'8803'},{id:'c_hd',name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta',balance:1200,apr:0,limit:3500,dueDay:25,last4:'1937'}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});
+  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300,limit:20000,dueDay:18,last4:'4471'},{id:'c_fu',name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta',balance:4000,apr:0,promoEnd:'2027-03-31',apr:21.5,limit:9000,dueDay:3,last4:'2210'},{id:'c_fs',name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta',balance:600,apr:19.9,limit:1500,dueDay:12,last4:'8803'},{id:'c_hd',name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta',balance:1200,apr:0,limit:3500,dueDay:25,last4:'1937'}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});d.goals=[{id:'g1',type:'sindeuda',title:'Libre de tarjetas',target:0,date:'2027-06-30',startVal:24000},{id:'g2',type:'prestado',title:'$100k prestados',target:100000,date:'2027-12-31'}];
   d.movements.push({id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-10',note:'Ahorros',source:'ahorro'},{id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-12',note:'Chase Sapphire',source:'c_chase'},{id:uid(),investorId:abuela.id,type:'aporte',amount:10000,date:'2026-03-14',note:'Aporte inicial'},
     {id:uid(),investorId:tio.id,type:'aporte',amount:34000,date:'2026-03-15',note:'Aporte inicial'},
     {id:uid(),investorId:ana.id,type:'aporte',amount:8000,date:'2026-07-01',note:''});
@@ -625,6 +644,45 @@ function myCard(){
       <div class="stat"><div class="eyebrow">Tu capital</div><div class="v">${fmt(cap)}</div></div>
     </div></button>`;
 }
+/* ============ goals ============ */
+const GOAL_T={patrimonio:'Patrimonio real',sindeuda:'Libre de deudas',prestado:'Total prestado',ahorros:'Ahorros en banco',ganancia:'Ganancia neta al mes',otra:'Meta propia'};
+function goalNow(g){const F=finances();return {patrimonio:F.worth,sindeuda:F.debt,prestado:portfolio().lent,ahorros:F.sav,ganancia:F.net,otra:+g.manual||0}[g.type]}
+function goalProgress(g){const now=goalNow(g);if(g.type==='sindeuda'){const startD=+g.startVal||Math.max(now,1);return {now,frac:startD?Math.max(0,Math.min(1,1-now/startD)):1}}return {now,frac:g.target?Math.max(0,Math.min(1,now/g.target)):0}}
+function goalsSection(){const gs=db.goals||[];
+  return `<section class="an"><div class="sec-h"><h2>Metas</h2><button class="muted" style="font-size:13px" data-act="goal">+ Meta</button></div>
+  ${gs.length?`<div class="list">${gs.map(g=>{const P=goalProgress(g),done=P.frac>=1,left=g.date?Math.max(0,Math.round(daysBetween(today(),g.date)/30.4)):null;
+    return `<button class="row" data-act="goal" data-id="${g.id}" style="flex-wrap:wrap;row-gap:8px"><div class="main"><div class="t">${h(g.title)}${done?' <span class="chip s-pagado">Lograda</span>':''}</div><div class="s">${g.type==='sindeuda'?`Quedan ${fmt(P.now)}`:`${fmt(P.now)} de ${fmt(g.target)}`}${g.date?` · ${left} mes${left===1?'':'es'} para ${ymLabel(g.date.slice(0,7))}`:''}</div></div><div class="r"><b class="num" style="color:var(--ion)">${Math.round(P.frac*100)}%</b></div><div class="meter"><i style="--w:${P.frac*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div></button>`}).join('')}</div>`
+  :`<div class="list"><div class="empty">Ponte una meta: libre de tarjetas, $100k prestados, $1,000 netos al mes…</div></div>`}</section>`}
+function sheetGoal(id){const g=id?db.goals.find(x=>x.id===id):null,t=g?.type||'sindeuda';
+  openSheet(`<h3>${g?'Meta':'Nueva meta'}</h3><div class="sub">Se mide sola con tus números.</div><form data-form="goal" data-id="${g?.id||''}">
+    ${fld('Tipo',`<select id="gtype" name="type">${Object.entries(GOAL_T).map(([k,v])=>`<option value="${k}" ${t===k?'selected':''}>${v}</option>`).join('')}</select>`)}
+    ${fld('Nombre',`<input id="gtitle" name="title" value="${h(g?.title||'')}" placeholder="Ej. Pagar todas las tarjetas">`)}
+    <div class="grid2">${fld('Meta $',money('target',g?.target||''),'Para “libre de deudas” déjalo en 0')}${fld('Para cuándo',`<input id="gdate" name="date" type="date" value="${g?.date||''}">`)}</div>
+    ${fld('Valor actual (solo meta propia)',money('manual',g?.manual||''))}
+    <div class="btns"><button class="btn pri wide" type="submit">Guardar</button>${g?`<button type="button" class="btn danger" data-act="delGoal" data-id="${g.id}" data-confirm="1">Eliminar</button>`:''}</div></form>`)}
+
+/* ============ client score ============ */
+// 100 = always on time. Each day late on average costs points; partial and unpaid months cost more.
+function clientScore(bid){const ls=db.loans.filter(l=>l.borrowerId===bid);let n=0,late=0,days=0,partial=0,open=0;
+  ls.forEach(l=>periods(l,curYM()).forEach(p=>{const due=dueISO(l,p);if(due>today())return;const st=status(l,p),pay=payOf(l.id,p);n++;
+    let d=pay?Math.max(0,daysBetween(due,pay.date||due)):daysBetween(due,today());if(st==='parcial')partial++;if(st==='atrasado'){open++}if(d>2)late++;days+=d}));
+  if(!n)return null;const avg=days/n,onTime=(n-late)/n,score=Math.max(0,Math.min(100,Math.round(100-avg*2.5-partial*6-open*12-(1-onTime)*25)));
+  const grade=score>=90?'A':score>=75?'B':score>=60?'C':'D';return {score,grade,avg:Math.round(avg*10)/10,onTime:Math.round(onTime*100),n,partial,open}}
+const scoreChip=S=>S?`<span class="grade g-${S.grade}" title="Score ${S.score}">${S.grade} · ${S.score}</span>`:'';
+
+/* ============ projection (simple interest, no compounding) ============ */
+function projection(){const F=finances(),o=owner(),capOwn=o?capitalOf(o):0,net=F.net,gross=myMonth(curYM()).est;
+  return {gross,net,m3:net*3,m6:net*6,m12:net*12,apyOwn:capOwn?net*12/capOwn*100:0,apyPort:portfolio().avg*12,capOwn}}
+function projSection(){const J=projection();
+  return `<section class="an"><div class="sec-h"><h2>Proyección</h2><span class="muted" style="font-size:12.5px">Sin interés compuesto</span></div>
+  <div class="card">
+    <div class="stats" style="margin-top:0"><div class="stat"><div class="eyebrow">3 meses</div><div class="v">${fmt(J.m3)}</div></div><div class="stat"><div class="eyebrow">6 meses</div><div class="v">${fmt(J.m6)}</div></div><div class="stat"><div class="eyebrow">12 meses</div><div class="v" style="color:var(--ion)">${fmt(J.m12)}</div></div></div>
+    <div style="margin-top:12px;border-top:1px solid var(--line);padding-top:8px">
+      <div class="kv"><span class="muted">Rendimiento anual de la cartera</span><span class="num">${pct(r2(J.apyPort))}</span></div>
+      <div class="kv"><span class="muted">Tu rendimiento anual sobre tu capital</span><span class="num" style="color:var(--ion)">${J.capOwn?pct(r2(J.apyOwn)):'—'}</span></div>
+    </div><div class="muted" style="font-size:12px;margin-top:6px">Si todo sigue igual y no reinviertes: ganancia neta del mes × meses.</div>
+  </div></section>`}
+
 /* ============ debt payoff plan ============ */
 const SKINS={citi:['#F06A1E','#9E3A0A'],sapphire:['#163B78','#071530'],freedom:['#2A72D6','#0E3474'],student:['#1C93B4','#0B4A63'],onyx:['#2B2F38','#0E1015'],teal:['#1A6B62','#0B2E2E']};
 const PRESETS=[{name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta'},{name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta'},{name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta'},{name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta'}];
@@ -845,7 +903,7 @@ function viewLoans(){
   </div>
   <div class="seg"><button class="${f==='activos'?'on':''}" data-act="loanFilter" data-v="activos">Activos · ${db.loans.filter(l=>!l.closed).length}</button><button class="${f==='liquidados'?'on':''}" data-act="loanFilter" data-v="liquidados">Liquidados · ${db.loans.filter(l=>l.closed).length}</button></div>
   ${groups.size?[...groups].map(([bid,ls])=>{const b=bor(bid);const tot=r2(ls.reduce((s,l)=>s+outNow(l),0)),mo=r2(ls.reduce((s,l)=>s+(l.closed?0:loanInt(l,outNow(l))),0));
-    return `<section><div class="sec-h"><h2 style="display:flex;align-items:center;gap:8px"><i class="dot" style="color:${b?.color}"></i>${h(b?.name)} <span class="dim" style="font:400 12px var(--body)">${ls.length} préstamo${ls.length>1?'s':''}</span></h2><span style="display:flex;gap:14px;align-items:center">${f==='activos'&&ls.some(l=>hasPeriod(l,ym)&&status(l,ym)!=='pagado')?`<button style="font-size:12.5px;font-weight:700;color:var(--ion)" data-act="collect" data-id="${bid}" data-confirm="1">Cobrar ${shortM(ym)}</button>`:''}<button class="muted" style="font-size:13px" data-act="editBor" data-id="${bid}">Editar</button></span></div>
+    return `<section><div class="sec-h"><h2 style="display:flex;align-items:center;gap:8px"><i class="dot" style="color:${b?.color}"></i>${h(b?.name)} ${scoreChip(clientScore(bid))}</h2><span style="display:flex;gap:14px;align-items:center">${f==='activos'&&ls.some(l=>hasPeriod(l,ym)&&status(l,ym)!=='pagado')?`<button style="font-size:12.5px;font-weight:700;color:var(--ion)" data-act="collect" data-id="${bid}" data-confirm="1">Cobrar ${shortM(ym)}</button>`:''}<button class="muted" style="font-size:13px" data-act="editBor" data-id="${bid}">Editar</button></span></div>
     <div class="list">${ls.map(l=>{const p=hasPeriod(l,ym)?ym:null;return `<button class="row" data-act="openLoan" data-id="${l.id}"><div class="main"><div class="t"><span class="num">${fmt(l.closed?l.principal:outNow(l))}</span> <span class="dim priv" style="font-weight:500">· ${rateLabel(l)}/mes</span></div><div class="s">Día ${l.payDay} · ${l.funding.map(f=>h(inv(f.investorId)?.name)).join(', ')}${+l.term?` · ${l.term} meses`:''}</div></div>
       <div class="r">${l.closed?chip('liquidado'):`<span class="num priv">${fmt(loanInt(l,outNow(l)))}</span>${p?chip(status(l,p)):'<span class="chip s-pendiente">Inicia</span>'}`}</div></button>`}).join('')}
     ${f==='activos'?`<div class="row" style="justify-content:space-between;font-size:12.5px"><span class="muted">Subtotal</span><span class="num">${fmt(tot)}<span class="priv"> · <span style="color:var(--ion)">${fmt(mo)}/mes</span></span></span></div>`:''}</div></section>`}).join('')
@@ -883,6 +941,7 @@ function viewLoan(id){
     </div>
   </div>
   <div class="btns"><button class="btn wide" data-act="editLoan" data-id="${l.id}">${ico('edit')}Editar</button><button class="btn wide" data-act="closeLoan" data-id="${l.id}">${l.closed?'Reabrir':'Liquidar'}</button></div>
+  ${(()=>{const S=clientScore(l.borrowerId);return S?`<div class="card" style="display:flex;gap:14px;align-items:center"><div class="gradebig g-${S.grade}">${S.grade}</div><div style="flex:1"><div style="font-weight:700">Score del cliente · ${S.score}/100</div><div class="muted" style="font-size:12.5px">${S.onTime}% a tiempo · ${S.avg} días de atraso promedio · ${S.n} pagos${S.partial?` · ${S.partial} parciales`:''}${S.open?` · ${S.open} sin pagar`:''}</div></div></div>`:''})()}
   ${repartoCard(l)}
   <section><div class="sec-h"><h2>Partes del préstamo</h2></div><div class="list">
   ${l.funding.map(f=>{const i=inv(f.investorId);if(!i)return '';const now=l.closed?0:f.amount*out/l.principal,ir=rateFor(f,l),pay=now*ir/100;
@@ -1001,21 +1060,43 @@ function viewPresent(id){
 
 /* ============ Mi panel: private widgets ============ */
 const cnt=(v,cls='')=>`<span class="num ${cls}" data-count="${r2(v)}">${fmt(v)}</span>`;
+function ccFace(c,big){const sk=SKINS[c.skin]||SKINS.onyx,ut=+c.limit?Math.min(1,(+c.balance||0)/c.limit):null;
+  return `<div class="ccf ${big?'big':''}" style="--a:${sk[0]};--b:${sk[1]}">
+    <div class="ccf-top"><span class="ccf-iss">${h(c.issuer||KIND_L[c.kind||'tarjeta'])}</span><span class="ccf-name">${h(c.name)}</span></div>
+    <div class="ccf-chip"><i></i><i></i><i></i></div>
+    <div class="ccf-num">•••• &nbsp;•••• &nbsp;•••• &nbsp;${h(c.last4||'••••')}</div>
+    <div class="ccf-bot"><div><small>SALDO</small><b>${fmt(c.balance)}</b></div><div style="text-align:right"><small>${+c.apr&&debtApr(c)?'APR':'PROMO'}</small><b>${debtApr(c)?pct(c.apr):'0%'}</b></div></div>
+    ${ut!=null?`<div class="ccf-bar"><i style="--w:${ut*100}%"></i></div>`:''}</div>`}
 function ccSection(){
   const cc=db.cards.filter(c=>(c.kind||'tarjeta')==='tarjeta');
   const lim=cc.reduce((s,c)=>s+(+c.limit||0),0),bal=cc.reduce((s,c)=>s+(+c.balance||0),0),u=lim?bal/lim:0;
   return `<section class="an"><div class="sec-h"><h2>Mis tarjetas</h2><button class="muted" style="font-size:13px" data-act="card">+ Agregar</button></div>
-  ${cc.length?`<div class="cc-row">${cc.map(c=>{const sk=SKINS[c.skin]||SKINS.onyx,ut=+c.limit?Math.min(1,(+c.balance||0)/c.limit):null;
-    return `<button class="cc" data-act="card" data-id="${c.id}" style="--a:${sk[0]};--b:${sk[1]}">
-      <div class="cc-top"><span class="cc-iss">${h(c.issuer||KIND_L[c.kind||'tarjeta'])}</span><span class="cc-apr">${+c.apr?pct(c.apr)+' APR':'0% APR'}</span></div>
-      <div class="cc-chip"></div>
-      <div class="cc-name">${h(c.name)}</div>
-      <div class="cc-bal">${fmt(c.balance)}</div>
-      ${ut!=null?`<div class="cc-bar"><i style="--w:${ut*100}%"></i></div>`:''}
-      <div class="cc-bot"><span class="cc-num">•••• ${h(c.last4||'0000')}</span><span>${ut!=null?Math.round(ut*100)+'% usado':''}${c.dueDay?` · paga el ${c.dueDay}`:''}</span></div></button>`}).join('')}</div>
-    ${lim?`<div class="card" style="padding:12px 16px"><div class="kv"><span class="muted">Uso total de crédito</span><span class="num" style="color:${u>.3?'#F59A9A':'var(--ion)'}">${Math.round(u*100)}%</span></div><div class="muted" style="font-size:12px">${u>.3?'Arriba de 30% baja tu score. Bájalo pagando primero la más usada.':'Debajo de 30%, bien para tu score.'} Usas ${fmt(bal)} de ${fmt(lim)}.</div></div>`:''}`
-  :`<div class="list"><div class="empty">Agrega tus tarjetas: Home Depot (Citi), Freedom Unlimited, Freedom Student y Sapphire están listas para un toque.</div></div>`}</section>`;
+  ${cc.length?`<div class="ccstack">${cc.map(c=>{const sk=SKINS[c.skin]||SKINS.onyx,ut=+c.limit?Math.round((+c.balance||0)/c.limit*100):null;
+    return `<button class="ccs" data-act="ccOpen" data-id="${c.id}" style="--a:${sk[0]};--b:${sk[1]}"><div class="ccs-h"><span><small>${h(c.issuer||'')}</small>${h(c.name)}</span><span class="ccs-r"><b class="num">${fmt(c.balance)}</b><small>${ut!=null?ut+'% usado':''}${c.dueDay?` · día ${c.dueDay}`:''}</small></span></div></button>`}).join('')}</div>
+    ${lim?`<div class="card" style="padding:12px 16px"><div class="kv"><span class="muted">Uso total de crédito</span><span class="num" style="color:${u>.3?'#F59A9A':'var(--ion)'}">${Math.round(u*100)}%</span></div><div class="meter" style="margin:6px 0 8px"><i style="--w:${Math.min(100,u*100)}%;background:${u>.3?'#F08A8A':'var(--ion)'}"></i></div><div class="muted" style="font-size:12px">${u>.3?'Arriba de 30% afecta tu score.':'Debajo de 30%, bien para tu score.'} Usas ${fmt(bal)} de ${fmt(lim)}.</div></div>`:''}`
+  :`<div class="list"><div class="empty">Toca “+ Agregar”: tus 4 tarjetas están listas para un toque.</div></div>`}</section>`;
 }
+// full card view: big card + pay / charge / edit + history
+function sheetCC(id){const c=db.cards.find(x=>x.id===id);if(!c)return;const tx=(c.txns||[]).slice().sort((a,b)=>a.date<b.date?1:-1);
+  const ut=+c.limit?Math.round((+c.balance||0)/c.limit*100):null;
+  openSheet(`${ccFace(c,true)}
+  <div class="stats" style="margin:14px 0 4px">
+    <div class="stat"><div class="eyebrow">Disponible</div><div class="v">${+c.limit?fmt(Math.max(0,c.limit-c.balance)):'—'}</div></div>
+    <div class="stat"><div class="eyebrow">Uso</div><div class="v">${ut!=null?ut+'%':'—'}</div></div>
+    <div class="stat"><div class="eyebrow">Interés/mes</div><div class="v debt">${fmt((+c.balance||0)*debtApr(c)/1200)}</div></div>
+  </div>
+  <div class="btns" style="display:grid;grid-template-columns:1fr 1fr 1fr;margin-top:10px"><button class="btn pri" data-act="ccTx" data-id="${c.id}" data-v="pago">Abonar</button><button class="btn" data-act="ccTx" data-id="${c.id}" data-v="cargo">Cargo</button><button class="btn" data-act="cardEdit" data-id="${c.id}">Editar</button></div>
+  ${+c.limit&&c.balance<c.limit?`<button class="btn" style="width:100%;margin-top:8px" data-act="ccMax" data-id="${c.id}" data-confirm="1">Usar todo el límite (${fmt(c.limit-c.balance)})</button>`:''}
+  <div class="sec-h" style="margin-top:16px"><h2>Movimientos</h2>${c.dueDay?`<span class="muted" style="font-size:12.5px">Pago el día ${c.dueDay}</span>`:''}</div>
+  <div class="list">${tx.length?tx.map(t=>`<div class="row"><div class="main"><div class="t">${t.type==='pago'?'Abono':'Cargo'}</div><div class="s">${dLong(t.date)}${t.note?' · '+h(t.note):''}</div></div><div class="r"><span class="num" style="color:${t.type==='pago'?'var(--ok)':'#F59A9A'}">${t.type==='pago'?'−':'+'}${fmt(t.amount)}</span><button class="dim" style="font-size:11.5px" data-act="ccDelTx" data-id="${c.id}" data-v="${t.id}" data-confirm="1">Borrar</button></div></div>`).join(''):'<div class="empty">Sin movimientos todavía.</div>'}</div>`);
+}
+function sheetCCTx(id,type){const c=db.cards.find(x=>x.id===id);
+  openSheet(`<h3>${type==='pago'?'Abonar a':'Cargo en'} ${h(c.name)}</h3><div class="sub">Saldo actual ${fmt(c.balance)}</div><form data-form="cctx" data-id="${id}" data-v="${type}">
+    ${type==='pago'?`<div class="presets" style="grid-template-columns:repeat(3,1fr)">${[['Mínimo',+c.minPay||Math.max(25,c.balance*.02)],['Mitad',c.balance/2],['Todo',+c.balance]].map(([l,v])=>`<button type="button" class="btn" style="height:44px;flex-direction:column;gap:0;font-size:12px" data-act="ccFill" data-v="${r2(Math.min(v,c.balance))}">${l}<span class="num" style="font-size:11px;opacity:.7">${fmt(Math.min(v,c.balance))}</span></button>`).join('')}</div>`:''}
+    <div class="grid2">${fld('Monto',money('amount'))}${fld('Fecha',`<input id="txdate" name="date" type="date" value="${today()}">`)}</div>
+    ${fld('Nota',`<input id="txnote" name="note" placeholder="${type==='pago'?'Ej. pago desde Chase checking':'Ej. préstamo a Tony'}">`)}
+    <div class="err" id="err"></div><button class="btn pri" type="submit">Guardar</button></form>`)}
+
 function viewMe(){
   const F=finances(),P=portfolio(),t=totals(),H=myHistory(),m=myMonth(curYM()),o=owner(),B=budget();
   const acc=H.length?H[H.length-1].acc:0,placed=o?placedNow(o):0;
@@ -1033,7 +1114,7 @@ function viewMe(){
     ${wc('bank','wc-teal','Dinero en banco',fmt(F.sav),kv('Ahorros',fmt(F.sav))+`<button class="wc-btn" data-act="savings">Actualizar saldo</button>`)}
     ${wc('orbit','wc-blue','Tu capital en Orbit',fmt(F.capOwn),kv('De tus ahorros',fmt(F.src.ahorro))+kv('De tarjetas',fmt(F.src.tarjetas))+kv('Prestado',fmt(placed))+kv('En espera',fmt(F.capOwn-placed)))}
     ${wc('income','wc-slate','Ingreso mensual',fmt(B.sal+B.orb),kv('Trabajo',fmt(B.sal))+kv('Orbit (bruto)',fmt(B.orb))+kv('Gastos fijos','−'+fmt(B.exp))+kv('Libre para deudas',fmt(Math.max(0,B.free)))+`<button class="wc-btn" data-act="income">Editar presupuesto</button>`)}
-    ${wc('debt','wc-graphite','Deudas',fmt(F.debt),(db.cards.length?db.cards.map(cd=>`<button class="kv" style="width:100%" data-act="card" data-id="${cd.id}"><span>${h(cd.name)} <small style="opacity:.6">${+cd.apr?pct(cd.apr):'0%'}</small></span><span class="num">${fmt(cd.balance)}</span></button>`).join(''):'<div class="kv"><span>Sin deudas</span></div>')+kv('Interés al mes',fmt(F.cost))+`<button class="wc-btn" data-act="card">Agregar deuda</button>`)}
+    ${wc('debt','wc-graphite','Deudas',fmt(F.debt),(db.cards.length?db.cards.map(cd=>`<button class="kv" style="width:100%" data-act="${(cd.kind||'tarjeta')==='tarjeta'?'ccOpen':'card'}" data-id="${cd.id}"><span>${h(cd.name)} <small style="opacity:.6">${+cd.apr?pct(cd.apr):'0%'}</small></span><span class="num">${fmt(cd.balance)}</span></button>`).join(''):'<div class="kv"><span>Sin deudas</span></div>')+kv('Interés al mes',fmt(F.cost))+`<button class="wc-btn" data-act="card">Agregar deuda</button>`)}
   </div>
   <section class="an"><div class="sec-h"><h2>Este mes</h2><span class="muted" style="font-size:12.5px">${ymLong(curYM())}</span></div>
   <div class="card month">
@@ -1049,10 +1130,12 @@ function viewMe(){
     <div class="stat"><div class="eyebrow">Prestado</div><div class="v">${cnt(P.lent)}</div></div>
     <div class="stat"><div class="eyebrow">Capital total</div><div class="v">${cnt(t.capital)}</div></div>
   </div></section>
+  ${goalsSection()}
   ${ccSection()}
   ${debtPlanSection()}
+  ${projSection()}
   ${H.length?`<section class="an"><div class="sec-h"><h2>Tu ganancia por mes</h2></div><div class="card">${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capMe')}</div></section>`:''}
-  <div class="btns an" style="display:grid;grid-template-columns:1fr 1fr"><button class="btn" data-act="profit">Por préstamo ›</button><button class="btn pri" data-act="adminPdf">${ico('pdf')}Reporte PDF</button></div>`};
+  <div class="btns an" style="display:grid;grid-template-columns:1fr 1fr 1fr"><button class="btn" data-act="profit">Préstamos</button><button class="btn" data-act="excel">Excel</button><button class="btn pri" data-act="adminPdf">${ico('pdf')}PDF</button></div>`};
 }
 function animateIn(){
   if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
@@ -1075,6 +1158,7 @@ function viewSettings(){
   <div class="muted" style="font-size:12.5px">Para enseñarle sus números a alguien, abre su perfil y toca “Mostrar a…”. Esa pantalla y el PDF solo muestran lo suyo.</div></section>
   <section><div class="sec-h"><h2>Recordatorios</h2></div>
   <div class="card" style="display:flex;flex-direction:column;gap:10px"><div class="muted" style="font-size:14px">Agrega a tu calendario del iPhone un aviso cada mes en el día de cobro de cada cliente y en el día de pago de cada inversionista. Te llega notificación a las 9 a.m.</div>
+  <button class="btn" data-act="excel">Exportar todo a Excel</button>
   <button class="btn pri" data-act="ics">${ico('cal')}Agregar recordatorios al calendario</button>
   <div class="dim" style="font-size:12px">Si agregas o cambias préstamos, vuelve a agregarlos y borra el calendario anterior.</div></div></section>
   <section><div class="sec-h"><h2>Clientes</h2></div><div class="list">
@@ -1294,6 +1378,7 @@ const ACTIONS={
   collect:e=>collectAll(e.dataset.id),
   ics:()=>exportICS(),
   card:e=>sheetCard(e.dataset.id),
+  delGoal:e=>{db.goals=db.goals.filter(g=>g.id!==e.dataset.id);save();closeSheet();render()},
   delCard:e=>{db.cards=db.cards.filter(c=>c.id!==e.dataset.id);save();closeSheet();render()},
   savings:()=>sheetSavings(),
   editBor:e=>sheetBor(e.dataset.id),
@@ -1304,6 +1389,14 @@ const ACTIONS={
   pdf:e=>exportPDF(inv(e.dataset.id)),
   settings:()=>push({type:'set'}),
   income:()=>sheetIncome(),
+  ccOpen:e=>sheetCC(e.dataset.id),
+  cardEdit:e=>sheetCard(e.dataset.id),
+  ccTx:e=>sheetCCTx(e.dataset.id,e.dataset.v),
+  ccFill:e=>{$('form[data-form=cctx]').amount.value=e.dataset.v},
+  ccMax:e=>{const c=db.cards.find(x=>x.id===e.dataset.id),a=r2(c.limit-c.balance);c.txns=c.txns||[];c.txns.push({id:uid(),type:'cargo',amount:a,date:today(),note:'Límite completo'});c.balance=r2(+c.limit);save();render();sheetCC(c.id);toast('Tarjeta al límite')},
+  ccDelTx:e=>{const c=db.cards.find(x=>x.id===e.dataset.id),t=(c.txns||[]).find(x=>x.id===e.dataset.v);if(t){c.balance=r2((+c.balance||0)+(t.type==='pago'?t.amount:-t.amount));c.txns=c.txns.filter(x=>x!==t)}save();render();sheetCC(c.id)},
+  goal:e=>sheetGoal(e.dataset.id),
+  excel:()=>exportExcel(),
   preset:e=>{const p=PRESETS.filter(x=>!db.cards.some(c=>c.name===x.name))[+e.dataset.v],f=$('form[data-form=card]');f.name.value=p.name;f.skin.value=p.skin;f.issuer.value=p.issuer;f.kind.value=p.kind;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('on',b===e));f.balance.focus()},
   wcard:e=>{const open=e.classList.contains('open');document.querySelectorAll('.wc.open').forEach(x=>x.classList.remove('open'));if(!open)e.classList.add('open')},
   strategy:e=>{db.settings.strategy=e.dataset.v;save();render()},
@@ -1350,6 +1443,8 @@ document.addEventListener('submit',ev=>{
     save();render();toast(msg);if(pay.interest>0)sheetOwe([l.id],p);else closeSheet();return;
   }
   if(k==='payout'){savePayout(f);return}
+  if(k==='cctx'){const c=db.cards.find(x=>x.id===f.dataset.id),a=r2(num(f.amount.value)),ty=f.dataset.v;if(a<=0)return err('Escribe el monto.');if(ty==='pago'&&a>c.balance+0.005)return err('El abono es mayor que el saldo.');c.txns=c.txns||[];c.txns.push({id:uid(),type:ty,amount:a,date:f.date.value||today(),note:f.note.value.trim()});c.balance=r2((+c.balance||0)+(ty==='pago'?-a:a));save();render();sheetCC(c.id);toast(ty==='pago'?'Abono registrado':'Cargo registrado');return}
+  if(k==='goal'){const g=f.dataset.id?db.goals.find(x=>x.id===f.dataset.id):null,d={type:f.type.value,title:f.title.value.trim()||GOAL_T[f.type.value],target:r2(num(f.target.value)),date:f.date.value||'',manual:r2(num(f.manual?.value||0))};if(g)Object.assign(g,d);else db.goals.push({id:uid(),start:today(),startVal:d.type==='sindeuda'?finances().debt:0,...d});save();closeSheet();render();return}
   if(k==='income'){Object.assign(db.settings,{salary:r2(num(f.salary.value)),expenses:r2(num(f.expenses.value)),useOrbit:f.useOrbit.checked});save();closeSheet();render();return}
   if(k==='card'){const c=f.dataset.id?db.cards.find(x=>x.id===f.dataset.id):null,d={name:f.name.value.trim()||'Deuda',kind:f.kind.value,balance:r2(num(f.balance.value)),apr:num(f.apr.value),minPay:r2(num(f.minPay.value))||0,promoEnd:f.promoEnd.value||'',limit:r2(num(f.limit.value))||0,dueDay:parseInt(f.dueDay.value,10)||0,last4:f.last4.value.replace(/\D/g,'').slice(0,4),skin:f.skin.value||'onyx',issuer:f.issuer.value};if(c)Object.assign(c,d);else db.cards.push({id:'c_'+uid(),...d});save();closeSheet();render();return}
   if(k==='savings'){db.settings.savings=r2(num(f.savings.value));save();closeSheet();render();return}
@@ -1409,6 +1504,24 @@ function exportICS(){
   db.cards.filter(c=>+c.dueDay&&+c.balance>0).forEach(c=>{ev('tdc-'+c.id,`Orbit · Pagar ${c.name}`,+c.dueDay,'Pago de tarjeta');n++});
   if(!n){toast('No hay préstamos activos');return}
   shareFile(new Blob([L.concat('END:VCALENDAR').join('\r\n')],{type:'text/calendar'}),'orbit-recordatorios.ics');
+}
+
+/* ============ excel ============ */
+function loadXLSX(){return new Promise((res,rej)=>{if(window.XLSX)return res();const sc=document.createElement('script');sc.src=window.XLSX_SRC;sc.onload=res;sc.onerror=rej;document.head.appendChild(sc)})}
+async function exportExcel(){
+  try{await loadXLSX()}catch(e){toast('No se pudo cargar Excel');return}
+  const X=window.XLSX,wb=X.utils.book_new(),add=(name,rows)=>X.utils.book_append_sheet(wb,X.utils.json_to_sheet(rows.length?rows:[{'':'Sin datos'}]),name);
+  add('Resumen mensual',myHistory().map(x=>({Mes:ymLabel(x.ym),Cobrado:x.collected,'Pagado a otros':x.others,'Tu ganancia':x.value,Acumulado:x.acc})));
+  add('Préstamos',db.loans.map(l=>({Cliente:borName(l),'Monto':l.principal,'Capital pendiente':outNow(l),'Tasas':rateLabel(l),'Interés/mes':r2(loanInt(l,outNow(l))),'Día de cobro':l.payDay,Inicio:l.start,'Plazo (meses)':+l.term||'Indefinido',Estado:l.closed?'Liquidado '+l.closed:'Activo',Score:clientScore(l.borrowerId)?.score??''})));
+  add('Partes',db.loans.flatMap(l=>l.funding.map(f=>({Cliente:borName(l),Persona:inv(f.investorId)?.name,Monto:f.amount,'Cliente %':crate(f,l),'Le pagas %':rateFor(f,l),Socios:fShares(f).map(x=>inv(x.investorId)?.name+' '+x.rate+'%').join(', ')}))));
+  add('Cobros',db.payments.map(p=>{const l=loanById(p.loanId);return {Cliente:l?borName(l):'',Mes:ymLabel(p.period),Vence:l?dueISO(l,p.period):'',Pagado:p.date,'Interés':p.interest,'Abono capital':p.capital,Estado:l?STATUS_L[status(l,p.period)]:'',Nota:p.note||''}}));
+  add('Inversionistas',db.investors.map(i=>{const S=summary(i);return {Nombre:i.name,Capital:S.cap,Prestado:S.pl,'En espera':S.fr,'Rendimiento/mes':S.mo,Tasa:rateText(i),'Cómo se le paga':i.payMethod||'',Destino:i.payDest||''}}));
+  add('Pagos a inversionistas',db.payouts.map(p=>({Persona:inv(p.investorId)?.name,Mes:ymLabel(p.period),Rendimiento:p.gross,Deducciones:(p.deductions||[]).map(d=>d.concept+' '+d.amount).join(', '),Neto:p.net,Estado:STATUS_L[p.status]||p.status,Fecha:p.date,'Método':p.method,Destino:p.dest})));
+  add('Movimientos de capital',db.movements.map(m=>({Persona:inv(m.investorId)?.name,Tipo:m.type,Monto:m.amount,Fecha:m.date,Origen:m.source?(m.source==='ahorro'?'Ahorros':db.cards.find(c=>c.id===m.source)?.name||''):'',Nota:m.note||''})));
+  add('Deudas',db.cards.map(c=>({Nombre:c.name,Banco:c.issuer||'',Tipo:KIND_L[c.kind||'tarjeta'],Saldo:c.balance,'APR %':c.apr,'Límite':c.limit||'','Pago mínimo':c.minPay||'','Día de pago':c.dueDay||'','Promo 0% hasta':c.promoEnd||''})));
+  add('Movimientos tarjetas',db.cards.flatMap(c=>(c.txns||[]).map(t=>({Tarjeta:c.name,Tipo:t.type,Monto:t.amount,Fecha:t.date,Nota:t.note||''}))));
+  const out=X.write(wb,{bookType:'xlsx',type:'array'});
+  shareFile(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Orbit-${today()}.xlsx`);
 }
 
 /* ============ files ============ */
