@@ -226,20 +226,22 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .metal-sub{font-size:11.5px;opacity:.65;margin-top:6px;line-height:1.35}
 .mode{margin-left:auto;font:700 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;color:#EAF7F4;padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18)}
 .mode .m-liquid{display:none;align-items:center;gap:5px}.metal.is-liquid .m-liquid{display:inline-flex}.metal.is-liquid .m-solid{display:none}
-.water{position:absolute;inset:auto 0 0 0;height:0;z-index:-1;transition:height 1.1s cubic-bezier(.3,.7,.2,1);background:linear-gradient(180deg,rgba(79,168,255,.55),rgba(30,90,170,.85))}
-.metal.is-liquid .water{height:72%}
-.metal.is-liquid{background:radial-gradient(120% 90% at 0% 0%,#163C5C 0%,transparent 55%),linear-gradient(135deg,#0B1A2E,#081220 60%,#060B14)}
+.water{position:absolute;inset:auto 0 0 0;height:0;z-index:-1;transition:height 1.6s cubic-bezier(.4,0,.2,1);background:linear-gradient(180deg,rgba(38,104,150,.75) 0%,rgba(12,48,82,.92) 45%,#04101E 100%)}
+.water::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(170deg,rgba(255,255,255,.035) 0 1px,transparent 1px 14px);animation:drift 18s linear infinite;mix-blend-mode:screen}
+.metal.is-liquid .water{height:78%}
+.metal.is-liquid{background:linear-gradient(180deg,#0E2234,#0A1828 40%,#050C16)}
 .metal.is-liquid::before{opacity:0}
-.wave{position:absolute;left:0;bottom:100%;width:200%;height:22px;margin-bottom:-1px}
-.metal:not(.is-liquid) .wave,.metal:not(.is-liquid) .bub{opacity:0}.wave,.bub{transition:opacity .6s}
-.wave path{fill:rgba(79,168,255,.55)}.w1{animation:waveX 6s linear infinite}.w2{animation:waveX 9s linear infinite reverse;opacity:.6}
-@keyframes waveX{to{transform:translateX(-50%)}}
-.bub{position:absolute;bottom:8%;left:20%;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.35);animation:bub 4s ease-in infinite}.b2{left:62%;animation-delay:1.4s;width:4px;height:4px}.b3{left:82%;animation-delay:2.6s}
-@keyframes bub{0%{transform:translateY(0);opacity:0}20%{opacity:.8}100%{transform:translateY(-90px);opacity:0}}
+.metal:not(.is-liquid) .wave,.metal:not(.is-liquid) .glint{opacity:0}.wave,.glint{transition:opacity .8s}
+.wave{position:absolute;left:0;bottom:100%;width:225%;height:16px;margin-bottom:-1px}
+.wave path{fill:rgba(38,104,150,.75)}.w1{animation:waveX 22s linear infinite}.w2{animation:waveX 34s linear infinite reverse;opacity:.5}.w2 path{fill:rgba(70,150,200,.35)}
+@keyframes waveX{to{transform:translateX(-44%)}}
+@keyframes drift{to{background-position:0 140px}}
+.glint{position:absolute;top:2px;left:-30%;width:30%;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(200,235,255,.55),transparent);animation:glint 7s ease-in-out infinite}
+@keyframes glint{0%{left:-30%}60%,100%{left:110%}}
 .wc-i{width:18px;height:18px;margin-right:10px;vertical-align:-4px;opacity:.85}
 .lev-flow{display:flex;align-items:center;gap:10px}.lev-flow>div{flex:1}.lev-flow small{display:block;font:600 9.5px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.lev-flow b{font:700 18px var(--display)}
 .lev-arrow{width:54px;flex:none;animation:flow 2s ease-in-out infinite}@keyframes flow{50%{transform:translateX(4px)}}
-.house-img{aspect-ratio:700/404!important}
+.house-svg{max-height:130px;margin:4px auto 0!important}
 /* panel */
 .step{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:7px;margin-right:8px;font:700 11px var(--mono);color:var(--ion);border:1px solid rgba(70,227,198,.35)}
 .tipdot{width:6px;height:6px;border-radius:50%;background:var(--ion);flex:none;align-self:flex-start;margin-top:8px;box-shadow:0 0 8px var(--ion)}
@@ -710,23 +712,24 @@ function carSVG(id){
   <g filter="url(#${id}f)"><path d="M292,122 L334,130 L328,136 L290,127 Z" fill="#BFF8EE"/><path d="M348,127 L370,133 L368,137 L348,132 Z" fill="#BFF8EE"/></g>
   ${wheel(52,158,19,27)}${wheel(170,164,25,32)}
 </svg>`}
-function houseSVG(id){return `<svg class="car-svg" viewBox="0 0 400 170" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
-  <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9FFBEA"/><stop offset=".5" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient>
-  <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  <radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#46E3C6" stop-opacity=".22"/><stop offset="1" stop-color="#46E3C6" stop-opacity="0"/></radialGradient></defs>
-  <ellipse cx="200" cy="150" rx="180" ry="11" fill="url(#${id}fl)"/>
-  <g stroke="url(#${id}s)" stroke-width="1.6" filter="url(#${id}f)">
-    <path d="M40,146 L360,146"/>
-    <path d="M70,146 L70,74 L236,60 L236,146"/><path d="M56,76 L250,58"/>
-    <path d="M236,146 L236,92 L338,86 L338,146"/><path d="M228,94 L350,84"/>
-    <path d="M90,86 L150,82 L150,128 L90,130 Z M120,84 L120,129 M90,108 L150,105"/>
-    <path d="M168,80 L214,77 L214,146 M168,80 L168,146"/><path d="M204,112 L204,120"/>
-    <path d="M252,100 L322,96 L322,128 L252,130 Z M287,98 L287,129"/>
-    <path d="M168,146 L160,154 L222,154 L214,146"/>
-    <path d="M30,146 C30,118 38,104 48,104 C58,104 64,120 62,146 M48,104 L48,146"/>
-    <path d="M372,146 C372,124 378,114 384,114 C390,114 394,126 392,146"/>
+function houseSVG(id){
+  // true isometric: near faces are x=max (right) and y=max (left); z is up
+  const C=.866,S=.5,P=(x,y,z)=>[(200+(x-y)*C).toFixed(1),(128+(x+y)*S-z).toFixed(1)].join(','),M=(...q)=>'M'+q.map(v=>P(...v)).join(' L');
+  const box=(x0,x1,y0,y1,z0,z1,step)=>{let d=M([x0,y0,z1],[x1,y0,z1],[x1,y1,z1],[x0,y1,z1],[x0,y0,z1])+' '+M([x0,y1,z1],[x0,y1,z0],[x1,y1,z0],[x1,y0,z0],[x1,y0,z1])+' '+M([x1,y1,z0],[x1,y1,z1]),h='';
+    for(let z=z0+step;z<z1-1;z+=step)h+=M([x0,y1,z],[x1,y1,z],[x1,y0,z])+' ';return `<path d="${d}"/><path d="${h}" opacity=".22"/>`};
+  const win=(face,a0,a1,z0,z1)=>face.x!=null?M([face.x,a0,z0],[face.x,a1,z0],[face.x,a1,z1],[face.x,a0,z1],[face.x,a0,z0]):M([a0,face.y,z0],[a1,face.y,z0],[a1,face.y,z1],[a0,face.y,z1],[a0,face.y,z0]);
+  return `<svg class="car-svg house-svg" viewBox="90 40 220 172" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
+  <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#9FB3CC" stop-opacity=".25"/><stop offset="1" stop-color="#9FB3CC" stop-opacity="0"/></radialGradient></defs>
+  <ellipse cx="200" cy="200" rx="110" ry="9" fill="url(#${id}fl)"/>
+  <g stroke="#EEF3F9" stroke-width="1.3" filter="url(#${id}f)">
+    <path d="${M([-12,-12,0],[104,-12,0],[104,66,0],[-12,66,0],[-12,-12,0])}" opacity=".3"/>
+    ${box(0,92,0,54,0,38,5)}
+    ${box(-6,62,8,58,38,66,5)}
+    <path d="${M([-10,4,66],[66,4,66],[66,62,66],[-10,62,66],[-10,4,66])}" stroke-width="1.8"/>
+    <path d="${win({y:54},12,44,6,30)} ${win({x:92},10,40,6,30)} ${win({y:58},6,48,44,60)}" stroke="#FFE7B0" opacity=".8"/>
+    <path d="${win({y:54},56,72,0,28)}"/>
   </g>
-  <g stroke="#FFE7B0" stroke-opacity=".9" stroke-width="2" filter="url(#${id}f)"><path d="M94,124 L146,122"/><path d="M256,126 L318,124"/></g>
 </svg>`}
 function leverageSection(){const F=finances(),fund=F.src.tarjetas;if(!fund)return '';
   const cards=db.cards.filter(c=>F.src.byCard[c.id]),bal=cards.reduce((s,c)=>s+(+c.balance||0),0),paid=Math.max(0,Math.min(fund,fund-bal)),fr=fund?paid/fund:0;
@@ -743,7 +746,7 @@ function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db
   return `<section class="an"><div class="sec-h"><h2>Assets</h2></div><div class="cars">
   <button class="carc" data-act="assetCars"><div class="carc-top"><span>Garage</span><span class="carc-d">En stock</span></div>${db.settings.carImg?`<img class="car-img" src="${db.settings.carImg}" alt="">`:`<img class="car-img car-def" src="${CAR_SRC}" alt="">`}
     <div class="carc-bot" style="grid-template-columns:1fr"><div><small>INVERTIDO</small><b class="num" style="font-size:22px">${fmt(F.cars)}</b></div></div></button>
-  <button class="carc" data-act="assetHouse"><div class="carc-top"><span>Casa</span><span class="carc-d">${hv?'Aparte':'Toca para agregar'}</span></div><img class="car-img car-def house-img" src="${window.HOUSE_SRC}" alt="">
+  <button class="carc" data-act="assetHouse"><div class="carc-top"><span>Casa</span><span class="carc-d">${hv?'Aparte':'Toca para agregar'}</span></div>${houseSVG('hv')}
     <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
     ${hv?`<div class="ccf-bar" style="background:rgba(255,255,255,.12)"><i style="--w:${ef*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div>`:''}</button>
   </div></section>`}
@@ -1235,7 +1238,7 @@ function viewMe(){
   const kv=(k,v,cls='')=>`<div class="kv"><span>${k}</span><span class="num ${cls}">${v}</span></div>`;
   return {eyebrow:'Solo para ti',title:'Mi panel',action:`<div style="display:flex;gap:8px">${eyeBtn()}<button class="iconbtn" data-act="settings" aria-label="Ajustes">${ico('gear')}</button></div>`,html:`
   <div class="metal an ${db.settings.heroMode==='liquid'?'is-liquid':''}" id="hero">
-    <div class="water" aria-hidden="true"><svg viewBox="0 0 600 40" preserveAspectRatio="none" class="wave w1"><path d="M0,20 C75,4 150,36 225,20 C300,4 375,36 450,20 C525,4 600,36 675,20 L675,40 L0,40 Z"/></svg><svg viewBox="0 0 600 40" preserveAspectRatio="none" class="wave w2"><path d="M0,22 C80,36 160,6 240,22 C320,36 400,6 480,22 C560,36 640,6 720,22 L720,40 L0,40 Z"/></svg><i class="bub"></i><i class="bub b2"></i><i class="bub b3"></i></div>
+    <div class="water" aria-hidden="true"><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w1"><path d="M0,30 C150,22 300,38 450,30 C600,22 750,38 900,30 C1050,22 1200,38 1350,30 L1350,60 L0,60 Z"/></svg><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w2"><path d="M0,34 C200,26 400,42 600,34 C800,26 1000,42 1200,34 C1400,26 1600,42 1800,34 L1800,60 L0,60 Z"/></svg><i class="glint"></i></div>
     <div class="metal-top"><span class="metal-logo">${logoSVG({id:'mt'})}</span><span class="metal-brand">ORBIT</span>
       <button class="mode" data-act="heroMode" aria-label="Cambiar entre net worth y liquidez"><span class="m-solid">◆ Net worth</span><span class="m-liquid"><svg viewBox="0 0 24 24" width="13" height="13"><path d="M12 3C9 7.5 6 10.6 6 14a6 6 0 0 0 12 0c0-3.4-3-6.5-6-11z" fill="currentColor"/></svg> Líquido</span></button></div>
     <div class="face f-solid"><div class="metal-l">Net worth</div><div class="metal-v">${cnt(F.worthAll)}</div><div class="metal-sub">Todo lo que tienes: banco, Orbit, garage y casa, menos deudas</div></div>
