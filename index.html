@@ -544,7 +544,7 @@ const carsStock=()=>(db.cars||[]).filter(c=>!c.sold);
 const carsValue=()=>db.settings.carsValue!=null?+db.settings.carsValue:r2(carsStock().reduce((s,c)=>s+carCost(c),0));
 const houseEq=()=>Math.max(-1e12,r2((+db.settings.houseValue||0)-(+db.settings.mortgage||0)));
 const carCost=c=>r2((+c.buy||0)+(c.costs||[]).reduce((s,x)=>s+(+x.amount||0),0));
-function finances(){const debt=r2(db.cards.reduce((s,c)=>s+(+c.balance||0),0)),cost=r2(db.cards.reduce((s,c)=>s+(+c.balance||0)*debtApr(c)/1200,0)),o=owner(),capOwn=o?capitalOf(o):0,sav=+db.settings.savings||0,m=myMonth(curYM());
+function finances(){const debt=r2(db.cards.reduce((s,c)=>s+(+c.balance||0),0)),cost=r2(db.cards.reduce((s,c)=>s+(+c.balance||0)*debtApr(c)/1200,0)),o=owner(),capOwn=o?capitalOf(o):0,sav=+db.settings.savings||0,P0=portfolio(),m={est:P0.mine};
   const cars=carsValue(),house=+db.settings.houseValue?houseEq():0;const st=db.settings,k401=r2((+st.k401||0)-(+st.k401Loan||0)),sal=+st.salary||0;return {debt,cost,capOwn,sav,cars,house,k401,sal,orbitM:m.est,liquid:r2(sav+sal+m.est),net:r2(m.est-cost),worth:r2(sav+capOwn+cars-debt),worthAll:r2(sav+capOwn+cars+house+k401-debt),src:ownSources()}}
 const owner=()=>db.investors.find(i=>i.owner);
 const deposits=i=>r2(db.movements.filter(m=>m.investorId===i.id&&m.type==='aporte').reduce((s,m)=>s+(+m.amount||0),0));
@@ -632,7 +632,7 @@ const I={
   loans:'<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/>',
   inv:'<circle cx="9" cy="8" r="3.4"/><path d="M2.8 20c.6-3.6 3.1-5.6 6.2-5.6s5.6 2 6.2 5.6"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18 14.6c1.9.6 3 2.4 3.3 5.4"/>',
   me:'<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>',
-  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.9 1.9M17.5 17.5l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.9-1.9M17.5 6.5l1.9-1.9"/>',
+  gear:'<path d="M10.3 2.6h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9-2.6-.5v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"/><circle cx="12" cy="12" r="3.2"/>',
   set:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   pdf:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
@@ -1321,7 +1321,7 @@ function sheetCCTx(id,type){const c=db.cards.find(x=>x.id===id);
 function viewMe(){
   const F=finances(),P=portfolio(),t=totals(),H=myHistory(),m=myMonth(curYM()),o=owner(),B=budget();
   const acc=H.length?H[H.length-1].acc:0,placed=o?placedNow(o):0;
-  const r=40,c=2*Math.PI*r,frac=m.est>0?Math.max(0,Math.min(1,F.net/m.est)):0;
+  const r=40,c=2*Math.PI*r,frac=P.interest>0?Math.max(0,Math.min(1,F.net/P.interest)):0;
   const holder=(o&&o.name&&o.name!=='Yo'?o.name:'Daniel').toUpperCase();
   const WI={"bank": "<path d=\"M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18M12 3l9 5H3z\"/>", "orbit": "<circle cx=\"12\" cy=\"12\" r=\"7\"/><circle cx=\"19\" cy=\"6\" r=\"2.2\" fill=\"currentColor\"/>", "cars": "<path d=\"M3 15l2-5c.5-1.3 1.6-2 3-2h8c1.4 0 2.5.7 3 2l2 5v3h-3M6 18H3v-3h18\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>", "house": "<path d=\"M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6\"/>", "income": "<path d=\"M4 17l5-5 4 4 7-8M14 8h6v6\"/>", "k401": "<path d=\"M4 19h16M6 19V9l6-5 6 5v10M10 19v-5h4v5\"/>", "debt": "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M3 10h18M7 15h4\"/>"};
   const wc=(id,cls,title,amt,body)=>`<div class="wc ${cls}" data-act="wcard" data-id="${id}"><div class="wc-h"><span class="wc-t"><svg class="wc-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${WI[id]||''}</svg>${title}</span><span class="wc-a num">${amt}</span></div><div class="wc-b"><div>${body}</div></div></div>`;
@@ -1348,8 +1348,10 @@ function viewMe(){
   <div class="card month">
     <div class="ring"><svg viewBox="0 0 92 92"><defs><linearGradient id="rgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient></defs><circle cx="46" cy="46" r="${r}" fill="none" stroke="rgba(150,175,210,.12)" stroke-width="7"/><circle class="ring-a" cx="46" cy="46" r="${r}" fill="none" stroke="url(#rgm)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c*frac} ${c}" style="--c:${c}"/></svg><div class="c"><div><b>${Math.round(frac*100)}%</b><span>te queda</span></div></div></div>
     <div>
-      <div class="kv"><span class="muted">Ganancia Orbit</span>${cnt(m.est)}</div>
+      <div class="kv"><span class="muted">Cobras a clientes</span><span class="num">${fmt(P.interest)}</span></div>
+      <div class="kv"><span class="muted">Pagas a inversionistas</span><span class="num debt">−${fmt(P.others)}</span></div>
       <div class="kv"><span class="muted">Interés de deudas</span><span class="num debt">−${fmt(F.cost)}</span></div>
+      <div hidden>${cnt(m.est)}</div>
       <div class="kv" style="border-top:1px solid var(--line);margin-top:4px;padding-top:8px"><span style="font-weight:600">Neta</span><span class="num" style="color:var(--ion);font-weight:700">${fmt(F.net)}</span></div>
     </div>
   </div></section>
