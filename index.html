@@ -262,6 +262,13 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .house-svg{max-height:130px;margin:6px auto 0!important}
 .hideNums :is(.num,.big,.metal-v,.v,.wc-a,.carc-bot b,.ccs-r b,.ccf-bot b,.ccf-num,.metal-net,.metal-sub,.row .s,.kv>span:last-child,.lev-flow b,td.ar,.legend .num,svg text,.w-sub,.chip+.num,.k67){filter:blur(7px);user-select:none;-webkit-user-select:none;transition:filter .3s}
 .hideNums .metal-v{background:none;color:#EAF7F4;-webkit-text-fill-color:#EAF7F4}.hideNums .metal-v .num{filter:none}
+html{height:100%;overscroll-behavior:none;-webkit-text-size-adjust:100%}
+body{min-height:100%;overscroll-behavior:none}
+#view{min-height:calc(100dvh - 58px - env(safe-area-inset-top,0px));box-sizing:border-box}
+.tabs{height:calc(62px + env(safe-area-inset-bottom,0px));transform:translateZ(0)}
+.tabs .wrap{height:62px;align-items:center}
+.tabs button{white-space:nowrap;font-size:9.5px}
+.top{transform:translateZ(0)}
 /* panel */
 .step{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:7px;margin-right:8px;font:700 11px var(--mono);color:var(--ion);border:1px solid rgba(70,227,198,.35)}
 .tipdot{width:6px;height:6px;border-radius:50%;background:var(--ion);flex:none;align-self:flex-start;margin-top:8px;box-shadow:0 0 8px var(--ion)}
