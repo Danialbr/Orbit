@@ -153,6 +153,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .wc-house{background:linear-gradient(135deg,#3A3226,#1A1610);color:#F6EFE3}.wc-house .wc-a{color:#F2C980}
 .wc-k401{background:linear-gradient(135deg,#2E2A1C,#141209);color:#F5EED9}.wc-k401 .wc-a{color:#E9C46A}
 .k401c{background:radial-gradient(80% 70% at 50% 45%,rgba(233,196,106,.16),transparent 70%),linear-gradient(160deg,#1A2130,#090C12)}
+.cat-svg{max-height:140px;margin:0 auto!important}.kret{text-align:center;font:600 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:2px 0 10px}
 .k67{height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .k67 span{font:800 104px/1 var(--display);letter-spacing:-.06em;background:linear-gradient(180deg,#FFF6DA,#E9C46A 55%,#8C6A2F);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(233,196,106,.35))}
 .k67 small{font:700 9.5px/1 var(--body);letter-spacing:.24em;opacity:.6;margin-top:4px}
@@ -443,7 +444,7 @@ function load(){
 }
 // v2: partner shares live on each slice of money (funding row) instead of the whole loan; payouts carry payment details
 function migrate(){
-  db.goals=db.goals||[];db.cars=db.cars||[];
+  db.goals=db.goals||[];if(db.settings&&!db.settings.birthYear)db.settings.birthYear=2002;db.cars=db.cars||[];
   db.settings=db.settings||{};db.cards=db.cards||[];db.payouts=db.payouts||[];db.movements=db.movements||[];
   db.loans.forEach(l=>{l.funding.forEach(f=>{f.shares=f.shares||[]});
     if(l.shares&&l.shares.length){l.funding.forEach(f=>l.shares.forEach(x=>{if(x.investorId!==f.investorId&&!f.shares.some(y=>y.investorId===x.investorId))f.shares.push({investorId:x.investorId,rate:+x.rate})}))}
@@ -776,12 +777,27 @@ function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db
     <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
     ${hv?`<div class="ccf-bar" style="background:rgba(255,255,255,.12)"><i style="--w:${ef*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div>`:''}</button>
   <button class="carc k401c" data-act="asset401"><div class="carc-top"><span>401K</span><span class="carc-d">Retiro</span></div>
-    <div class="k67"><span>67</span><small>EDAD DE RETIRO${db.settings.birthYear?` · ${(+db.settings.birthYear+67)-new Date().getFullYear()} AÑOS`:''}</small></div>
+    ${catSVG('kc')}<div class="kret">${(()=>{const by=+db.settings.birthYear||2002,ra=+db.settings.retireAge||67,y=by+ra,left=y-new Date().getFullYear();return `Retiro a los ${ra} · ${y} · faltan ${left} años`})()}</div>
     <div class="carc-bot"><div><small>NETO</small><b class="num" style="color:var(--ion)">${fmt(F.k401)}</b></div><div><small>SALDO</small><b class="num">${fmt(+db.settings.k401||0)}</b></div><div style="text-align:right"><small>PRÉSTAMO</small><b class="num debt">${fmt(+db.settings.k401Loan||0)}</b></div></div>
     ${+db.settings.k401Loan?`<div class="muted" style="font-size:11.5px;margin-top:8px">Préstamo al ${pct(+db.settings.k401Rate||0)} · pagas ${fmt(+db.settings.k401Pay||0)}/mes</div>`:''}</button>
   </div></section>`}
+function catSVG(id){return `<svg class="car-svg cat-svg" viewBox="0 0 200 150" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
+<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFF4D6"/><stop offset=".6" stop-color="#E9C46A"/><stop offset="1" stop-color="#B8893A"/></linearGradient>
+<filter id="${id}f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1.8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#E9C46A" stop-opacity=".25"/><stop offset="1" stop-color="#E9C46A" stop-opacity="0"/></radialGradient></defs>
+<ellipse cx="100" cy="138" rx="60" ry="7" fill="url(#${id}fl)"/>
+<g stroke="url(#${id}s)" stroke-width="1.6" filter="url(#${id}f)">
+<path d="M84,34 L80,14 L94,26 C99,25 105,25 110,26 L124,14 L120,34 C126,42 126,54 118,62 C112,67 92,67 86,62 C78,54 78,42 84,34 Z"/>
+<path d="M90,44 C93,42 96,42 98,44 M106,44 C109,42 112,42 114,44" stroke-width="1.8"/>
+<path d="M100,52 L97,55 L103,55 Z" stroke-width="1.4"/>
+<path d="M86,54 L68,52 M86,57 L68,59 M118,54 L136,52 M118,57 L136,59" stroke-width=".9" opacity=".6"/>
+<path d="M88,64 C76,76 72,96 74,112 C76,126 84,134 100,134 C116,134 124,126 126,112 C128,96 124,76 112,64"/>
+<path d="M88,134 C88,124 92,118 96,118 M112,134 C112,124 108,118 104,118" stroke-width="1.6"/>
+<path d="M126,118 C142,124 156,118 158,104 C160,92 150,86 144,94" />
+<path d="M94,84 C98,82 102,82 106,84 M92,96 C98,93 102,93 108,96" stroke-width=".9" opacity=".45"/>
+</g></svg>`}
 function sheetAsset401(){const st=db.settings;openSheet(`<h3>401K</h3><div class="sub">Cuenta en tu net worth: saldo menos lo que le debes.</div><form data-form="asset401">
-  <div class="grid2">${fld('Saldo del 401K',money('k401',st.k401||''))}${fld('Año en que naciste',`<input id="byear" name="birthYear" inputmode="numeric" value="${st.birthYear||''}" placeholder="Opcional">`)}</div>
+  <div class="grid2">${fld('Saldo del 401K',money('k401',st.k401||''))}${fld('Edad de retiro',`<input id="rage" name="retireAge" inputmode="numeric" value="${st.retireAge||67}">`,'Nacido en 2002')}</div>
   <div class="grid2">${fld('Préstamo pendiente',money('k401Loan',st.k401Loan||''))}${fld('Interés %',`<input id="krate" name="k401Rate" inputmode="decimal" value="${st.k401Rate||''}" placeholder="Ej. 8.5">`)}</div>
   ${fld('Pago del préstamo / mes',money('k401Pay',st.k401Pay||''),'Lo descuentan de tu cheque')}
   <button class="btn pri" type="submit">Guardar</button></form>`)}
@@ -1627,7 +1643,7 @@ document.addEventListener('submit',ev=>{
     save();render();toast(msg);if(pay.interest>0)sheetOwe([l.id],p);else closeSheet();return;
   }
   if(k==='payout'){savePayout(f);return}
-  if(k==='asset401'){const st=db.settings;st.k401=r2(num(f.k401.value));st.k401Loan=r2(num(f.k401Loan.value));st.k401Rate=num(f.k401Rate.value);st.k401Pay=r2(num(f.k401Pay.value));st.birthYear=parseInt(f.birthYear.value,10)||'';save();closeSheet();render();return}
+  if(k==='asset401'){const st=db.settings;st.k401=r2(num(f.k401.value));st.k401Loan=r2(num(f.k401Loan.value));st.k401Rate=num(f.k401Rate.value);st.k401Pay=r2(num(f.k401Pay.value));st.retireAge=parseInt(f.retireAge.value,10)||67;save();closeSheet();render();return}
   if(k==='assetCars'){db.settings.carsValue=r2(num(f.carsValue.value));save();closeSheet();render();return}
   if(k==='assetHouse'){db.settings.houseValue=r2(num(f.houseValue.value));db.settings.mortgage=r2(num(f.mortgage.value));save();closeSheet();render();return}
   if(k==='car'){const c=f.dataset.id?db.cars.find(x=>x.id===f.dataset.id):null,name=f.name.value.trim();if(!name)return err('Escribe el carro.');const d={name,buy:r2(num(f.buy.value)),date:f.date.value||today(),ask:r2(num(f.ask.value)),note:f.note.value.trim(),costs:readDeds().map(x=>({concept:x.concept,amount:x.amount}))};if(f.soldPrice&&num(f.soldPrice.value)>0){d.sold=true;d.soldPrice=r2(num(f.soldPrice.value));d.soldDate=f.soldDate.value||today()}else{d.sold=false}if(c)Object.assign(c,d);else db.cars.push({id:uid(),...d});save();closeSheet();render();toast(d.sold?'Carro vendido':'Guardado');return}
