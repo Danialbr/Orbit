@@ -260,6 +260,8 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .lev-flow{display:flex;align-items:center;gap:10px}.lev-flow>div{flex:1}.lev-flow small{display:block;font:600 9.5px/1 var(--body);letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}.lev-flow b{font:700 18px var(--display)}
 .lev-arrow{width:54px;flex:none;animation:flow 2s ease-in-out infinite}@keyframes flow{50%{transform:translateX(4px)}}
 .house-svg{max-height:130px;margin:6px auto 0!important}
+.hideNums :is(.num,.big,.metal-v,.v,.wc-a,.carc-bot b,.ccs-r b,.ccf-bot b,.ccf-num,.metal-net,.metal-sub,.row .s,.kv>span:last-child,.lev-flow b,td.ar,.legend .num,svg text,.w-sub,.chip+.num,.k67){filter:blur(7px);user-select:none;-webkit-user-select:none;transition:filter .3s}
+.hideNums .metal-v{background:none;color:#EAF7F4;-webkit-text-fill-color:#EAF7F4}.hideNums .metal-v .num{filter:none}
 /* panel */
 .step{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:7px;margin-right:8px;font:700 11px var(--mono);color:var(--ion);border:1px solid rgba(70,227,198,.35)}
 .tipdot{width:6px;height:6px;border-radius:50%;background:var(--ion);flex:none;align-self:flex-start;margin-top:8px;box-shadow:0 0 8px var(--ion)}
@@ -652,7 +654,8 @@ function render(){
   if(out.present){$('#view').innerHTML=out.html;return}
   $('#eyebrow').textContent=out.eyebrow||'';
   $('#title').textContent=out.title;
-  $('#topAct').innerHTML=out.action||'';
+  $('#topAct').innerHTML=`<div style="display:flex;gap:8px"><button class="iconbtn" data-act="hideNums" aria-label="${db.settings.hideNums?'Mostrar números':'Ocultar números'}" style="${db.settings.hideNums?'color:var(--ion);border-color:rgba(70,227,198,.5)':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 9h14M5 15h14M10 4L8 20M16 4l-2 16"/>${db.settings.hideNums?'<path d="M3 3l18 18"/>':''}</svg></button>${out.action||''}</div>`;
+  document.body.classList.toggle('hideNums',!!db.settings.hideNums);
   setTimeout(()=>{if(ui.anim){ui.anim=false;animateIn()}startCat()},0);
   $('#backBtn').hidden=!v;$('#brand').hidden=!!v;
   $('#view').innerHTML=(db.settings.sample?`<div class="banner"><span>Estás viendo datos de ejemplo</span><button data-act="clearSample">Empezar con mis datos</button></div>`:'')+out.html;
@@ -1609,6 +1612,7 @@ const ACTIONS={
   pdf:e=>exportPDF(inv(e.dataset.id)),
   settings:()=>push({type:'set'}),
   income:()=>sheetIncome(),
+  hideNums:()=>{db.settings.hideNums=!db.settings.hideNums;save();render();toast(db.settings.hideNums?'Números ocultos':'Números visibles')},
   heroMode:e=>{const el=$('#hero');const liq=!el.classList.contains('is-liquid');el.classList.toggle('is-liquid',liq);db.settings.heroMode=liq?'liquid':'solid';save();el.querySelectorAll(liq?'.f-liquid [data-count]':'.f-solid [data-count]').forEach(n=>{const to=+n.dataset.count,t0=performance.now();const st=now=>{const k=Math.min(1,(now-t0)/800),q=1-Math.pow(1-k,3);n.textContent=fmt(to*q);if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)})},
   ccOpen:e=>sheetCC(e.dataset.id),
   cardEdit:e=>sheetCard(e.dataset.id),
