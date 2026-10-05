@@ -269,6 +269,8 @@ body{min-height:100%;overscroll-behavior:none}
 .tabs .wrap{height:62px;align-items:center}
 .tabs button{white-space:nowrap;font-size:9.5px}
 .top{transform:translateZ(0)}
+.hideNames .pname{filter:blur(6px);user-select:none}
+.pvbtn{position:relative}.pvbtn b{position:absolute;bottom:3px;right:4px;font:800 8.5px/1 var(--body);color:var(--ion)}.pvbtn:not(.pv-all){color:var(--ion);border-color:rgba(70,227,198,.5)}
 /* panel */
 .step{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:7px;margin-right:8px;font:700 11px var(--mono);color:var(--ion);border:1px solid rgba(70,227,198,.35)}
 .tipdot{width:6px;height:6px;border-radius:50%;background:var(--ion);flex:none;align-self:flex-start;margin-top:8px;box-shadow:0 0 8px var(--ion)}
@@ -413,6 +415,7 @@ const fmt=n=>USD.format(r2(n));
 const pct=n=>`${Number(n||0).toLocaleString('en-US',{maximumFractionDigits:2})}%`;
 const COLORS=['#46E3C6','#4FA8FF','#F2B84B','#FF7A9C','#A08CFF','#7BE07B','#FF9F5A','#5ED0FF','#E9EEF5'];
 const STATUS_L={pagado:'Pagado',parcial:'Parcial',atrasado:'Atrasado',pendiente:'Pendiente',reinvertido:'Reinvertido',enespera:'En espera',liquidado:'Liquidado'};
+const pn=x=>`<span class="pname">${h(x)}</span>`;
 const chip=s=>`<span class="chip s-${s}">${STATUS_L[s]}</span>`;
 const maxISO=(a,b)=>a>b?a:b;
 
@@ -454,7 +457,7 @@ function load(){
 }
 // v2: partner shares live on each slice of money (funding row) instead of the whole loan; payouts carry payment details
 function migrate(){
-  db.goals=db.goals||[];if(db.settings&&!db.settings.birthYear)db.settings.birthYear=2002;db.cars=db.cars||[];
+  db.owed=db.owed||[];db.goals=db.goals||[];if(db.settings&&!db.settings.birthYear)db.settings.birthYear=2002;db.cars=db.cars||[];
   db.settings=db.settings||{};db.cards=db.cards||[];db.payouts=db.payouts||[];db.movements=db.movements||[];
   db.loans.forEach(l=>{l.funding.forEach(f=>{f.shares=f.shares||[]});
     if(l.shares&&l.shares.length){l.funding.forEach(f=>l.shares.forEach(x=>{if(x.investorId!==f.investorId&&!f.shares.some(y=>y.investorId===x.investorId))f.shares.push({investorId:x.investorId,rate:+x.rate})}))}
@@ -545,8 +548,9 @@ const carsStock=()=>(db.cars||[]).filter(c=>!c.sold);
 const carsValue=()=>db.settings.carsValue!=null?+db.settings.carsValue:r2(carsStock().reduce((s,c)=>s+carCost(c),0));
 const houseEq=()=>Math.max(-1e12,r2((+db.settings.houseValue||0)-(+db.settings.mortgage||0)));
 const carCost=c=>r2((+c.buy||0)+(c.costs||[]).reduce((s,x)=>s+(+x.amount||0),0));
+const owedLeft=o=>r2((+o.amount||0)-(o.paid||[]).reduce((s,x)=>s+(+x.amount||0),0)),owedTotal=()=>r2((db.owed||[]).reduce((s,o)=>s+Math.max(0,owedLeft(o)),0));
 function finances(){const debt=r2(db.cards.reduce((s,c)=>s+(+c.balance||0),0)),cost=r2(db.cards.reduce((s,c)=>s+(+c.balance||0)*debtApr(c)/1200,0)),o=owner(),capOwn=o?capitalOf(o):0,sav=+db.settings.savings||0,P0=portfolio(),m={est:P0.mine};
-  const cars=carsValue(),house=+db.settings.houseValue?houseEq():0;const st=db.settings,k401=r2((+st.k401||0)-(+st.k401Loan||0)),sal=+st.salary||0;return {debt,cost,capOwn,sav,cars,house,k401,sal,orbitM:m.est,liquid:r2(sav+sal+m.est),net:r2(m.est-cost),worth:r2(sav+capOwn+cars-debt),worthAll:r2(sav+capOwn+cars+house+k401-debt),src:ownSources()}}
+  const cars=carsValue(),house=+db.settings.houseValue?houseEq():0;const st=db.settings,k401=r2((+st.k401||0)-(+st.k401Loan||0)),sal=+st.salary||0;return {debt,cost,capOwn,sav,cars,house,k401,sal,orbitM:m.est,liquid:r2(sav+sal+m.est),net:r2(m.est-cost),worth:r2(sav+capOwn+cars-debt),owed:owedTotal(),worthAll:r2(sav+capOwn+cars+house+k401+owedTotal()-debt),src:ownSources()}}
 const owner=()=>db.investors.find(i=>i.owner);
 const deposits=i=>r2(db.movements.filter(m=>m.investorId===i.id&&m.type==='aporte').reduce((s,m)=>s+(+m.amount||0),0));
 function monthsRange(){const f=db.loans.map(firstYM).sort()[0];const out=[];if(!f)return out;for(let p=f;p<=curYM();p=addM(p,1))out.push(p);return out}
@@ -662,8 +666,9 @@ function render(){
   if(out.present){$('#view').innerHTML=out.html;return}
   $('#eyebrow').textContent=out.eyebrow||'';
   $('#title').textContent=out.title;
-  $('#topAct').innerHTML=`<div style="display:flex;gap:8px"><button class="iconbtn" data-act="hideNums" aria-label="${db.settings.hideNums?'Mostrar números':'Ocultar números'}" style="${db.settings.hideNums?'color:var(--ion);border-color:rgba(70,227,198,.5)':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 9h14M5 15h14M10 4L8 20M16 4l-2 16"/>${db.settings.hideNums?'<path d="M3 3l18 18"/>':''}</svg></button>${out.action||''}</div>`;
-  document.body.classList.toggle('hideNums',!!db.settings.hideNums);
+  $('#title').classList.toggle('pname',!!(v&&(v.type==='loan'||v.type==='inv')));
+  $('#topAct').innerHTML=`<div style="display:flex;gap:8px"><button class="iconbtn pvbtn pv-${db.settings.privacy||(db.settings.hideNums?'nums':'all')}" data-act="hideNums" aria-label="Privacidad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/></svg><b>${{all:'',names:'A',nums:'#',both:'A#'}[db.settings.privacy||(db.settings.hideNums?'nums':'all')]}</b></button>${out.action||''}</div>`;
+  {const pv=db.settings.privacy||(db.settings.hideNums?'nums':'all');document.body.classList.toggle('hideNums',pv==='nums'||pv==='both');document.body.classList.toggle('hideNames',pv==='names'||pv==='both')}
   setTimeout(()=>{if(ui.anim){ui.anim=false;animateIn()}startCat()},0);
   $('#backBtn').hidden=!v;$('#brand').hidden=!!v;
   $('#view').innerHTML=(db.settings.sample?`<div class="banner"><span>Estás viendo datos de ejemplo</span><button data-act="clearSample">Empezar con mis datos</button></div>`:'')+out.html;
@@ -700,7 +705,7 @@ function itemRow(l,p,opts={}){
   const right=st==='parcial'?`<span class="num">${fmt(paid)} <span class="dim">/ ${fmt(exp)}</span></span>`:`<span class="num">${fmt(exp)}</span>`;
   return `<button class="row" data-act="pay" data-l="${l.id}" data-p="${p}">
     <span class="bar" style="color:${borColor(l)}"></span>
-    <div class="main"><div class="t">${h(borName(l))} <span class="dim priv" style="font-weight:500">· ${rateLabel(l)}</span></div>
+    <div class="main"><div class="t">${pn(borName(l))} <span class="dim priv" style="font-weight:500">· ${rateLabel(l)}</span></div>
     <div class="s">${opts.month?ymLabel(p)+' · ':''}Día ${l.payDay} · capital ${fmt(outBefore(l,p))}</div></div>
     <div class="r">${right}${chip(st)}</div></button>`;
 }
@@ -781,6 +786,19 @@ function leverageSection(){const F=finances(),fund=F.src.tarjetas;if(!fund)retur
     <div class="kv"><span class="muted">Te falta pagar</span><span class="num debt">${fmt(fund-paid)}</span></div>
     <div class="muted" style="font-size:12px;margin-top:4px">Tarjetas al ${pct(r2(apr))} anual. Se resta de tu net worth hasta que lo pagues. Registra cada abono en la tarjeta.</div>
   </div></section>`}
+function owedSection(){const L=(db.owed||[]).filter(o=>owedLeft(o)>0.005),T=owedTotal();
+  return `<section class="an"><div class="sec-h"><h2>Me deben</h2><button class="muted" style="font-size:13px" data-act="owe">+ Agregar</button></div>
+  ${L.length?`<div class="card" style="padding:12px 16px"><div class="kv"><span class="muted">Total sin intereses · ${L.length} persona${L.length>1?'s':''}</span><b class="num">${fmt(T)}</b></div><div class="muted" style="font-size:12px">Suma en tu net worth, no en tu dinero líquido.</div></div>
+  <div class="list">${L.map(o=>{const left=owedLeft(o),fr=o.amount?1-left/o.amount:0;return `<button class="row" data-act="owe" data-id="${o.id}" style="flex-wrap:wrap;row-gap:8px"><div class="main"><div class="t">${pn(o.name)}</div><div class="s">${o.concept?h(o.concept)+' · ':''}desde ${dShort(o.date)}${(o.paid||[]).length?` · pagó ${fmt(o.amount-left)}`:''}</div></div><div class="r"><span class="num">${fmt(left)}</span></div><div class="meter"><i style="--w:${fr*100}%;background:var(--ion)"></i></div></button>`}).join('')}</div>`
+  :`<div class="list"><div class="empty">Anota aquí lo que te deben sin intereses.</div></div>`}</section>`}
+function sheetOwed(id){const o=id?db.owed.find(x=>x.id===id):null;
+  openSheet(`<h3>${o?pn(o.name):'Me deben'}</h3><div class="sub">${o?`Debe ${fmt(owedLeft(o))} de ${fmt(o.amount)}`:'Dinero prestado sin intereses.'}</div>
+  <form data-form="owe" data-id="${o?.id||''}">
+    <div class="grid2">${fld('Nombre',`<input id="oname" name="name" value="${h(o?.name||'')}">`)}${fld('Monto total',money('amount',o?.amount||''))}</div>
+    <div class="grid2">${fld('Concepto',`<input id="oconcept" name="concept" value="${h(o?.concept||'')}" placeholder="Opcional">`)}${fld('Fecha',`<input id="odate" name="date" type="date" value="${o?.date||today()}">`)}</div>
+    ${o?`<div class="grid2">${fld('Abono recibido',money('pay'))}${fld('Fecha del abono',`<input id="opdate" name="payDate" type="date" value="${today()}">`)}</div>
+    ${(o.paid||[]).length?`<div class="list">${o.paid.map(x=>`<div class="row"><div class="main"><div class="t">Abono</div><div class="s">${dLong(x.date)}</div></div><div class="r"><span class="num" style="color:var(--ok)">−${fmt(x.amount)}</span></div></div>`).join('')}</div>`:''}`:''}
+    <div class="btns"><button class="btn pri wide" type="submit">Guardar</button>${o?`<button type="button" class="btn danger" data-act="delOwe" data-id="${o.id}" data-confirm="1">Eliminar</button>`:''}</div></form>`)}
 function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db.settings.mortgage||0,eq=hv-mg,ef=hv?Math.max(0,Math.min(1,eq/hv)):0;
   return `<section class="an"><div class="sec-h"><h2>Assets</h2></div><div class="cars">
   <button class="carc" data-act="assetCars"><div class="carc-top"><span>Garage</span><span class="carc-d">En stock</span></div>${db.settings.carImg?`<img class="car-img" src="${db.settings.carImg}" alt="">`:`<img class="car-img car-def" src="${CAR_SRC}" alt="">`}
@@ -1019,7 +1037,7 @@ function viewProfit(){
   <section><div class="sec-h"><h2>Por mes</h2><span class="muted" style="font-size:12px">Cobrado menos lo que pagas</span></div>
   <div class="card">${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capProfit')}</div></section>
   <section><div class="sec-h"><h2>Tu parte de cada préstamo</h2><span class="muted num" style="font-size:12.5px">${fmt(P.mine)}/mes</span></div>
-  <div class="list">${loans.map(({l,R})=>`<button class="row" data-act="openLoan" data-id="${l.id}"><span class="bar" style="color:${borColor(l)}"></span><div class="main"><div class="t">${h(borName(l))} <span class="dim" style="font-weight:500">· Día ${l.payDay}</span></div><div class="s">Cobras ${fmt(R.total)} · pagas ${fmt(R.total-R.mine)}</div></div><div class="r"><span class="num" style="color:${R.mine<0?'var(--bad)':'var(--ion)'}">${fmt(R.mine)}</span><span class="muted" style="font-size:11.5px">${pct(r2(R.minePct))} efectivo</span></div></button>`).join('')||'<div class="empty">Sin préstamos activos.</div>'}</div></section>
+  <div class="list">${loans.map(({l,R})=>`<button class="row" data-act="openLoan" data-id="${l.id}"><span class="bar" style="color:${borColor(l)}"></span><div class="main"><div class="t">${pn(borName(l))} <span class="dim" style="font-weight:500">· Día ${l.payDay}</span></div><div class="s">Cobras ${fmt(R.total)} · pagas ${fmt(R.total-R.mine)}</div></div><div class="r"><span class="num" style="color:${R.mine<0?'var(--bad)':'var(--ion)'}">${fmt(R.mine)}</span><span class="muted" style="font-size:11.5px">${pct(r2(R.minePct))} efectivo</span></div></button>`).join('')||'<div class="empty">Sin préstamos activos.</div>'}</div></section>
   ${H.length?`<section><div class="sec-h"><h2>Historial</h2></div><div class="tbl-wrap"><table class="tight"><thead><tr><th>Mes</th><th class="ar">Cobrado</th><th class="ar">Pagas</th><th class="ar">Tu ganancia</th></tr></thead><tbody>
   ${H.slice().reverse().map(x=>`<tr><td><b>${ymLabel(x.ym)}</b>${x.current?' <span class="dim" style="font-size:11px">en curso</span>':''}</td><td class="ar num">${fmt(x.collected)}</td><td class="ar num">−${fmt(x.others)}</td><td class="ar num" style="color:${x.value<0?'var(--bad)':'var(--ion)'}">${fmt(x.value)}</td></tr>`).join('')}
   </tbody></table></div><div class="muted" style="font-size:12px">El mes en curso usa lo esperado. Los meses cerrados usan lo cobrado real.</div></section>`:''}
@@ -1027,14 +1045,14 @@ function viewProfit(){
   <button class="btn pri" data-act="adminPdf">${ico('pdf')}Reporte de cartera PDF</button>`};
 }
 function payRow(x){const late=x.due<today()?daysBetween(x.due,today()):0;
-  return `<button class="row" data-act="payout" data-id="${x.i.id}" data-p="${x.p}"><div class="main"><div class="t">${h(x.i.name)} <span class="dim" style="font-weight:500">· ${ymLabel(x.p)}</span></div><div class="s">${x.due===today()?'Vence hoy':late?`Venció el ${dShort(x.due)}`:`Vence el ${dShort(x.due)}`}${x.i.payMethod?' · '+h(x.i.payMethod):''}</div></div><div class="r"><span class="num">${fmt(x.amt)}</span>${late?`<span class="chip s-atrasado">${late} día${late>1?'s':''} tarde</span>`:chip('pendiente')}</div></button>`}
+  return `<button class="row" data-act="payout" data-id="${x.i.id}" data-p="${x.p}"><div class="main"><div class="t">${pn(x.i.name)} <span class="dim" style="font-weight:500">· ${ymLabel(x.p)}</span></div><div class="s">${x.due===today()?'Vence hoy':late?`Venció el ${dShort(x.due)}`:`Vence el ${dShort(x.due)}`}${x.i.payMethod?' · '+h(x.i.payMethod):''}</div></div><div class="r"><span class="num">${fmt(x.amt)}</span>${late?`<span class="chip s-atrasado">${late} día${late>1?'s':''} tarde</span>`:chip('pendiente')}</div></button>`}
 function payQueue(){const q=pendingPayouts(),ym=curYM(),done=db.investors.filter(i=>!i.owner&&payoutOf(i,ym)).length;
   if(!q.length&&!done)return '';
   return `<section class="priv"><div class="sec-h"><h2>Pagos a inversionistas</h2><span class="muted" style="font-size:12.5px">${done} pagado${done===1?'':'s'} este mes</span></div>
   ${q.length?`<div class="list">${q.map(payRow).join('')}</div>`:`<div class="list"><div class="empty">Estás al día con todos.</div></div>`}</section>`}
 function todayBanner(){const t=today(),c=monthItems(curYM()).filter(x=>x.due===t&&status(x.l,x.p)!=='pagado'),q=pendingPayouts().filter(x=>x.due===t);
   if(!c.length&&!q.length)return '';
-  return `<div class="banner" style="border-style:solid;border-color:rgba(70,227,198,.45);background:rgba(70,227,198,.07);color:var(--fg);flex-direction:column;align-items:stretch;gap:4px"><b style="color:var(--ion)">Hoy</b>${c.map(x=>`<span>Cobrar a ${h(borName(x.l))} · <span class="num">${fmt(expected(x.l,x.p))}</span></span>`).join('')}${q.map(x=>`<span class="priv">Pagar a ${h(x.i.name)} · <span class="num">${fmt(x.amt)}</span></span>`).join('')}</div>`}
+  return `<div class="banner" style="border-style:solid;border-color:rgba(70,227,198,.45);background:rgba(70,227,198,.07);color:var(--fg);flex-direction:column;align-items:stretch;gap:4px"><b style="color:var(--ion)">Hoy</b>${c.map(x=>`<span>Cobrar a ${pn(borName(x.l))} · <span class="num">${fmt(expected(x.l,x.p))}</span></span>`).join('')}${q.map(x=>`<span class="priv">Pagar a ${pn(x.i.name)} · <span class="num">${fmt(x.amt)}</span></span>`).join('')}</div>`}
 function viewHome(){
   const t=totals(),ym=curYM(),late=lateItems(),items=monthItems(ym);
   const hasData=db.loans.length||db.movements.length;
@@ -1095,7 +1113,7 @@ function viewCal(){
   <div class="card">
     <div class="calnav"><button class="iconbtn" data-act="calMove" data-v="-1" aria-label="Mes anterior">${ico('chevL')}</button><h2>${ymLong(ym)}</h2><button class="iconbtn" data-act="calMove" data-v="1" aria-label="Mes siguiente">${ico('chevR')}</button></div>
     <div class="cal">${cells}</div>
-    ${bors.length?`<div class="legend" style="margin-top:12px">${bors.map(l=>{const rates=[...new Set(items.filter(x=>x.l.borrowerId===l.borrowerId).map(x=>rateLabel(x.l)))].join(' / ');return `<span><i class="dot" style="color:${borColor(l)}"></i>${h(borName(l))}<span class="priv"> · ${rates}</span></span>`}).join('')}</div>`:''}
+    ${bors.length?`<div class="legend" style="margin-top:12px">${bors.map(l=>{const rates=[...new Set(items.filter(x=>x.l.borrowerId===l.borrowerId).map(x=>rateLabel(x.l)))].join(' / ');return `<span><i class="dot" style="color:${borColor(l)}"></i>${pn(borName(l))}<span class="priv"> · ${rates}</span></span>`}).join('')}</div>`:''}
     <div class="legend"><span>● cobrado</span><span>○ por cobrar</span><span style="color:var(--bad)">▢ atrasado</span></div>
   </div>
   <div class="stats card" style="margin-top:0">
@@ -1130,7 +1148,7 @@ function viewLoans(){
   ${mgrCards()}
   <div class="seg"><button class="${f==='activos'?'on':''}" data-act="loanFilter" data-v="activos">Activos · ${db.loans.filter(l=>!l.closed).length}</button><button class="${f==='liquidados'?'on':''}" data-act="loanFilter" data-v="liquidados">Liquidados · ${db.loans.filter(l=>l.closed).length}</button></div>
   ${groups.size?[...groups].map(([bid,ls])=>{const b=bor(bid);const tot=r2(ls.reduce((s,l)=>s+outNow(l),0)),mo=r2(ls.reduce((s,l)=>s+(l.closed?0:loanInt(l,outNow(l))),0));
-    return `<section><div class="sec-h"><h2 style="display:flex;align-items:center;gap:8px"><i class="dot" style="color:${b?.color}"></i>${h(b?.name)} ${scoreChip(clientScore(bid))}</h2><span style="display:flex;gap:14px;align-items:center">${f==='activos'&&ls.some(l=>hasPeriod(l,ym)&&status(l,ym)!=='pagado')?`<button style="font-size:12.5px;font-weight:700;color:var(--ion)" data-act="collect" data-id="${bid}" data-confirm="1">Cobrar ${shortM(ym)}</button>`:''}<button class="muted" style="font-size:13px" data-act="editBor" data-id="${bid}">Editar</button></span></div>
+    return `<section><div class="sec-h"><h2 style="display:flex;align-items:center;gap:8px"><i class="dot" style="color:${b?.color}"></i>${pn(b?.name)} ${scoreChip(clientScore(bid))}</h2><span style="display:flex;gap:14px;align-items:center">${f==='activos'&&ls.some(l=>hasPeriod(l,ym)&&status(l,ym)!=='pagado')?`<button style="font-size:12.5px;font-weight:700;color:var(--ion)" data-act="collect" data-id="${bid}" data-confirm="1">Cobrar ${shortM(ym)}</button>`:''}<button class="muted" style="font-size:13px" data-act="editBor" data-id="${bid}">Editar</button></span></div>
     <div class="list">${ls.map(l=>{const p=hasPeriod(l,ym)?ym:null;return `<button class="row" data-act="openLoan" data-id="${l.id}"><div class="main"><div class="t"><span class="num">${fmt(l.closed?l.principal:outNow(l))}</span> <span class="dim priv" style="font-weight:500">· ${rateLabel(l)}/mes</span></div><div class="s">${l.manager?`Con ${h(l.manager)} · `:''}Día ${l.payDay} · ${l.funding.map(f=>h(inv(f.investorId)?.name)).join(', ')}${+l.term?` · ${l.term} meses`:''}</div></div>
       <div class="r">${l.closed?chip('liquidado'):`<span class="num priv">${fmt(loanInt(l,outNow(l)))}</span>${p?chip(status(l,p)):'<span class="chip s-pendiente">Inicia</span>'}`}</div></button>`}).join('')}
     ${f==='activos'?`<div class="row" style="justify-content:space-between;font-size:12.5px"><span class="muted">Subtotal</span><span class="num">${fmt(tot)}<span class="priv"> · <span style="color:var(--ion)">${fmt(mo)}/mes</span></span></span></div>`:''}</div></section>`}).join('')
@@ -1145,7 +1163,7 @@ function repartoCard(l){
   <div class="card" style="padding:14px">
     <div class="split" style="margin-top:0;height:10px;gap:2px;background:none">${segs.filter(x=>x.w>0).map(x=>`<i style="width:${x.w/R.total*100}%;background:${x.c};border-radius:3px"></i>`).join('')}</div>
     <div style="margin-top:10px">
-    ${R.parts.map((p,k)=>`<div class="kv"><span><i class="dot" style="display:inline-block;width:8px;height:8px;margin-right:8px;box-shadow:none;color:${segs[k].c}"></i>${h(p.i.name)} <span class="dim">· ${pct(p.rate)} sobre ${fmt(p.base)}${p.kind==='part'?' · parte de '+h(p.of.name):''}</span></span><span class="num">${fmt(p.amt)}</span></div>`).join('')}
+    ${R.parts.map((p,k)=>`<div class="kv"><span><i class="dot" style="display:inline-block;width:8px;height:8px;margin-right:8px;box-shadow:none;color:${segs[k].c}"></i>${pn(p.i.name)} <span class="dim">· ${pct(p.rate)} sobre ${fmt(p.base)}${p.kind==='part'?' · parte de '+h(p.of.name):''}</span></span><span class="num">${fmt(p.amt)}</span></div>`).join('')}
     <div class="kv" style="border-top:1px solid var(--line);margin-top:4px;padding-top:8px"><span style="font-weight:600"><i class="dot" style="display:inline-block;width:8px;height:8px;margin-right:8px;box-shadow:none;color:var(--ion)"></i>Te queda <span class="dim" style="font-weight:400">· ${pct(r2(R.minePct))} efectivo</span></span><span class="num" style="font-weight:600;color:${R.mine<0?'var(--bad)':'var(--ion)'}">${fmt(R.mine)}</span></div>
     </div></div></section>`;
 }
@@ -1172,8 +1190,8 @@ function viewLoan(id){
   ${repartoCard(l)}
   <section><div class="sec-h"><h2>Partes del préstamo</h2></div><div class="list">
   ${l.funding.map(f=>{const i=inv(f.investorId);if(!i)return '';const now=l.closed?0:f.amount*out/l.principal,ir=rateFor(f,l),pay=now*ir/100;
-    return `<button class="row" data-act="openInv" data-id="${i.id}"><div class="main"><div class="t">${h(i.name)}${i.owner?'<span class="tag">Tú</span>':''}</div><div class="s">${Math.round(f.amount/l.principal*100)}% del préstamo<span class="priv"> · cliente ${pct(crate(f,l))} · recibe ${pct(ir)}</span></div></div><div class="r"><span class="num">${fmt(l.closed?f.amount:now)}</span><span class="num muted priv" style="font-size:12px">${fmt(pay)}/mes</span></div></button>`}).join('')}
-  ${l.funding.flatMap(f=>fShares(f).map(x=>({x,f}))).map(({x,f})=>{const i=inv(x.investorId),of=inv(f.investorId);if(!i)return '';const b=fBase(l,f,out);return `<button class="row priv" data-act="openInv" data-id="${i.id}"><div class="main"><div class="t">${h(i.name)}<span class="tag" style="color:var(--warn);border-color:rgba(242,184,75,.4)">Socio</span></div><div class="s">${pct(x.rate)} sobre la parte de ${h(of?.name)} (${fmt(b)})</div></div><div class="r"><span class="num">—</span><span class="num muted" style="font-size:12px">${fmt(b*x.rate/100)}/mes</span></div></button>`}).join('')}
+    return `<button class="row" data-act="openInv" data-id="${i.id}"><div class="main"><div class="t">${pn(i.name)}${i.owner?'<span class="tag">Tú</span>':''}</div><div class="s">${Math.round(f.amount/l.principal*100)}% del préstamo<span class="priv"> · cliente ${pct(crate(f,l))} · recibe ${pct(ir)}</span></div></div><div class="r"><span class="num">${fmt(l.closed?f.amount:now)}</span><span class="num muted priv" style="font-size:12px">${fmt(pay)}/mes</span></div></button>`}).join('')}
+  ${l.funding.flatMap(f=>fShares(f).map(x=>({x,f}))).map(({x,f})=>{const i=inv(x.investorId),of=inv(f.investorId);if(!i)return '';const b=fBase(l,f,out);return `<button class="row priv" data-act="openInv" data-id="${i.id}"><div class="main"><div class="t">${pn(i.name)}<span class="tag" style="color:var(--warn);border-color:rgba(242,184,75,.4)">Socio</span></div><div class="s">${pct(x.rate)} sobre la parte de ${pn(of?.name)} (${fmt(b)})</div></div><div class="r"><span class="num">—</span><span class="num muted" style="font-size:12px">${fmt(b*x.rate/100)}/mes</span></div></button>`}).join('')}
   </div></section>
   <section><div class="sec-h"><h2>Pagos por mes</h2><span class="muted" style="font-size:12px">Toca para registrar</span></div>
   ${ps.length?`<div class="tbl-wrap"><table><thead><tr><th>Mes</th><th>Fecha</th><th class="ar">Esperado</th><th class="ar">Pagado</th><th>Estado</th></tr></thead><tbody>
@@ -1190,7 +1208,7 @@ function viewInvestors(){
   return {eyebrow:`${all.length} personas`,title:'Inversionistas',action:addBtn('newInv','Persona'),html:`
   <div class="card hero priv"><div class="eyebrow">Pagas a otros por mes</div><div class="big ion">${fmt(totalDiv)}</div><div class="muted" style="font-size:13px;margin-top:6px">Inversionistas y socios, sin contar lo tuyo</div></div>
   ${all.map(i=>{const S=summary(i);return `<button class="card" style="text-align:left;width:100%" data-act="openInv" data-id="${i.id}">
-    <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><div style="font:600 16px var(--display)">${h(i.name)}${i.owner?'<span class="tag">Tú</span>':S.partner?'<span class="tag" style="color:var(--warn);border-color:rgba(242,184,75,.4)">Socio</span>':''}</div><div class="muted" style="font-size:12.5px">${rateText(i)}</div></div>
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><div style="font:600 16px var(--display)">${pn(i.name)}${i.owner?'<span class="tag">Tú</span>':S.partner?'<span class="tag" style="color:var(--warn);border-color:rgba(242,184,75,.4)">Socio</span>':''}</div><div class="muted" style="font-size:12.5px">${rateText(i)}</div></div>
     ${S.partner?`<div class="big" style="font-size:25px">${fmt(S.mo)}<span class="muted" style="font:500 13px var(--body)"> /mes</span></div>
     <div class="legend"><span>Participa en ${S.n} préstamo${S.n>1?'s':''} · sobre ${fmt(S.base)}</span></div>`
     :`<div class="big" style="font-size:25px">${fmt(S.cap)}</div>
@@ -1230,7 +1248,7 @@ function placementsList(i,S,opts={}){
   const pls=placements(i);if(!pls.length)return `<div class="list"><div class="empty">Aún no está en ningún préstamo.${S.fr>0?` Tiene ${fmt(S.fr)} en espera.`:''}</div></div>`;
   const groups=new Map();pls.forEach(x=>{if(!groups.has(x.l.borrowerId))groups.set(x.l.borrowerId,[]);groups.get(x.l.borrowerId).push(x)});
   return `<div class="list">${[...groups].map(([bid,xs])=>{const b=bor(bid);const m=xs.reduce((s,x)=>s+x.amt,0),cap=xs.filter(x=>x.kind==='capital').reduce((s,x)=>s+x.base,0);
-    return `<div class="row" style="background:var(--panel-2)"><i class="dot" style="color:${b?.color}"></i><div class="main"><div class="t">${h(b?.name)}</div><div class="s">${xs.length} préstamo${xs.length>1?'s':''}${cap&&S.pl?` · ${Math.round(cap/S.pl*1000)/10}% de su capital colocado`:''}</div></div><div class="r"><span class="num" style="color:var(--ion)">${fmt(m)}/mes</span></div></div>
+    return `<div class="row" style="background:var(--panel-2)"><i class="dot" style="color:${b?.color}"></i><div class="main"><div class="t">${pn(b?.name)}</div><div class="s">${xs.length} préstamo${xs.length>1?'s':''}${cap&&S.pl?` · ${Math.round(cap/S.pl*1000)/10}% de su capital colocado`:''}</div></div><div class="r"><span class="num" style="color:var(--ion)">${fmt(m)}/mes</span></div></div>
     ${xs.map(x=>`<${opts.static?'div':'button'} class="row" ${opts.static?'':`data-act="openLoan" data-id="${x.l.id}"`} style="padding-left:36px"><div class="main"><div class="t" style="font-weight:500">Día ${x.l.payDay} <span class="num muted">· ${x.kind==='part'?'participación ':''}${pct(x.rate)} sobre ${fmt(x.base)}</span></div></div><div class="r"><span class="num">${fmt(x.amt)}</span></div></${opts.static?'div':'button'}>`).join('')}`}).join('')}</div>`;
 }
 function payHistRow(i,r,tap){const po=payoutOf(i,r.p),late=payoutDelay(i,r.p),ded=po?.deductions?.reduce((s,d)=>s+d.amount,0)||0;
@@ -1276,7 +1294,7 @@ function viewPresent(id){
     <div style="display:flex;align-items:center;gap:10px"><div class="brand" style="width:38px;height:38px">${logoSVG({id:"pv",bg:true})}</div><div><div class="eyebrow" style="color:var(--ion)">ORBIT · Private Capital</div><div class="muted" style="font-size:12px">Estado al ${dLong(today())}</div></div></div>
     <button class="iconbtn" data-act="back" aria-label="Salir">${ico('x')}</button>
   </div>
-  <div><div class="eyebrow">Estado de cuenta</div><div style="font:600 28px/1.15 var(--display);letter-spacing:-.02em;margin-top:4px">${h(i.name)}</div></div>
+  <div><div class="eyebrow">Estado de cuenta</div><div style="font:600 28px/1.15 var(--display);letter-spacing:-.02em;margin-top:4px">${pn(i.name)}</div></div>
   <div class="card hero">${heroFor(i,S)}</div>
   ${invChart(i,S,'capPres')}
   <section><div class="sec-h"><h2>Sus préstamos</h2></div>${placementsList(i,S,{static:true})}</section>
@@ -1329,7 +1347,7 @@ function viewMe(){
   const acc=H.length?H[H.length-1].acc:0,placed=o?placedNow(o):0;
   const r=40,c=2*Math.PI*r,frac=P.interest>0?Math.max(0,Math.min(1,F.net/P.interest)):0;
   const holder=(o&&o.name&&o.name!=='Yo'?o.name:'Daniel').toUpperCase();
-  const WI={"bank": "<path d=\"M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18M12 3l9 5H3z\"/>", "orbit": "<circle cx=\"12\" cy=\"12\" r=\"7\"/><circle cx=\"19\" cy=\"6\" r=\"2.2\" fill=\"currentColor\"/>", "cars": "<path d=\"M3 15l2-5c.5-1.3 1.6-2 3-2h8c1.4 0 2.5.7 3 2l2 5v3h-3M6 18H3v-3h18\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>", "house": "<path d=\"M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6\"/>", "income": "<path d=\"M4 17l5-5 4 4 7-8M14 8h6v6\"/>", "k401": "<path d=\"M4 19h16M6 19V9l6-5 6 5v10M10 19v-5h4v5\"/>", "debt": "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M3 10h18M7 15h4\"/>"};
+  const WI={"bank": "<path d=\"M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18M12 3l9 5H3z\"/>", "orbit": "<circle cx=\"12\" cy=\"12\" r=\"7\"/><circle cx=\"19\" cy=\"6\" r=\"2.2\" fill=\"currentColor\"/>", "cars": "<path d=\"M3 15l2-5c.5-1.3 1.6-2 3-2h8c1.4 0 2.5.7 3 2l2 5v3h-3M6 18H3v-3h18\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>", "house": "<path d=\"M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6\"/>", "income": "<path d=\"M4 17l5-5 4 4 7-8M14 8h6v6\"/>", "k401": "<path d=\"M4 19h16M6 19V9l6-5 6 5v10M10 19v-5h4v5\"/>", "owed": "<path d=\"M7 11V7a5 5 0 0 1 10 0M5 11h14v9H5zM12 15v2\"/>", "debt": "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M3 10h18M7 15h4\"/>"};
   const wc=(id,cls,title,amt,body)=>`<div class="wc ${cls}" data-act="wcard" data-id="${id}"><div class="wc-h"><span class="wc-t"><svg class="wc-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${WI[id]||''}</svg>${title}</span><span class="wc-a num">${amt}</span></div><div class="wc-b"><div>${body}</div></div></div>`;
   const kv=(k,v,cls='')=>`<div class="kv"><span>${k}</span><span class="num ${cls}">${v}</span></div>`;
   return {eyebrow:'Solo para ti',title:'Mi panel',action:`<div style="display:flex;gap:8px">${eyeBtn()}<button class="iconbtn" data-act="settings" aria-label="Ajustes">${ico('gear')}</button></div>`,html:`
@@ -1337,7 +1355,7 @@ function viewMe(){
     <div class="water" aria-hidden="true"><div class="rays"><i></i><i></i><i></i><i></i></div><div class="moon"><i></i><i></i><i></i><i></i><i></i><i></i></div><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w3"><path d="M0,32 C120,26 240,38 360,32 C480,26 600,38 720,32 C840,26 960,38 1080,32 C1200,26 1320,38 1440,32 L1440,60 L0,60 Z"/></svg><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w2"><path d="M0,34 C200,26 400,42 600,34 C800,26 1000,42 1200,34 C1400,26 1600,42 1800,34 L1800,60 L0,60 Z"/></svg><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w1"><path d="M0,30 C150,22 300,38 450,30 C600,22 750,38 900,30 C1050,22 1200,38 1350,30 L1350,60 L0,60 Z"/></svg><i class="glint"></i></div>
     <div class="metal-top"><span class="metal-logo">${logoSVG({id:'mt'})}</span><span class="metal-brand">ORBIT</span>
       <button class="mode" data-act="heroMode" aria-label="Cambiar entre net worth y liquidez"><span class="m-solid">◆ Net worth</span><span class="m-liquid"><svg viewBox="0 0 24 24" width="13" height="13"><path d="M12 3C9 7.5 6 10.6 6 14a6 6 0 0 0 12 0c0-3.4-3-6.5-6-11z" fill="currentColor"/></svg> Líquido</span></button></div>
-    <div class="face f-solid"><div class="metal-l">Net worth</div><div class="metal-v">${cnt(F.worthAll)}</div><div class="metal-sub">Banco, Orbit, garage, casa y 401K, menos deudas</div></div>
+    <div class="face f-solid"><div class="metal-l">Net worth</div><div class="metal-v">${cnt(F.worthAll)}</div><div class="metal-sub">Banco, Orbit, garage, casa, 401K y lo que te deben, menos deudas</div></div>
     <div class="face f-liquid"><div class="metal-l">Dinero líquido</div><div class="metal-v">${cnt(F.liquid)}</div><div class="metal-sub">Banco ${fmt(F.sav)} + trabajo ${fmt(F.sal)} + Orbit ${fmt(F.orbitM)} este mes</div></div>
     <div class="metal-bot"><span class="metal-name">${h(holder)}</span><span class="metal-net"><small>NETO / MES</small>${fmt(F.net)}</span></div>
   </div>
@@ -1347,6 +1365,7 @@ function viewMe(){
     ${wc('cars','wc-carbon','Garage',fmt(F.cars),`<button class="wc-btn" data-act="assetCars">Editar valor</button>`)}
     ${wc('house','wc-house','Casa',fmt(F.house),kv('Valor',fmt(+db.settings.houseValue||0))+kv('Hipoteca','−'+fmt(+db.settings.mortgage||0))+`<button class="wc-btn" data-act="assetHouse">Editar</button>`)}
     ${wc('k401','wc-k401','401K',fmt(F.k401),kv('Saldo',fmt(+db.settings.k401||0))+kv('Préstamo','−'+fmt(+db.settings.k401Loan||0))+`<button class="wc-btn" data-act="asset401">Editar</button>`)}
+    ${wc('owed','wc-slate','Me deben',fmt(F.owed),(db.owed||[]).filter(o=>owedLeft(o)>0).map(o=>kv(pn(o.name),fmt(owedLeft(o)))).join('')+`<button class="wc-btn" data-act="owe">Agregar</button>`)}
     ${wc('income','wc-slate','Ingresos',fmt(B.sal+B.orb),kv('Trabajo',fmt(B.sal))+kv('Orbit',fmt(B.orb))+kv('Gastos','−'+fmt(B.exp))+kv('Libre',fmt(Math.max(0,B.free)))+`<button class="wc-btn" data-act="income">Editar presupuesto</button>`)}
     ${wc('debt','wc-graphite','Deudas',fmt(F.debt),(db.cards.length?db.cards.map(cd=>`<button class="kv" style="width:100%" data-act="${(cd.kind||'tarjeta')==='tarjeta'?'ccOpen':'card'}" data-id="${cd.id}"><span>${h(cd.name)} <small style="opacity:.6">${+cd.apr?pct(cd.apr):'0%'}</small></span><span class="num">${fmt(cd.balance)}</span></button>`).join(''):'<div class="kv"><span>Sin deudas</span></div>')+kv('Interés al mes',fmt(F.cost))+`<button class="wc-btn" data-act="card">Agregar deuda</button>`)}
   </div>
@@ -1368,6 +1387,7 @@ function viewMe(){
   </div></section>
   ${leverageSection()}
   ${assetsSection()}
+  ${owedSection()}
   ${goalsSection()}
   ${ccSection()}
   ${debtPlanSection()}
@@ -1418,7 +1438,7 @@ const num=v=>{const n=parseFloat(String(v).replace(/[$,\s]/g,''));return isFinit
 
 function sheetPay(lid,p){
   const l=loanById(lid),pay=payOf(lid,p),exp=expected(l,p),st=status(l,p);
-  openSheet(`<h3>${h(borName(l))} · ${ymLabel(p)}</h3>
+  openSheet(`<h3>${pn(borName(l))} · ${ymLabel(p)}</h3>
   <div class="sub">Vence el ${dLong(dueISO(l,p))} · ${rateLabel(l)} sobre ${fmt(outBefore(l,p))} ${chip(st)}</div>
   <form data-form="pay" data-l="${lid}" data-p="${p}">
     <button type="button" class="btn pri" data-act="fillFull" data-v="${exp}">Pagó completo · ${fmt(exp)}</button>
@@ -1431,11 +1451,11 @@ function sheetPay(lid,p){
 
 function shareRow(sliceId,x={}){
   const opts=db.investors.filter(i=>!i.owner&&i.id!==sliceId);
-  return `<div class="shrow"><span class="dim" style="font-size:12px">Socio</span><select data-sp aria-label="Socio">${opts.map(i=>`<option value="${i.id}" ${x.investorId===i.id?'selected':''}>${h(i.name)}</option>`).join('')}</select><input data-sr inputmode="decimal" value="${x.rate??''}" placeholder="%" aria-label="Porcentaje del socio"><button type="button" class="dim" data-act="rmShare" aria-label="Quitar">✕</button></div>`;
+  return `<div class="shrow"><span class="dim" style="font-size:12px">Socio</span><select data-sp aria-label="Socio">${opts.map(i=>`<option value="${i.id}" ${x.investorId===i.id?'selected':''}>${pn(i.name)}</option>`).join('')}</select><input data-sr inputmode="decimal" value="${x.rate??''}" placeholder="%" aria-label="Porcentaje del socio"><button type="button" class="dim" data-act="rmShare" aria-label="Quitar">✕</button></div>`;
 }
 function partRow(f={},l=null){
   const sel=f.investorId||owner()?.id;
-  return `<div class="slice"><div class="part-h"><select data-pi aria-label="De quién es el dinero">${db.investors.map(i=>`<option value="${i.id}" ${sel===i.id?'selected':''}>${h(i.name)}${i.owner?' (tú)':''}</option>`).join('')}</select><button type="button" class="dim" data-act="rmPart" aria-label="Quitar parte">✕</button></div>
+  return `<div class="slice"><div class="part-h"><select data-pi aria-label="De quién es el dinero">${db.investors.map(i=>`<option value="${i.id}" ${sel===i.id?'selected':''}>${pn(i.name)}${i.owner?' (tú)':''}</option>`).join('')}</select><button type="button" class="dim" data-act="rmPart" aria-label="Quitar parte">✕</button></div>
     <div class="part-g">
       <div class="field"><label>Monto</label><input data-fund inputmode="decimal" value="${f.amount?r2(f.amount):''}" placeholder="0.00"></div>
       <div class="field"><label>Cliente %</label><input data-crate inputmode="decimal" value="${f.crate??''}" placeholder="general"></div>
@@ -1482,7 +1502,7 @@ function fundHint(){
   let mineT=0,totT=0;
   const blocks=sl.map(x=>{const i=inv(x.investorId),cr=x.crate??rate,tot=x.amount*cr/100,shr=x.shares.reduce((s,y)=>s+y.rate,0),ir=i.owner?cr-shr:(x.rate??+i.rate),myR=i.owner?ir:cr-ir-shr,mine=x.amount*myR/100;mineT+=mine;totT+=tot;
     const parts=[...(i.owner?[]:[[i.name,ir,x.amount*ir/100]]),...x.shares.map(y=>[inv(y.investorId)?.name,y.rate,x.amount*y.rate/100])];
-    return `<div style="padding:6px 0;border-top:1px solid var(--line)"><div class="kv" style="padding-block:2px"><b>${h(i.name)} · ${fmt(x.amount)} al ${pct(cr)}</b><span class="num">${fmt(tot)}/mes</span></div>
+    return `<div style="padding:6px 0;border-top:1px solid var(--line)"><div class="kv" style="padding-block:2px"><b>${pn(i.name)} · ${fmt(x.amount)} al ${pct(cr)}</b><span class="num">${fmt(tot)}/mes</span></div>
       ${parts.map(([n,r,a])=>`<div class="kv" style="padding-block:1px"><span class="muted">${h(n)} · ${pct(r)}</span><span class="num muted">−${fmt(a)}</span></div>`).join('')}
       <div class="kv" style="padding-block:1px"><span style="color:${mine<0?'var(--bad)':'var(--ion)'}">Tú · ${pct(r2(myR))}</span><span class="num" style="color:${mine<0?'var(--bad)':'var(--ion)'}">${fmt(mine)}</span></div></div>`}).join('');
   $('#splitHint').innerHTML=`<div class="kv" style="padding-top:0"><span>Cliente paga en total</span><span class="num">${fmt(totT)}/mes</span></div>${blocks}<div class="kv" style="border-top:1px solid var(--line-2);padding-top:8px"><b>Te queda en total</b><span class="num" style="font-weight:700;color:${mineT<0?'var(--bad)':'var(--ion)'}">${fmt(mineT)}/mes</span></div>`;
@@ -1504,7 +1524,7 @@ function sheetInv(id){
 }
 function sheetMove(id,type){
   const i=inv(id),free=r2(capitalOf(i)-placedNow(i));
-  openSheet(`<h3>${type==='aporte'?'Aporte de capital':'Retiro de capital'}</h3><div class="sub">${h(i.name)} · en espera ${fmt(free)}</div>
+  openSheet(`<h3>${type==='aporte'?'Aporte de capital':'Retiro de capital'}</h3><div class="sub">${pn(i.name)} · en espera ${fmt(free)}</div>
   <form data-form="move" data-id="${id}" data-v="${type}">
     <div class="grid2">${fld('Monto',money('amount'))}${fld('Fecha',`<input id="mdate" name="date" type="date" value="${today()}">`)}</div>
     ${i.owner&&type==='aporte'?fld('¿De dónde salió el dinero?',`<select id="msource" name="source"><option value="ahorro">Mis ahorros</option>${db.cards.map(c=>`<option value="${c.id}">Tarjeta · ${h(c.name)}</option>`).join('')}<option value="__new">+ Nueva tarjeta…</option></select>`)+`<div class="field" id="newCardWrap" hidden><label>Nombre de la tarjeta</label><input id="newCard" name="newCard" placeholder="Ej. Chase Sapphire"></div>`:''}
@@ -1527,7 +1547,7 @@ function sheetBor(id){
 function sheetClose(id){
   const l=loanById(id);
   if(l.closed){l.closed=null;save();render();toast('Préstamo reabierto');return}
-  openSheet(`<h3>Liquidar préstamo</h3><div class="sub">${h(borName(l))} devuelve ${fmt(outNow(l))}. El capital vuelve a “en espera” para cada inversionista.</div>
+  openSheet(`<h3>Liquidar préstamo</h3><div class="sub">${pn(borName(l))} devuelve ${fmt(outNow(l))}. El capital vuelve a “en espera” para cada inversionista.</div>
   <form data-form="close" data-id="${id}">
     ${fld('Fecha de liquidación',`<input id="cdate" name="date" type="date" value="${today()}">`,'Registra antes el interés del último mes si lo cobraste.')}
     <button class="btn pri" type="submit">Liquidar</button>
@@ -1538,8 +1558,8 @@ function sheetClose(id){
 const dedRow=(d={})=>`<div class="fund ded"><input data-dc value="${h(d.concept||'')}" placeholder="Concepto (ej. Wire fee)" aria-label="Concepto"><input data-da inputmode="decimal" value="${d.amount??''}" placeholder="0.00" aria-label="Monto"><button type="button" class="dim" data-act="rmDed" aria-label="Quitar">✕</button></div>`;
 function sheetPayout(id,p){
   const i=inv(id),po=payoutOf(i,p),due=payoutDue(i,p),st=po?.status||'pagado',div=dividend(i,p);
-  const lines=db.loans.filter(l=>hasPeriod(l,p)&&involved(l,i)).map(l=>{const a=sumAmt(linesFor(i,l,outBefore(l,p)));const s=status(l,p);return `<div class="kv"><span class="muted">${h(borName(l))} · Día ${l.payDay} ${s==='pagado'?'':`<span class="chip s-${s}" style="padding:3px 6px">${STATUS_L[s]}</span>`}</span><span class="num">${fmt(a)}</span></div>`}).join('');
-  openSheet(`<h3>Pago a ${h(i.name)} · ${ymLabel(p)}</h3><div class="sub">Le toca ${fmt(div)} · vence el ${dLong(due)}</div>
+  const lines=db.loans.filter(l=>hasPeriod(l,p)&&involved(l,i)).map(l=>{const a=sumAmt(linesFor(i,l,outBefore(l,p)));const s=status(l,p);return `<div class="kv"><span class="muted">${pn(borName(l))} · Día ${l.payDay} ${s==='pagado'?'':`<span class="chip s-${s}" style="padding:3px 6px">${STATUS_L[s]}</span>`}</span><span class="num">${fmt(a)}</span></div>`}).join('');
+  openSheet(`<h3>Pago a ${pn(i.name)} · ${ymLabel(p)}</h3><div class="sub">Le toca ${fmt(div)} · vence el ${dLong(due)}</div>
   <div class="card" style="padding:8px 14px;margin-bottom:12px">${lines||'<div class="muted">Sin préstamos este mes.</div>'}</div>
   <form data-form="payout" data-id="${id}" data-p="${p}">
     <input type="hidden" name="status" value="${st}">
@@ -1580,7 +1600,7 @@ function sheetOwe(loanIds,p){
   const people=db.investors.filter(i=>!i.owner&&loanIds.some(id=>involved(loanById(id),i)));
   if(!people.length){closeSheet();return}
   openSheet(`<h3>Cobro guardado</h3><div class="sub">Ahora te toca pagarle a:</div><div class="list">
-  ${people.map(i=>{const po=payoutOf(i,p),late=payoutDelay(i,p);return `<button class="row" data-act="payout" data-id="${i.id}" data-p="${p}"><div class="main"><div class="t">${h(i.name)}</div><div class="s">${ymLabel(p)} · vence ${dShort(payoutDue(i,p))}${po?' · '+h(viaText(po)):''}</div></div><div class="r"><span class="num">${fmt(payoutAmt(i,p))}</span>${po?chip(po.status):late>0?`<span class="chip s-atrasado">${late} días</span>`:chip('pendiente')}</div></button>`}).join('')}
+  ${people.map(i=>{const po=payoutOf(i,p),late=payoutDelay(i,p);return `<button class="row" data-act="payout" data-id="${i.id}" data-p="${p}"><div class="main"><div class="t">${pn(i.name)}</div><div class="s">${ymLabel(p)} · vence ${dShort(payoutDue(i,p))}${po?' · '+h(viaText(po)):''}</div></div><div class="r"><span class="num">${fmt(payoutAmt(i,p))}</span>${po?chip(po.status):late>0?`<span class="chip s-atrasado">${late} días</span>`:chip('pendiente')}</div></button>`}).join('')}
   </div><button class="btn" style="margin-top:12px;width:100%" data-act="closeSheet">Después</button>`);
 }
 function collectMgr(name){const ym=curYM(),ids=[];db.loans.filter(l=>l.manager===name&&!l.closed&&hasPeriod(l,ym)&&status(l,ym)!=='pagado').forEach(l=>{let pay=payOf(l.id,ym);if(!pay){pay={id:uid(),loanId:l.id,period:ym,capital:0,note:''};db.payments.push(pay)}pay.interest=expected(l,ym);pay.date=today();pay.note='Vía '+name;ids.push(l.id)});save();render();if(ids.length){toast(`${name}: ${ids.length} cobro${ids.length>1?'s':''} marcado${ids.length>1?'s':''}`);sheetOwe(ids,ym)}}
@@ -1630,7 +1650,9 @@ const ACTIONS={
   pdf:e=>exportPDF(inv(e.dataset.id)),
   settings:()=>push({type:'set'}),
   income:()=>sheetIncome(),
-  hideNums:()=>{db.settings.hideNums=!db.settings.hideNums;save();render();toast(db.settings.hideNums?'Números ocultos':'Números visibles')},
+  owe:e=>sheetOwed(e.dataset.id),
+  delOwe:e=>{db.owed=db.owed.filter(x=>x.id!==e.dataset.id);save();closeSheet();render()},
+  hideNums:()=>{const M=['all','names','nums','both'],L={all:'Todo visible',names:'Nombres ocultos',nums:'Números ocultos',both:'Nombres y números ocultos'};const cur=db.settings.privacy||(db.settings.hideNums?'nums':'all');db.settings.privacy=M[(M.indexOf(cur)+1)%4];delete db.settings.hideNums;save();render();toast(L[db.settings.privacy])},
   heroMode:e=>{const el=$('#hero');const liq=!el.classList.contains('is-liquid');el.classList.toggle('is-liquid',liq);db.settings.heroMode=liq?'liquid':'solid';save();el.querySelectorAll(liq?'.f-liquid [data-count]':'.f-solid [data-count]').forEach(n=>{const to=+n.dataset.count,t0=performance.now();const st=now=>{const k=Math.min(1,(now-t0)/800),q=1-Math.pow(1-k,3);n.textContent=fmt(to*q);if(k<1)requestAnimationFrame(st)};requestAnimationFrame(st)})},
   ccOpen:e=>sheetCC(e.dataset.id),
   cardEdit:e=>sheetCard(e.dataset.id),
@@ -1694,6 +1716,7 @@ document.addEventListener('submit',ev=>{
     save();render();toast(msg);if(pay.interest>0)sheetOwe([l.id],p);else closeSheet();return;
   }
   if(k==='payout'){savePayout(f);return}
+  if(k==='owe'){const o=f.dataset.id?db.owed.find(x=>x.id===f.dataset.id):null,name=f.name.value.trim(),amount=r2(num(f.amount.value));if(!name||amount<=0)return err('Escribe nombre y monto.');const d={name,amount,concept:f.concept.value.trim(),date:f.date.value||today()};if(o){Object.assign(o,d);const pa=r2(num(f.pay?.value||0));if(pa>0){o.paid=o.paid||[];o.paid.push({amount:pa,date:f.payDate.value||today()})}}else db.owed.push({id:uid(),paid:[],...d});save();closeSheet();render();toast('Guardado');return}
   if(k==='asset401'){const st=db.settings;st.k401=r2(num(f.k401.value));st.k401Loan=r2(num(f.k401Loan.value));st.k401Rate=num(f.k401Rate.value);st.k401Pay=r2(num(f.k401Pay.value));st.retireAge=parseInt(f.retireAge.value,10)||67;save();closeSheet();render();return}
   if(k==='assetCars'){db.settings.carsValue=r2(num(f.carsValue.value));save();closeSheet();render();return}
   if(k==='assetHouse'){db.settings.houseValue=r2(num(f.houseValue.value));db.settings.mortgage=r2(num(f.mortgage.value));save();closeSheet();render();return}
@@ -1775,7 +1798,7 @@ async function exportExcel(){
   add('Pagos a inversionistas',db.payouts.map(p=>({Persona:inv(p.investorId)?.name,Mes:ymLabel(p.period),Rendimiento:p.gross,Deducciones:(p.deductions||[]).map(d=>d.concept+' '+d.amount).join(', '),Neto:p.net,Estado:STATUS_L[p.status]||p.status,Fecha:p.date,'Método':p.method,Destino:p.dest})));
   add('Movimientos de capital',db.movements.map(m=>({Persona:inv(m.investorId)?.name,Tipo:m.type,Monto:m.amount,Fecha:m.date,Origen:m.source?(m.source==='ahorro'?'Ahorros':db.cards.find(c=>c.id===m.source)?.name||''):'',Nota:m.note||''})));
   add('Deudas',db.cards.map(c=>({Nombre:c.name,Banco:c.issuer||'',Tipo:KIND_L[c.kind||'tarjeta'],Saldo:c.balance,'APR %':c.apr,'Límite':c.limit||'','Pago mínimo':c.minPay||'','Día de pago':c.dueDay||'','Promo 0% hasta':c.promoEnd||''})));
-  {const F=finances();add('Patrimonio',[{Concepto:'Ahorros en banco',Monto:F.sav},{Concepto:'Capital en Orbit',Monto:F.capOwn},{Concepto:'Carros en stock',Monto:F.cars},{Concepto:'Casa (valor)',Monto:+db.settings.houseValue||0},{Concepto:'Hipoteca',Monto:-(+db.settings.mortgage||0)},{Concepto:'401K (neto)',Monto:F.k401},{Concepto:'Deudas',Monto:-F.debt},{Concepto:'Patrimonio real (sin casa)',Monto:F.worth},{Concepto:'Patrimonio con casa',Monto:F.worthAll}])}
+  {const F=finances();add('Patrimonio',[{Concepto:'Ahorros en banco',Monto:F.sav},{Concepto:'Capital en Orbit',Monto:F.capOwn},{Concepto:'Carros en stock',Monto:F.cars},{Concepto:'Casa (valor)',Monto:+db.settings.houseValue||0},{Concepto:'Hipoteca',Monto:-(+db.settings.mortgage||0)},{Concepto:'401K (neto)',Monto:F.k401},{Concepto:'Me deben (sin interés)',Monto:F.owed},{Concepto:'Deudas',Monto:-F.debt},{Concepto:'Patrimonio real (sin casa)',Monto:F.worth},{Concepto:'Patrimonio con casa',Monto:F.worthAll}])}
   add('Movimientos tarjetas',db.cards.flatMap(c=>(c.txns||[]).map(t=>({Tarjeta:c.name,Tipo:t.type,Monto:t.amount,Fecha:t.date,Nota:t.note||''}))));
   const out=X.write(wb,{bookType:'xlsx',type:'array'});
   shareFile(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Orbit-${today()}.xlsx`);
