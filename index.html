@@ -663,33 +663,28 @@ function myCard(){
 /* ============ cars in stock ============ */
 // original low-slung hypercar profile (not any real model)
 function carSVG(id){
-  return `<svg class="car-svg" viewBox="0 0 400 170" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
-  <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9FFBEA"/><stop offset=".5" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient>
-  <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-  <radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#46E3C6" stop-opacity=".22"/><stop offset="1" stop-color="#46E3C6" stop-opacity="0"/></radialGradient></defs>
-  <ellipse cx="220" cy="152" rx="180" ry="12" fill="url(#${id}fl)"/>
-  <g stroke="url(#${id}s)" stroke-width="1.6" filter="url(#${id}f)">
-    <path d="M58,104 C58,96 66,90 80,86 C104,80 132,78 156,78 L170,77 C186,64 210,52 240,48 C266,45 292,48 314,56 C338,64 360,72 378,80 C388,84 392,92 390,102 L388,114"/>
-    <path d="M58,104 C62,114 70,120 82,124 C110,132 146,138 178,142"/>
-    <path d="M70,112 C96,122 134,130 172,134"/>
-    <path d="M80,104 C102,110 128,114 152,116"/>
-    <path d="M66,94 L90,92 L96,98" stroke-width="2.2"/>
-    <path d="M126,98 L162,100 L170,108" stroke-width="2.6"/>
-    <path d="M98,86 C120,84 142,85 160,88 M92,94 C112,98 130,106 140,116"/>
-    <path d="M170,77 C186,68 210,60 236,58 C260,56 282,60 300,66 C292,72 278,76 260,78 C228,80 194,80 170,77 Z"/>
-    <path d="M206,61 C216,67 224,73 230,79"/>
-    <path d="M178,142 L198,140 M250,134 L314,124"/>
-    <path d="M196,100 C236,92 284,88 332,90"/>
-    <path d="M264,100 C282,96 302,96 320,100 L312,114 C296,110 280,110 268,114 Z"/>
-    <path d="M324,58 L384,66 L382,72 L324,64 Z M346,64 L348,76 M368,68 L368,80"/>
-    <ellipse cx="222" cy="130" rx="23" ry="26"/><ellipse cx="222" cy="130" rx="14" ry="16"/>
-    ${[0,72,144,216,288].map(a=>`<path d="M222,130 L${(222+13*Math.cos((a-90)*Math.PI/180)).toFixed(1)},${(130+15*Math.sin((a-90)*Math.PI/180)).toFixed(1)}" stroke-width="1.1"/>`).join("")}
-    <ellipse cx="352" cy="110" rx="17" ry="21"/><ellipse cx="352" cy="110" rx="9" ry="12"/>
-    <path d="M198,140 C198,114 208,102 224,102 C240,102 248,114 248,134"/>
-    <path d="M332,122 C332,98 340,88 352,88 C366,88 374,98 374,114"/>
-    <path d="M70,116 C70,124 74,128 80,128" stroke-width="1.2"/>
+  const wheel=(cx,cy,rx,ry)=>{let sp='';for(let k=0;k<5;k++)for(const d of[-8,8]){const a=(k*72-90+d)*Math.PI/180;sp+=`<line x1="${(cx+rx*.18*Math.cos(a)).toFixed(1)}" y1="${(cy+ry*.18*Math.sin(a)).toFixed(1)}" x2="${(cx+rx*.68*Math.cos(a)).toFixed(1)}" y2="${(cy+ry*.68*Math.sin(a)).toFixed(1)}" stroke="#8C97A8" stroke-width="1.6" stroke-linecap="round"/>`}
+    return `<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}" fill="#050608"/><ellipse cx="${cx}" cy="${cy}" rx="${rx*.74}" ry="${ry*.74}" fill="#0E1218" stroke="#2C3440" stroke-width="1.2"/><path d="M${cx-rx*.42},${cy-ry*.5} A${rx*.6},${ry*.6} 0 0 1 ${cx+rx*.3},${cy-ry*.56}" stroke="#46E3C6" stroke-width="3" fill="none" stroke-linecap="round"/>${sp}<ellipse cx="${cx}" cy="${cy}" rx="${rx*.12}" ry="${ry*.12}" fill="#C9D3E0"/>`};
+  return `<svg class="car-svg" viewBox="0 0 400 200" aria-hidden="true"><defs>
+  <linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A4A60"/><stop offset=".45" stop-color="#1A2230"/><stop offset="1" stop-color="#0A0D13"/></linearGradient>
+  <linearGradient id="${id}r" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#4FA8FF" stop-opacity=".2"/><stop offset=".55" stop-color="#46E3C6"/><stop offset="1" stop-color="#C8FFF4"/></linearGradient>
+  <linearGradient id="${id}g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22324A"/><stop offset="1" stop-color="#030406"/></linearGradient>
+  <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="${id}sh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".85"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
+  <radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#46E3C6" stop-opacity=".18"/><stop offset="1" stop-color="#46E3C6" stop-opacity="0"/></radialGradient></defs>
+  <ellipse cx="210" cy="188" rx="196" ry="10" fill="url(#${id}fl)"/><ellipse cx="200" cy="184" rx="182" ry="8" fill="url(#${id}sh)"/>
+  <path d="M22,88 L92,80 L94,87 L26,96 Z" fill="#11161E" stroke="url(#${id}r)" stroke-width=".8"/><path d="M46,94 L50,104 M76,86 L78,100" stroke="#11161E" stroke-width="4"/>
+  <path d="M26,122 C24,110 32,102 50,98 L112,90 C132,80 158,74 190,73 C212,73 230,78 246,88 C272,98 312,108 350,116 C366,120 376,126 378,134 C380,144 374,152 364,158 L332,164 L258,170 L198,168 A28,34 0 0 0 142,168 L74,162 A20,28 0 0 0 30,158 L26,142 Z" fill="url(#${id}p)"/>
+  <path d="M120,90 C140,82 162,77 190,77 C206,77 220,81 232,88 L224,97 C198,99 152,99 120,96 Z" fill="url(#${id}g)"/>
+  <path d="M234,89 C254,98 280,106 302,111 L282,115 C264,111 248,104 230,98 Z" fill="url(#${id}g)"/>
+  <path d="M74,120 C96,112 120,110 140,114 L132,130 C114,127 96,129 82,134 Z" fill="#05070A"/>
+  <path d="M258,152 L322,146 L314,160 L262,164 Z" fill="#05070A"/><path d="M336,146 L366,140 L360,152 L340,156 Z" fill="#05070A"/>
+  <g fill="none" stroke="url(#${id}r)" stroke-width="1.8" stroke-linecap="round" filter="url(#${id}f)">
+    <path d="M30,104 C40,98 60,96 112,90 C132,80 158,74 190,73 C212,73 230,78 246,88 C272,98 312,108 350,116 C366,120 376,126 378,134"/>
+    <path d="M90,122 C150,116 230,120 300,130 C330,134 352,140 366,148" stroke-width="1.1" opacity=".7"/>
   </g>
-  <g stroke="#E8FFFA" stroke-width="2.4" filter="url(#${id}f)"><path d="M68,93 L88,91"/><path d="M128,99 L160,101"/></g>
+  <g filter="url(#${id}f)"><path d="M292,122 L334,130 L328,136 L290,127 Z" fill="#BFF8EE"/><path d="M348,127 L370,133 L368,137 L348,132 Z" fill="#BFF8EE"/></g>
+  ${wheel(52,158,19,27)}${wheel(170,164,25,32)}
 </svg>`}
 function houseSVG(id){return `<svg class="car-svg" viewBox="0 0 400 170" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
   <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9FFBEA"/><stop offset=".5" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient>
