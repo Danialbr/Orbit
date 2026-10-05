@@ -139,6 +139,34 @@ tr:first-child td{border-top:0}
 table.tight th,table.tight td{padding-inline:8px}table.tight{font-size:12.5px}
 tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 
+/* panel widgets */
+.w{display:block;text-align:left;width:100%;position:relative;overflow:hidden;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:16px}
+.wgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.wgrid.one{grid-template-columns:1fr}
+.w .eyebrow{font-size:9.5px}
+.w-v{font:700 21px/1.15 var(--display);letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w-v .num{font-weight:700}
+.w-sub{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.35}
+.w-hero{padding:20px;border:1px solid transparent;background:linear-gradient(160deg,#0F2A24,#0A1310) padding-box,linear-gradient(135deg,rgba(61,214,140,.75),rgba(70,227,198,.2) 50%,rgba(150,175,210,.12)) border-box}
+.w-hero .big{color:var(--ok);font-size:36px}
+.w-hero.neg{background:linear-gradient(160deg,#2A1414,#130A0A) padding-box,linear-gradient(135deg,rgba(255,107,107,.75),rgba(150,175,210,.12)) border-box}.w-hero.neg .big{color:var(--bad)}
+.w-hero::after{content:"";position:absolute;inset:-40% -20% auto auto;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(61,214,140,.22),transparent 70%);animation:breathe 5s ease-in-out infinite}
+.w-green{box-shadow:inset 0 0 0 1px rgba(61,214,140,.25)}.w-green .w-v{color:var(--ok)}
+.w-red{box-shadow:inset 0 0 0 1px rgba(255,107,107,.28)}.w-red .w-v{color:var(--bad)}
+.w-ion .w-v{color:var(--ion)}
+.w-v.green{color:var(--ok)}.w-v.red{color:var(--bad)}
+.w-green::before,.w-red::before,.w-ion::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:currentColor}
+.w-green::before{color:var(--ok)}.w-red::before{color:var(--bad)}.w-ion::before{color:var(--ion)}
+.w-ringbox{display:flex;gap:10px;align-items:center}.w-ringbox>div{min-width:0}
+.wring{width:64px;height:64px;flex:none;transform:rotate(-90deg)}
+.wbar{display:flex;gap:3px;height:12px;border-radius:12px;overflow:hidden;background:var(--raise);margin-top:12px}
+.wbar i{display:block;height:100%;width:var(--w);border-radius:3px}.wbar .g{background:linear-gradient(90deg,#2BB673,var(--ok))}.wbar .r{background:linear-gradient(90deg,#E04F5F,var(--bad))}
+.w-in{animation:win .55s cubic-bezier(.2,.8,.2,1) both}
+.w-in .wring-a{animation:ringdraw 1.1s .2s cubic-bezier(.3,.7,.2,1) both}
+.w-in .wbar i{animation:grow 1s .25s cubic-bezier(.3,.7,.2,1) both}
+@keyframes win{from{opacity:0;transform:translateY(14px) scale(.98)}}
+@keyframes ringdraw{from{stroke-dasharray:0 var(--c)}}
+@keyframes grow{from{width:0}}
+@keyframes breathe{50%{transform:scale(1.15);opacity:.7}}
 /* calendar */
 .calnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .calnav h2{margin:0;font:600 18px/1 var(--display);text-transform:capitalize}
@@ -469,7 +497,7 @@ function sampleDB(){
 /* ============ ui state ============ */
 const ui={tab:'home',stack:[],calYM:curYM(),calDay:null,loanFilter:'activos'};
 const cur=()=>ui.stack[ui.stack.length-1];
-function go(tab){ui.tab=tab;ui.stack=[];render();window.scrollTo(0,0)}
+function go(tab){ui.tab=tab;ui.stack=[];ui.anim=true;render();window.scrollTo(0,0)}
 function push(v){ui.stack.push(v);render();window.scrollTo(0,0)}
 function back(){ui.stack.pop();render();window.scrollTo(0,0)}
 
@@ -478,6 +506,8 @@ const I={
   cal:'<rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><circle cx="8" cy="14" r="1" fill="currentColor"/><circle cx="12" cy="14" r="1" fill="currentColor"/><circle cx="16" cy="14" r="1" fill="currentColor"/>',
   loans:'<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v5M18 9.5v5"/>',
   inv:'<circle cx="9" cy="8" r="3.4"/><path d="M2.8 20c.6-3.6 3.1-5.6 6.2-5.6s5.6 2 6.2 5.6"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18 14.6c1.9.6 3 2.4 3.3 5.4"/>',
+  me:'<path d="M4 20V11M10 20V5M16 20v-6M22 20H2"/>',
+  gear:'<circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v2.6M12 18.9v2.6M4.6 4.6l1.9 1.9M17.5 17.5l1.9 1.9M2.5 12h2.6M18.9 12h2.6M4.6 19.4l1.9-1.9M17.5 6.5l1.9-1.9"/>',
   set:'<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/>',
   plus:'<path d="M12 5v14M5 12h14"/>',
   pdf:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/>',
@@ -488,7 +518,7 @@ const I={
   chevL:'<path d="M15 18l-6-6 6-6"/>',chevR:'<path d="M9 18l6-6-6-6"/>'
 };
 const ico=(k,extra='')=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" ${extra}>${I[k]}</svg>`;
-const TABS=[['home','Inicio'],['cal','Calendario'],['loans','Préstamos'],['inv','Inversionistas'],['set','Ajustes']];
+const TABS=[['home','Inicio'],['cal','Calendario'],['loans','Préstamos'],['inv','Inversionistas'],['me','Mi panel']];
 
 /* ============ render ============ */
 function render(){
@@ -498,7 +528,8 @@ function render(){
   else if(v&&v.type==='profit')out=viewProfit();
   else if(v&&v.type==='loan')out=viewLoan(v.id);
   else if(v&&v.type==='inv')out=viewInvestor(v.id);
-  else out={home:viewHome,cal:viewCal,loans:viewLoans,inv:viewInvestors,set:viewSettings}[ui.tab]();
+  else if(v&&v.type==='set')out=viewSettings();
+  else out={home:viewHome,cal:viewCal,loans:viewLoans,inv:viewInvestors,me:viewMe}[ui.tab]();
   if(!out){ui.stack.pop();return render()}
   document.body.classList.toggle('presenting',!!out.present);
   document.body.classList.toggle('discreet',!!db.settings.discreet&&!out.present);
@@ -506,6 +537,7 @@ function render(){
   $('#eyebrow').textContent=out.eyebrow||'';
   $('#title').textContent=out.title;
   $('#topAct').innerHTML=out.action||'';
+  setTimeout(()=>{if(ui.anim){ui.anim=false;animateIn()}},0);
   $('#backBtn').hidden=!v;$('#brand').hidden=!!v;
   $('#view').innerHTML=(db.settings.sample?`<div class="banner"><span>Estás viendo datos de ejemplo</span><button data-act="clearSample">Empezar con mis datos</button></div>`:'')+out.html;
 }
@@ -858,6 +890,45 @@ function viewPresent(id){
   <div class="dim" style="font-size:11.5px;text-align:center">Montos según el rendimiento pactado sobre el capital activo.</div>`};
 }
 
+/* ============ Mi panel: private widgets ============ */
+const cnt=(v,cls='')=>`<span class="num ${cls}" data-count="${r2(v)}">${fmt(v)}</span>`;
+function viewMe(){
+  const F=finances(),P=portfolio(),t=totals(),H=myHistory(),m=myMonth(curYM()),o=owner();
+  const acc=H.length?H[H.length-1].acc:0,capOwn=F.capOwn,fromCards=F.src.tarjetas,fromSav=F.src.ahorro,share=capOwn>0?Math.min(1,fromCards/Math.max(capOwn,fromSav+fromCards)):0;
+  const months=F.debt>0&&F.net>0?Math.ceil(F.debt/F.net):null,placed=o?placedNow(o):0;
+  const R=(f,col)=>{const r=34,c=2*Math.PI*r;return `<svg viewBox="0 0 84 84" class="wring"><circle cx="42" cy="42" r="${r}" fill="none" stroke="rgba(150,175,210,.12)" stroke-width="8"/><circle class="wring-a" cx="42" cy="42" r="${r}" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c*f} ${c}" style="--c:${c}"/></svg>`};
+  return {eyebrow:'Solo para ti',title:'Mi panel',action:`<div style="display:flex;gap:8px">${eyeBtn()}<button class="iconbtn" data-act="settings" aria-label="Ajustes">${ico('gear')}</button></div>`,html:`
+  <div class="w w-hero ${F.worth<0?'neg':''}"><div class="eyebrow">Patrimonio real · si pagas tus tarjetas hoy</div>
+    <div class="big">${cnt(F.worth)}</div>
+    <div class="w-sub">Ahorros ${fmt(F.sav)} + tu capital en Orbit ${fmt(capOwn)} − tarjetas ${fmt(F.debt)}</div></div>
+  <div class="wgrid">
+    <button class="w w-green" data-act="savings"><div class="eyebrow">Dinero en banco</div><div class="w-v">${cnt(F.sav)}</div><div class="w-sub">Toca para actualizar</div></button>
+    <button class="w w-red" data-act="card"><div class="eyebrow">Deuda tarjetas</div><div class="w-v">${cnt(F.debt)}</div><div class="w-sub">${db.cards.length} tarjeta${db.cards.length===1?'':'s'} · ${fmt(F.cost)}/mes interés</div></button>
+    <div class="w w-ion"><div class="eyebrow">Total prestado</div><div class="w-v">${cnt(P.lent)}</div><div class="w-sub">${P.n} préstamos · ${P.clients} clientes</div></div>
+    <div class="w"><div class="eyebrow">Capital total</div><div class="w-v">${cnt(t.capital)}</div><div class="w-sub">En espera ${fmt(t.free)}</div></div>
+  </div>
+  <div class="w"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="eyebrow">Tu capital en Orbit</div><span class="num">${fmt(capOwn)}</span></div>
+    <div class="wbar"><i class="g" style="--w:${capOwn>0?fromSav/(fromSav+fromCards||1)*100:0}%"></i><i class="r" style="--w:${capOwn>0?fromCards/(fromSav+fromCards||1)*100:0}%"></i></div>
+    <div class="legend"><span><i class="dot" style="color:var(--ok)"></i>De tus ahorros ${fmt(fromSav)}</span><span><i class="dot" style="color:var(--bad)"></i>De tarjetas ${fmt(fromCards)}</span><span>Prestado ${fmt(placed)}</span></div></div>
+  <div class="wgrid one">
+    <div class="w w-ringbox">${R(m.est>0?Math.min(1,F.net/m.est):0,'var(--ok)')}<div><div class="eyebrow">Ganancia neta/mes</div><div class="w-v ${F.net<0?'red':'green'}">${cnt(F.net)}</div><div class="w-sub">Bruta ${fmt(m.est)} − TDC ${fmt(F.cost)}</div></div></div>
+    <div class="w w-ringbox">${R(share,'var(--bad)')}<div><div class="eyebrow">Financiado con TDC</div><div class="w-v">${Math.round(share*100)}%</div><div class="w-sub">de tu capital en Orbit salió de tarjetas</div></div></div>
+  </div>
+  <div class="wgrid">
+    <div class="w"><div class="eyebrow">Acumulado</div><div class="w-v green">${cnt(acc)}</div><div class="w-sub">${H.filter(x=>!x.current).length} meses cerrados</div></div>
+    <div class="w"><div class="eyebrow">TDC pagadas en</div><div class="w-v">${months?months+' mes'+(months>1?'es':''):F.debt>0?'—':'Sin deuda'}</div><div class="w-sub">${months?'usando toda tu ganancia neta':F.debt>0?'Tu ganancia neta no alcanza':'Todo tuyo'}</div></div>
+  </div>
+  ${H.length?`<div class="w"><div class="eyebrow" style="margin-bottom:8px">Tu ganancia por mes</div>${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capMe')}</div>`:''}
+  ${db.cards.length?`<section><div class="sec-h"><h2>Tarjetas</h2><button class="muted" style="font-size:13px" data-act="card">+ Tarjeta</button></div><div class="list">${db.cards.map(c=>`<button class="row" data-act="card" data-id="${c.id}"><span class="bar" style="color:var(--bad)"></span><div class="main"><div class="t">${h(c.name)}</div><div class="s">${pct(c.apr)} anual · ${fmt((+c.balance||0)*(+c.apr||0)/1200)}/mes</div></div><div class="r"><span class="num" style="color:var(--bad)">${fmt(c.balance)}</span></div></button>`).join('')}</div></section>`:''}
+  <div class="btns" style="display:grid;grid-template-columns:1fr 1fr"><button class="btn" data-act="profit">Mis ganancias ›</button><button class="btn pri" data-act="adminPdf">${ico('pdf')}Reporte PDF</button></div>`};
+}
+function animateIn(){
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('#view .w').forEach((el,k)=>{el.style.animationDelay=(k*55)+'ms';el.classList.add('w-in')});
+  if(reduce)return;
+  document.querySelectorAll('#view [data-count]').forEach(el=>{const to=+el.dataset.count,t0=performance.now(),d=900;
+    const step=now=>{const k=Math.min(1,(now-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmt(to*e);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
+}
 function viewSettings(){
   const lb=db.settings.lastBackup;
   return {eyebrow:'Datos locales',title:'Ajustes',html:`
@@ -1100,6 +1171,7 @@ const ACTIONS={
   calDay:e=>{const d=+e.dataset.v;ui.calDay=d&&ui.calDay!==d?d:null;render()},
   loanFilter:e=>{ui.loanFilter=e.dataset.v;render()},
   pdf:e=>exportPDF(inv(e.dataset.id)),
+  settings:()=>push({type:'set'}),
   adminPdf:()=>exportAdminPDF(),
   profit:()=>push({type:'profit'}),
   bar:e=>{const c=document.getElementById(e.dataset.cap);if(c){c.textContent=e.dataset.v;c.style.color='var(--fg)'}},
