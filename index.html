@@ -153,7 +153,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .wc-house{background:linear-gradient(135deg,#3A3226,#1A1610);color:#F6EFE3}.wc-house .wc-a{color:#F2C980}
 .wc-k401{background:linear-gradient(135deg,#2E2A1C,#141209);color:#F5EED9}.wc-k401 .wc-a{color:#E9C46A}
 .k401c{background:radial-gradient(80% 70% at 50% 45%,rgba(70,180,255,.14),transparent 70%),linear-gradient(160deg,#1A2130,#090C12)}
-.catcv{display:block;width:100%;height:150px}.kret{text-align:center;font:600 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:2px 0 10px}
+.catimg{aspect-ratio:626/330!important}.kret{text-align:center;font:600 10px/1 var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.6;margin:2px 0 10px}
 .k67{height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .k67 span{font:800 104px/1 var(--display);letter-spacing:-.06em;background:linear-gradient(180deg,#FFF6DA,#E9C46A 55%,#8C6A2F);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(233,196,106,.35))}
 .k67 small{font:700 9.5px/1 var(--body);letter-spacing:.24em;opacity:.6;margin-top:4px}
@@ -376,7 +376,7 @@ form{display:flex;flex-direction:column;gap:12px}
 </div>
 
 <script src="jspdf.umd.min.js"></script>
-<script>window.XLSX_SRC='xlsx.full.min.js';window.CAR_SRC='car.webp';window.HOUSE_SRC='house.webp'</script>
+<script>window.XLSX_SRC='xlsx.full.min.js';window.CAR_SRC='car.webp';window.HOUSE_SRC='house.webp';window.CAT_SRC='cat.webp'</script>
 <script>
 (()=>{
 'use strict';
@@ -777,7 +777,7 @@ function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db
     <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
     ${hv?`<div class="ccf-bar" style="background:rgba(255,255,255,.12)"><i style="--w:${ef*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div>`:''}</button>
   <button class="carc k401c" data-act="asset401"><div class="carc-top"><span>401K</span><span class="carc-d">Retiro</span></div>
-    <canvas id="catcv" class="catcv"></canvas><div class="kret">${(()=>{const by=+db.settings.birthYear||2002,ra=+db.settings.retireAge||67,y=by+ra,left=y-new Date().getFullYear();return `Retiro a los ${ra} · ${y} · faltan ${left} años`})()}</div>
+    <img class="car-img car-def catimg" src="${window.CAT_SRC}" alt=""><div class="kret">${(()=>{const by=+db.settings.birthYear||2002,ra=+db.settings.retireAge||67,y=by+ra,left=y-new Date().getFullYear();return `Retiro a los ${ra} · ${y} · faltan ${left} años`})()}</div>
     <div class="carc-bot"><div><small>NETO</small><b class="num" style="color:var(--ion)">${fmt(F.k401)}</b></div><div><small>SALDO</small><b class="num">${fmt(+db.settings.k401||0)}</b></div><div style="text-align:right"><small>PRÉSTAMO</small><b class="num debt">${fmt(+db.settings.k401Loan||0)}</b></div></div>
     ${+db.settings.k401Loan?`<div class="muted" style="font-size:11.5px;margin-top:8px">Préstamo al ${pct(+db.settings.k401Rate||0)} · pagas ${fmt(+db.settings.k401Pay||0)}/mes</div>`:''}</button>
   </div></section>`}
