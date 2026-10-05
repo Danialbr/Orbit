@@ -1,5 +1,5 @@
 // Orbit: guarda la app en el iPhone para usarla sin internet.
-const V='orbit-v28';
+const V='orbit-v29';
 const CORE=['./','./index.html','./manifest.webmanifest','./jspdf.umd.min.js','./xlsx.full.min.js','./car.webp','./house.webp','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(CORE)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==V).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});

@@ -151,6 +151,11 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .car-svg{width:100%;height:auto;display:block;margin:8px 0 4px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 .carc-bot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.carc-bot small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.16em;opacity:.6;margin-bottom:5px}.carc-bot b{font:700 14px var(--display)}
 .wc-house{background:linear-gradient(135deg,#3A3226,#1A1610);color:#F6EFE3}.wc-house .wc-a{color:#F2C980}
+.wc-k401{background:linear-gradient(135deg,#2E2A1C,#141209);color:#F5EED9}.wc-k401 .wc-a{color:#E9C46A}
+.k401c{background:radial-gradient(80% 70% at 50% 45%,rgba(233,196,106,.16),transparent 70%),linear-gradient(160deg,#1A2130,#090C12)}
+.k67{height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.k67 span{font:800 104px/1 var(--display);letter-spacing:-.06em;background:linear-gradient(180deg,#FFF6DA,#E9C46A 55%,#8C6A2F);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(233,196,106,.35))}
+.k67 small{font:700 9.5px/1 var(--body);letter-spacing:.24em;opacity:.6;margin-top:4px}
 .wc-carbon{background:radial-gradient(120% 120% at 100% 0%,rgba(79,168,255,.18),transparent 55%),repeating-linear-gradient(45deg,#1B1F27 0 4px,#14171D 4px 8px);color:#EEF3F9}
 .an-in .car-svg{animation:carIn 1.1s .2s cubic-bezier(.2,.8,.2,1) both}@keyframes carIn{from{opacity:0;transform:translateX(-24px);filter:blur(4px)}}
 /* credit cards: stack + face */
@@ -529,7 +534,7 @@ const carsValue=()=>db.settings.carsValue!=null?+db.settings.carsValue:r2(carsSt
 const houseEq=()=>Math.max(-1e12,r2((+db.settings.houseValue||0)-(+db.settings.mortgage||0)));
 const carCost=c=>r2((+c.buy||0)+(c.costs||[]).reduce((s,x)=>s+(+x.amount||0),0));
 function finances(){const debt=r2(db.cards.reduce((s,c)=>s+(+c.balance||0),0)),cost=r2(db.cards.reduce((s,c)=>s+(+c.balance||0)*debtApr(c)/1200,0)),o=owner(),capOwn=o?capitalOf(o):0,sav=+db.settings.savings||0,m=myMonth(curYM());
-  const cars=carsValue(),house=+db.settings.houseValue?houseEq():0;const sal=+db.settings.salary||0;return {debt,cost,capOwn,sav,cars,house,sal,orbitM:m.est,liquid:r2(sav+sal+m.est),net:r2(m.est-cost),worth:r2(sav+capOwn+cars-debt),worthAll:r2(sav+capOwn+cars+house-debt),src:ownSources()}}
+  const cars=carsValue(),house=+db.settings.houseValue?houseEq():0;const st=db.settings,k401=r2((+st.k401||0)-(+st.k401Loan||0)),sal=+st.salary||0;return {debt,cost,capOwn,sav,cars,house,k401,sal,orbitM:m.est,liquid:r2(sav+sal+m.est),net:r2(m.est-cost),worth:r2(sav+capOwn+cars-debt),worthAll:r2(sav+capOwn+cars+house+k401-debt),src:ownSources()}}
 const owner=()=>db.investors.find(i=>i.owner);
 const deposits=i=>r2(db.movements.filter(m=>m.investorId===i.id&&m.type==='aporte').reduce((s,m)=>s+(+m.amount||0),0));
 function monthsRange(){const f=db.loans.map(firstYM).sort()[0];const out=[];if(!f)return out;for(let p=f;p<=curYM();p=addM(p,1))out.push(p);return out}
@@ -569,7 +574,7 @@ function sampleDB(){
         mama={id:'inv_mama',name:'Mamá',rate:0,owner:false,phone:'',note:'Participación sin capital'},
         abuela={id:'inv_abuela',name:'Abuela',rate:2,owner:false,phone:'',note:'',payMethod:'Zelle',payDest:'abuela@correo.com'};
   tio.payMethod='Wire';tio.payDest='Chase ****4471';
-  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300,limit:20000,dueDay:18,last4:'4471'},{id:'c_fu',name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta',balance:4000,apr:0,promoEnd:'2027-03-31',apr:21.5,limit:9000,dueDay:3,last4:'2210'},{id:'c_fs',name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta',balance:600,apr:19.9,limit:1500,dueDay:12,last4:'8803'},{id:'c_hd',name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta',balance:1200,apr:0,limit:3500,dueDay:25,last4:'1937'}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});d.cars=[];Object.assign(d.settings,{carsValue:65000,houseValue:240000,mortgage:185000});d.goals=[{id:'g1',type:'sindeuda',title:'Libre de tarjetas',target:0,date:'2027-06-30',startVal:24000},{id:'g2',type:'prestado',title:'$100k prestados',target:100000,date:'2027-12-31'}];
+  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300,limit:20000,dueDay:18,last4:'4471'},{id:'c_fu',name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta',balance:4000,apr:0,promoEnd:'2027-03-31',apr:21.5,limit:9000,dueDay:3,last4:'2210'},{id:'c_fs',name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta',balance:600,apr:19.9,limit:1500,dueDay:12,last4:'8803'},{id:'c_hd',name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta',balance:1200,apr:0,limit:3500,dueDay:25,last4:'1937'}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});d.cars=[];Object.assign(d.settings,{carsValue:65000,houseValue:240000,mortgage:185000,k401:48000,k401Loan:12000,k401Rate:8.5,k401Pay:260});d.goals=[{id:'g1',type:'sindeuda',title:'Libre de tarjetas',target:0,date:'2027-06-30',startVal:24000},{id:'g2',type:'prestado',title:'$100k prestados',target:100000,date:'2027-12-31'}];
   d.movements.push({id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-10',note:'Ahorros',source:'ahorro'},{id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-12',note:'Chase Sapphire',source:'c_chase'},{id:uid(),investorId:abuela.id,type:'aporte',amount:10000,date:'2026-03-14',note:'Aporte inicial'},
     {id:uid(),investorId:tio.id,type:'aporte',amount:34000,date:'2026-03-15',note:'Aporte inicial'},
     {id:uid(),investorId:ana.id,type:'aporte',amount:8000,date:'2026-07-01',note:''});
@@ -770,7 +775,16 @@ function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db
   <button class="carc" data-act="assetHouse"><div class="carc-top"><span>Casa</span><span class="carc-d">${hv?'Aparte':'Toca para agregar'}</span></div>${houseSVG('hv')}
     <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
     ${hv?`<div class="ccf-bar" style="background:rgba(255,255,255,.12)"><i style="--w:${ef*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div>`:''}</button>
+  <button class="carc k401c" data-act="asset401"><div class="carc-top"><span>401K</span><span class="carc-d">Retiro</span></div>
+    <div class="k67"><span>67</span><small>EDAD DE RETIRO${db.settings.birthYear?` · ${(+db.settings.birthYear+67)-new Date().getFullYear()} AÑOS`:''}</small></div>
+    <div class="carc-bot"><div><small>NETO</small><b class="num" style="color:var(--ion)">${fmt(F.k401)}</b></div><div><small>SALDO</small><b class="num">${fmt(+db.settings.k401||0)}</b></div><div style="text-align:right"><small>PRÉSTAMO</small><b class="num debt">${fmt(+db.settings.k401Loan||0)}</b></div></div>
+    ${+db.settings.k401Loan?`<div class="muted" style="font-size:11.5px;margin-top:8px">Préstamo al ${pct(+db.settings.k401Rate||0)} · pagas ${fmt(+db.settings.k401Pay||0)}/mes</div>`:''}</button>
   </div></section>`}
+function sheetAsset401(){const st=db.settings;openSheet(`<h3>401K</h3><div class="sub">Cuenta en tu net worth: saldo menos lo que le debes.</div><form data-form="asset401">
+  <div class="grid2">${fld('Saldo del 401K',money('k401',st.k401||''))}${fld('Año en que naciste',`<input id="byear" name="birthYear" inputmode="numeric" value="${st.birthYear||''}" placeholder="Opcional">`)}</div>
+  <div class="grid2">${fld('Préstamo pendiente',money('k401Loan',st.k401Loan||''))}${fld('Interés %',`<input id="krate" name="k401Rate" inputmode="decimal" value="${st.k401Rate||''}" placeholder="Ej. 8.5">`)}</div>
+  ${fld('Pago del préstamo / mes',money('k401Pay',st.k401Pay||''),'Lo descuentan de tu cheque')}
+  <button class="btn pri" type="submit">Guardar</button></form>`)}
 function sheetAssetCars(){openSheet(`<h3>Garage</h3><div class="sub">Cuánto dinero tienes metido en carros ahora mismo.</div><form data-form="assetCars">${fld('Valor total invertido',money('carsValue',db.settings.carsValue??carsValue()))}<div class="field"><label>Imagen de la tarjeta</label><div class="btns"><button type="button" class="btn wide" data-act="carImgPick">${db.settings.carImg?'Cambiar imagen':'Usar una imagen mía'}</button>${db.settings.carImg?'<button type="button" class="btn" data-act="carImgClear">Quitar</button>':''}</div><div class="hint">Mejor un PNG con fondo transparente. Se guarda solo en este iPhone.</div><input type="file" id="carImgFile" accept="image/*" hidden></div><button class="btn pri" type="submit">Guardar</button></form>`)}
 function sheetAssetHouse(){const st=db.settings;openSheet(`<h3>Mi casa</h3><div class="sub">Tu equity es lo que vale menos lo que debes de la hipoteca. Se muestra aparte y no cuenta en tu dinero real.</div><form data-form="assetHouse"><div class="grid2">${fld('Valor de la casa',money('houseValue',st.houseValue||''))}${fld('Lo que debes (hipoteca)',money('mortgage',st.mortgage||''))}</div><button class="btn pri" type="submit">Guardar</button></form>`)}
 function carsSection(){const st=carsStock(),sold=(db.cars||[]).filter(c=>c.sold),inv=st.reduce((s,c)=>s+carCost(c),0),exp=st.reduce((s,c)=>s+((+c.ask||0)-carCost(c)),0);
@@ -1254,7 +1268,7 @@ function viewMe(){
   const acc=H.length?H[H.length-1].acc:0,placed=o?placedNow(o):0;
   const r=40,c=2*Math.PI*r,frac=m.est>0?Math.max(0,Math.min(1,F.net/m.est)):0;
   const holder=(o&&o.name&&o.name!=='Yo'?o.name:'Daniel').toUpperCase();
-  const WI={"bank": "<path d=\"M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18M12 3l9 5H3z\"/>", "orbit": "<circle cx=\"12\" cy=\"12\" r=\"7\"/><circle cx=\"19\" cy=\"6\" r=\"2.2\" fill=\"currentColor\"/>", "cars": "<path d=\"M3 15l2-5c.5-1.3 1.6-2 3-2h8c1.4 0 2.5.7 3 2l2 5v3h-3M6 18H3v-3h18\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>", "house": "<path d=\"M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6\"/>", "income": "<path d=\"M4 17l5-5 4 4 7-8M14 8h6v6\"/>", "debt": "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M3 10h18M7 15h4\"/>"};
+  const WI={"bank": "<path d=\"M3 10h18M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18M12 3l9 5H3z\"/>", "orbit": "<circle cx=\"12\" cy=\"12\" r=\"7\"/><circle cx=\"19\" cy=\"6\" r=\"2.2\" fill=\"currentColor\"/>", "cars": "<path d=\"M3 15l2-5c.5-1.3 1.6-2 3-2h8c1.4 0 2.5.7 3 2l2 5v3h-3M6 18H3v-3h18\"/><circle cx=\"7\" cy=\"17\" r=\"2\"/><circle cx=\"17\" cy=\"17\" r=\"2\"/>", "house": "<path d=\"M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6\"/>", "income": "<path d=\"M4 17l5-5 4 4 7-8M14 8h6v6\"/>", "k401": "<path d=\"M4 19h16M6 19V9l6-5 6 5v10M10 19v-5h4v5\"/>", "debt": "<rect x=\"3\" y=\"6\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M3 10h18M7 15h4\"/>"};
   const wc=(id,cls,title,amt,body)=>`<div class="wc ${cls}" data-act="wcard" data-id="${id}"><div class="wc-h"><span class="wc-t"><svg class="wc-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${WI[id]||''}</svg>${title}</span><span class="wc-a num">${amt}</span></div><div class="wc-b"><div>${body}</div></div></div>`;
   const kv=(k,v,cls='')=>`<div class="kv"><span>${k}</span><span class="num ${cls}">${v}</span></div>`;
   return {eyebrow:'Solo para ti',title:'Mi panel',action:`<div style="display:flex;gap:8px">${eyeBtn()}<button class="iconbtn" data-act="settings" aria-label="Ajustes">${ico('gear')}</button></div>`,html:`
@@ -1262,7 +1276,7 @@ function viewMe(){
     <div class="water" aria-hidden="true"><div class="rays"><i></i><i></i><i></i><i></i></div><div class="moon"><i></i><i></i><i></i><i></i><i></i><i></i></div><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w3"><path d="M0,32 C120,26 240,38 360,32 C480,26 600,38 720,32 C840,26 960,38 1080,32 C1200,26 1320,38 1440,32 L1440,60 L0,60 Z"/></svg><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w2"><path d="M0,34 C200,26 400,42 600,34 C800,26 1000,42 1200,34 C1400,26 1600,42 1800,34 L1800,60 L0,60 Z"/></svg><svg viewBox="0 0 1200 60" preserveAspectRatio="none" class="wave w1"><path d="M0,30 C150,22 300,38 450,30 C600,22 750,38 900,30 C1050,22 1200,38 1350,30 L1350,60 L0,60 Z"/></svg><i class="glint"></i></div>
     <div class="metal-top"><span class="metal-logo">${logoSVG({id:'mt'})}</span><span class="metal-brand">ORBIT</span>
       <button class="mode" data-act="heroMode" aria-label="Cambiar entre net worth y liquidez"><span class="m-solid">◆ Net worth</span><span class="m-liquid"><svg viewBox="0 0 24 24" width="13" height="13"><path d="M12 3C9 7.5 6 10.6 6 14a6 6 0 0 0 12 0c0-3.4-3-6.5-6-11z" fill="currentColor"/></svg> Líquido</span></button></div>
-    <div class="face f-solid"><div class="metal-l">Net worth</div><div class="metal-v">${cnt(F.worthAll)}</div><div class="metal-sub">Todo lo que tienes: banco, Orbit, garage y casa, menos deudas</div></div>
+    <div class="face f-solid"><div class="metal-l">Net worth</div><div class="metal-v">${cnt(F.worthAll)}</div><div class="metal-sub">Banco, Orbit, garage, casa y 401K, menos deudas</div></div>
     <div class="face f-liquid"><div class="metal-l">Dinero líquido</div><div class="metal-v">${cnt(F.liquid)}</div><div class="metal-sub">Banco ${fmt(F.sav)} + trabajo ${fmt(F.sal)} + Orbit ${fmt(F.orbitM)} este mes</div></div>
     <div class="metal-bot"><span class="metal-name">${h(holder)}</span><span class="metal-net"><small>NETO / MES</small>${fmt(F.net)}</span></div>
   </div>
@@ -1271,6 +1285,7 @@ function viewMe(){
     ${wc('orbit','wc-blue','Capital en Orbit',fmt(F.capOwn),kv('Tuyo (ahorros)',fmt(F.src.ahorro))+kv('Financiado con tarjetas',fmt(F.src.tarjetas))+kv('Prestado',fmt(placed))+kv('En espera',fmt(F.capOwn-placed)))}
     ${wc('cars','wc-carbon','Garage',fmt(F.cars),`<button class="wc-btn" data-act="assetCars">Editar valor</button>`)}
     ${wc('house','wc-house','Casa',fmt(F.house),kv('Valor',fmt(+db.settings.houseValue||0))+kv('Hipoteca','−'+fmt(+db.settings.mortgage||0))+`<button class="wc-btn" data-act="assetHouse">Editar</button>`)}
+    ${wc('k401','wc-k401','401K',fmt(F.k401),kv('Saldo',fmt(+db.settings.k401||0))+kv('Préstamo','−'+fmt(+db.settings.k401Loan||0))+`<button class="wc-btn" data-act="asset401">Editar</button>`)}
     ${wc('income','wc-slate','Ingresos',fmt(B.sal+B.orb),kv('Trabajo',fmt(B.sal))+kv('Orbit',fmt(B.orb))+kv('Gastos','−'+fmt(B.exp))+kv('Libre',fmt(Math.max(0,B.free)))+`<button class="wc-btn" data-act="income">Editar presupuesto</button>`)}
     ${wc('debt','wc-graphite','Deudas',fmt(F.debt),(db.cards.length?db.cards.map(cd=>`<button class="kv" style="width:100%" data-act="${(cd.kind||'tarjeta')==='tarjeta'?'ccOpen':'card'}" data-id="${cd.id}"><span>${h(cd.name)} <small style="opacity:.6">${+cd.apr?pct(cd.apr):'0%'}</small></span><span class="num">${fmt(cd.balance)}</span></button>`).join(''):'<div class="kv"><span>Sin deudas</span></div>')+kv('Interés al mes',fmt(F.cost))+`<button class="wc-btn" data-act="card">Agregar deuda</button>`)}
   </div>
@@ -1562,6 +1577,7 @@ const ACTIONS={
   carImgPick:()=>$('#carImgFile').click(),
   carImgClear:()=>{delete db.settings.carImg;save();closeSheet();render()},
   assetHouse:()=>sheetAssetHouse(),
+  asset401:()=>sheetAsset401(),
   delCar:e=>{db.cars=db.cars.filter(c=>c.id!==e.dataset.id);save();closeSheet();render()},
   excel:()=>exportExcel(),
   preset:e=>{const p=PRESETS.filter(x=>!db.cards.some(c=>c.name===x.name))[+e.dataset.v],f=$('form[data-form=card]');f.name.value=p.name;f.skin.value=p.skin;f.issuer.value=p.issuer;f.kind.value=p.kind;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('on',b===e));f.balance.focus()},
@@ -1611,6 +1627,7 @@ document.addEventListener('submit',ev=>{
     save();render();toast(msg);if(pay.interest>0)sheetOwe([l.id],p);else closeSheet();return;
   }
   if(k==='payout'){savePayout(f);return}
+  if(k==='asset401'){const st=db.settings;st.k401=r2(num(f.k401.value));st.k401Loan=r2(num(f.k401Loan.value));st.k401Rate=num(f.k401Rate.value);st.k401Pay=r2(num(f.k401Pay.value));st.birthYear=parseInt(f.birthYear.value,10)||'';save();closeSheet();render();return}
   if(k==='assetCars'){db.settings.carsValue=r2(num(f.carsValue.value));save();closeSheet();render();return}
   if(k==='assetHouse'){db.settings.houseValue=r2(num(f.houseValue.value));db.settings.mortgage=r2(num(f.mortgage.value));save();closeSheet();render();return}
   if(k==='car'){const c=f.dataset.id?db.cars.find(x=>x.id===f.dataset.id):null,name=f.name.value.trim();if(!name)return err('Escribe el carro.');const d={name,buy:r2(num(f.buy.value)),date:f.date.value||today(),ask:r2(num(f.ask.value)),note:f.note.value.trim(),costs:readDeds().map(x=>({concept:x.concept,amount:x.amount}))};if(f.soldPrice&&num(f.soldPrice.value)>0){d.sold=true;d.soldPrice=r2(num(f.soldPrice.value));d.soldDate=f.soldDate.value||today()}else{d.sold=false}if(c)Object.assign(c,d);else db.cars.push({id:uid(),...d});save();closeSheet();render();toast(d.sold?'Carro vendido':'Guardado');return}
@@ -1690,7 +1707,7 @@ async function exportExcel(){
   add('Pagos a inversionistas',db.payouts.map(p=>({Persona:inv(p.investorId)?.name,Mes:ymLabel(p.period),Rendimiento:p.gross,Deducciones:(p.deductions||[]).map(d=>d.concept+' '+d.amount).join(', '),Neto:p.net,Estado:STATUS_L[p.status]||p.status,Fecha:p.date,'Método':p.method,Destino:p.dest})));
   add('Movimientos de capital',db.movements.map(m=>({Persona:inv(m.investorId)?.name,Tipo:m.type,Monto:m.amount,Fecha:m.date,Origen:m.source?(m.source==='ahorro'?'Ahorros':db.cards.find(c=>c.id===m.source)?.name||''):'',Nota:m.note||''})));
   add('Deudas',db.cards.map(c=>({Nombre:c.name,Banco:c.issuer||'',Tipo:KIND_L[c.kind||'tarjeta'],Saldo:c.balance,'APR %':c.apr,'Límite':c.limit||'','Pago mínimo':c.minPay||'','Día de pago':c.dueDay||'','Promo 0% hasta':c.promoEnd||''})));
-  {const F=finances();add('Patrimonio',[{Concepto:'Ahorros en banco',Monto:F.sav},{Concepto:'Capital en Orbit',Monto:F.capOwn},{Concepto:'Carros en stock',Monto:F.cars},{Concepto:'Casa (valor)',Monto:+db.settings.houseValue||0},{Concepto:'Hipoteca',Monto:-(+db.settings.mortgage||0)},{Concepto:'Deudas',Monto:-F.debt},{Concepto:'Patrimonio real (sin casa)',Monto:F.worth},{Concepto:'Patrimonio con casa',Monto:F.worthAll}])}
+  {const F=finances();add('Patrimonio',[{Concepto:'Ahorros en banco',Monto:F.sav},{Concepto:'Capital en Orbit',Monto:F.capOwn},{Concepto:'Carros en stock',Monto:F.cars},{Concepto:'Casa (valor)',Monto:+db.settings.houseValue||0},{Concepto:'Hipoteca',Monto:-(+db.settings.mortgage||0)},{Concepto:'401K (neto)',Monto:F.k401},{Concepto:'Deudas',Monto:-F.debt},{Concepto:'Patrimonio real (sin casa)',Monto:F.worth},{Concepto:'Patrimonio con casa',Monto:F.worthAll}])}
   add('Movimientos tarjetas',db.cards.flatMap(c=>(c.txns||[]).map(t=>({Tarjeta:c.name,Tipo:t.type,Monto:t.amount,Fecha:t.date,Nota:t.note||''}))));
   const out=X.write(wb,{bookType:'xlsx',type:'array'});
   shareFile(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Orbit-${today()}.xlsx`);
