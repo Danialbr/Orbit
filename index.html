@@ -150,7 +150,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .carc-bot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.carc-bot small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.16em;opacity:.6;margin-bottom:5px}.carc-bot b{font:700 14px var(--display)}
 .wc-house{background:linear-gradient(135deg,#3A3226,#1A1610);color:#F6EFE3}.wc-house .wc-a{color:#F2C980}
 .wc-carbon{background:radial-gradient(120% 120% at 100% 0%,rgba(79,168,255,.18),transparent 55%),repeating-linear-gradient(45deg,#1B1F27 0 4px,#14171D 4px 8px);color:#EEF3F9}
-.an-in .car-svg{animation:drive .9s .2s cubic-bezier(.2,.8,.2,1) both}@keyframes drive{from{transform:translateX(-40px);opacity:0}}
+.an-in .car-svg{animation:carIn 1.1s .2s cubic-bezier(.2,.8,.2,1) both}@keyframes carIn{from{opacity:0;transform:translateX(-24px);filter:blur(4px)}}
 /* credit cards: stack + face */
 .ccstack{display:flex;flex-direction:column}
 .ccs{position:relative;display:block;width:100%;text-align:left;color:#fff;border-radius:14px;margin-top:-10px;padding:0 16px;background:radial-gradient(120% 140% at 100% 0%,rgba(255,255,255,.16),transparent 55%),linear-gradient(135deg,var(--a),var(--b));border:1px solid rgba(255,255,255,.16);box-shadow:0 -8px 20px -12px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.22) inset}
@@ -663,50 +663,57 @@ function myCard(){
 /* ============ cars in stock ============ */
 // original low-slung hypercar profile (not any real model)
 function carSVG(id){
-  const W=(cx)=>{const cy=86;let sp='';for(let k=0;k<5;k++)for(const d of[-7,7]){const a=(k*72-90+d)*Math.PI/180;sp+=`<line x1="${(cx+4*Math.cos(a)).toFixed(1)}" y1="${(cy+4*Math.sin(a)).toFixed(1)}" x2="${(cx+19*Math.cos(a)).toFixed(1)}" y2="${(cy+19*Math.sin(a)).toFixed(1)}" stroke="url(#${id}rim)" stroke-width="2" stroke-linecap="round"/>`}
-    return `<circle cx="${cx}" cy="${cy}" r="27" fill="#06080C"/><circle cx="${cx}" cy="${cy}" r="21" fill="#0F131A" stroke="#2A313D" stroke-width="1.5"/><path d="M${cx-11},${cy-12} A16,16 0 0 1 ${cx+12},${cy-11}" stroke="#46E3C6" stroke-width="4" fill="none" stroke-linecap="round"/>${sp}<circle cx="${cx}" cy="${cy}" r="4" fill="#D9E1EC"/>`};
-  return `<svg class="car-svg" viewBox="0 0 400 122" aria-hidden="true"><defs>
-  <linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7FAFD"/><stop offset=".35" stop-color="#C3CEDC"/><stop offset=".7" stop-color="#6F7D92"/><stop offset="1" stop-color="#2A3240"/></linearGradient>
-  <linearGradient id="${id}gl" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2A3A52"/><stop offset="1" stop-color="#05070B"/></linearGradient>
-  <linearGradient id="${id}rim" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#F1F4F8"/><stop offset="1" stop-color="#7C8798"/></linearGradient>
-  <linearGradient id="${id}hl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0"/><stop offset=".5" stop-color="#FFFFFF" stop-opacity=".85"/><stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></linearGradient>
-  <radialGradient id="${id}sh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".8"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient>
-  </defs>
-  <ellipse cx="202" cy="113" rx="196" ry="8" fill="url(#${id}sh)"/>
-  <path d="M398,80 C396,74 384,70 360,66 C338,62 318,58 300,54 C290,52 282,48 272,44 C252,38 228,32 204,32 C182,32 164,36 150,42 C136,46 122,46 110,46 C90,46 72,44 54,44 C40,44 26,47 18,54 L12,70 C11,80 15,86 22,86 L68,86 A30,30 0 0 1 128,86 L276,86 A30,30 0 0 1 336,86 L388,86 C394,86 398,84 398,80 Z" fill="url(#${id}p)"/>
-  <path d="M158,42 C172,37 188,35 206,35 C228,35 248,39 266,45 L236,47 L168,47 Z" fill="url(#${id}gl)"/>
-  <path d="M186,37 C202,36 220,36 238,38" stroke="#FFFFFF" stroke-opacity=".35" stroke-width="1.2" fill="none"/>
-  <path d="M146,60 C166,54 190,54 210,59 L204,70 C186,67 166,68 150,73 Z" fill="#0A0D13"/>
-  <path d="M154,63 C172,58 190,58 204,61" stroke="#46E3C6" stroke-opacity=".55" stroke-width="1" fill="none"/>
-  <path d="M28,56 C120,50 230,50 300,57 C340,61 370,68 394,77" stroke="url(#${id}hl)" stroke-width="1.5" fill="none"/>
-  <path d="M130,82 L274,82" stroke="#1A2029" stroke-width="4" stroke-linecap="round"/>
-  <path d="M18,30 L78,26 L80,32 L22,36 Z" fill="#1D232E"/><path d="M42,35 L46,45 M64,32 L66,44" stroke="#1D232E" stroke-width="3"/>
-  <path d="M362,66 L394,75" stroke="#BDF7EC" stroke-width="2.4" stroke-linecap="round"/><path d="M362,66 L394,75" stroke="#46E3C6" stroke-width="7" stroke-linecap="round" opacity=".25"/>
-  <path d="M9,60 L16,57" stroke="#FF7A7A" stroke-width="3" stroke-linecap="round"/>
-  <path d="M336,86 L384,86 L388,91 L340,91 Z" fill="#141922"/><path d="M12,86 L66,86 L64,91 L14,91 Z" fill="#141922"/>
-  ${W(98)}${W(306)}
+  return `<svg class="car-svg" viewBox="0 0 400 170" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
+  <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9FFBEA"/><stop offset=".5" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient>
+  <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#46E3C6" stop-opacity=".22"/><stop offset="1" stop-color="#46E3C6" stop-opacity="0"/></radialGradient></defs>
+  <ellipse cx="220" cy="152" rx="180" ry="12" fill="url(#${id}fl)"/>
+  <g stroke="url(#${id}s)" stroke-width="1.6" filter="url(#${id}f)">
+    <path d="M58,104 C58,96 66,90 80,86 C104,80 132,78 156,78 L170,77 C186,64 210,52 240,48 C266,45 292,48 314,56 C338,64 360,72 378,80 C388,84 392,92 390,102 L388,114"/>
+    <path d="M58,104 C62,114 70,120 82,124 C110,132 146,138 178,142"/>
+    <path d="M70,112 C96,122 134,130 172,134"/>
+    <path d="M80,104 C102,110 128,114 152,116"/>
+    <path d="M66,94 L90,92 L96,98" stroke-width="2.2"/>
+    <path d="M126,98 L162,100 L170,108" stroke-width="2.6"/>
+    <path d="M98,86 C120,84 142,85 160,88 M92,94 C112,98 130,106 140,116"/>
+    <path d="M170,77 C186,68 210,60 236,58 C260,56 282,60 300,66 C292,72 278,76 260,78 C228,80 194,80 170,77 Z"/>
+    <path d="M206,61 C216,67 224,73 230,79"/>
+    <path d="M178,142 L198,140 M250,134 L314,124"/>
+    <path d="M196,100 C236,92 284,88 332,90"/>
+    <path d="M264,100 C282,96 302,96 320,100 L312,114 C296,110 280,110 268,114 Z"/>
+    <path d="M324,58 L384,66 L382,72 L324,64 Z M346,64 L348,76 M368,68 L368,80"/>
+    <ellipse cx="222" cy="130" rx="23" ry="26"/><ellipse cx="222" cy="130" rx="14" ry="16"/>
+    ${[0,72,144,216,288].map(a=>`<path d="M222,130 L${(222+13*Math.cos((a-90)*Math.PI/180)).toFixed(1)},${(130+15*Math.sin((a-90)*Math.PI/180)).toFixed(1)}" stroke-width="1.1"/>`).join("")}
+    <ellipse cx="352" cy="110" rx="17" ry="21"/><ellipse cx="352" cy="110" rx="9" ry="12"/>
+    <path d="M198,140 C198,114 208,102 224,102 C240,102 248,114 248,134"/>
+    <path d="M332,122 C332,98 340,88 352,88 C366,88 374,98 374,114"/>
+    <path d="M70,116 C70,124 74,128 80,128" stroke-width="1.2"/>
+  </g>
+  <g stroke="#E8FFFA" stroke-width="2.4" filter="url(#${id}f)"><path d="M68,93 L88,91"/><path d="M128,99 L160,101"/></g>
 </svg>`}
-function houseSVG(id){return `<svg class="car-svg" viewBox="0 0 400 122" aria-hidden="true"><defs>
-  <linearGradient id="${id}w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F7FB"/><stop offset="1" stop-color="#8C99AD"/></linearGradient>
-  <linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE7B0" stop-opacity=".95"/><stop offset="1" stop-color="#F2A64A" stop-opacity=".75"/></linearGradient>
-  <radialGradient id="${id}sh" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#000" stop-opacity=".7"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
-  <ellipse cx="200" cy="114" rx="190" ry="7" fill="url(#${id}sh)"/>
-  <path d="M70,110 L70,52 L230,40 L230,110 Z" fill="url(#${id}w)"/>
-  <path d="M60,54 L240,38 L240,32 L60,48 Z" fill="#1D232E"/>
-  <path d="M230,110 L230,66 L340,60 L340,110 Z" fill="url(#${id}w)" opacity=".92"/>
-  <path d="M224,68 L350,58 L350,52 L224,62 Z" fill="#1D232E"/>
-  <rect x="88" y="62" width="62" height="40" rx="2" fill="url(#${id}g)"/><path d="M119,62 L119,102 M88,82 L150,82" stroke="#1D232E" stroke-width="2"/>
-  <rect x="164" y="58" width="50" height="52" rx="2" fill="#0F141C"/><rect x="200" y="82" width="4" height="10" rx="2" fill="#D9E1EC"/>
-  <rect x="248" y="72" width="76" height="30" rx="2" fill="url(#${id}g)" opacity=".9"/><path d="M286,72 L286,102" stroke="#1D232E" stroke-width="2"/>
-  <path d="M20,110 L380,110" stroke="#2A313D" stroke-width="2"/>
-  <path d="M30,110 C30,90 40,78 50,78 C60,78 66,92 64,110 Z" fill="#1B3B36"/><path d="M356,110 C354,94 362,84 370,84 C378,84 384,96 382,110 Z" fill="#1B3B36"/>
-  <path d="M164,110 L214,110 L222,118 L156,118 Z" fill="#2A313D"/>
+function houseSVG(id){return `<svg class="car-svg" viewBox="0 0 400 170" aria-hidden="true" fill="none" stroke-linecap="round" stroke-linejoin="round"><defs>
+  <linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#9FFBEA"/><stop offset=".5" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient>
+  <filter id="${id}f" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  <radialGradient id="${id}fl" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#46E3C6" stop-opacity=".22"/><stop offset="1" stop-color="#46E3C6" stop-opacity="0"/></radialGradient></defs>
+  <ellipse cx="200" cy="150" rx="180" ry="11" fill="url(#${id}fl)"/>
+  <g stroke="url(#${id}s)" stroke-width="1.6" filter="url(#${id}f)">
+    <path d="M40,146 L360,146"/>
+    <path d="M70,146 L70,74 L236,60 L236,146"/><path d="M56,76 L250,58"/>
+    <path d="M236,146 L236,92 L338,86 L338,146"/><path d="M228,94 L350,84"/>
+    <path d="M90,86 L150,82 L150,128 L90,130 Z M120,84 L120,129 M90,108 L150,105"/>
+    <path d="M168,80 L214,77 L214,146 M168,80 L168,146"/><path d="M204,112 L204,120"/>
+    <path d="M252,100 L322,96 L322,128 L252,130 Z M287,98 L287,129"/>
+    <path d="M168,146 L160,154 L222,154 L214,146"/>
+    <path d="M30,146 C30,118 38,104 48,104 C58,104 64,120 62,146 M48,104 L48,146"/>
+    <path d="M372,146 C372,124 378,114 384,114 C390,114 394,126 392,146"/>
+  </g>
+  <g stroke="#FFE7B0" stroke-opacity=".9" stroke-width="2" filter="url(#${id}f)"><path d="M94,124 L146,122"/><path d="M256,126 L318,124"/></g>
 </svg>`}
 function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db.settings.mortgage||0,eq=hv-mg,ef=hv?Math.max(0,Math.min(1,eq/hv)):0;
-  return `<section class="an"><div class="sec-h"><h2>Mis activos</h2></div><div class="cars">
-  <button class="carc" data-act="assetCars"><div class="carc-top"><span>Carros en stock</span><span class="carc-d">Toca para editar</span></div>${carSVG('cv')}
-    <div class="carc-bot" style="grid-template-columns:1fr"><div><small>VALOR INVERTIDO</small><b class="num" style="font-size:22px">${fmt(F.cars)}</b></div></div></button>
-  <button class="carc" data-act="assetHouse"><div class="carc-top"><span>Mi casa</span><span class="carc-d">${hv?'Aparte de tu dinero real':'Toca para agregar'}</span></div>${houseSVG('hv')}
+  return `<section class="an"><div class="sec-h"><h2>Assets</h2></div><div class="cars">
+  <button class="carc" data-act="assetCars"><div class="carc-top"><span>Carros</span><span class="carc-d">En stock</span></div>${carSVG('cv')}
+    <div class="carc-bot" style="grid-template-columns:1fr"><div><small>INVERTIDO</small><b class="num" style="font-size:22px">${fmt(F.cars)}</b></div></div></button>
+  <button class="carc" data-act="assetHouse"><div class="carc-top"><span>Casa</span><span class="carc-d">${hv?'Aparte':'Toca para agregar'}</span></div>${houseSVG('hv')}
     <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
     ${hv?`<div class="ccf-bar" style="background:rgba(255,255,255,.12)"><i style="--w:${ef*100}%;background:linear-gradient(90deg,var(--ion),var(--ion-2))"></i></div>`:''}</button>
   </div></section>`}
@@ -823,7 +830,7 @@ function debtPlanSection(){
      <div class="seg" style="margin-top:14px"><button class="${D.strat==='aval'?'on':''}" data-act="strategy" data-v="aval">Mayor interés primero</button><button class="${D.strat==='snow'?'on':''}" data-act="strategy" data-v="snow">Menor saldo primero</button></div>
      <div style="margin-top:12px"><div class="eyebrow" style="margin-bottom:6px">Este mes paga</div>${[...pl.order].sort((a,b)=>(pl.first[b.id]||0)-(pl.first[a.id]||0)).map((d,k)=>`<div class="kv"><span><span class="step">${k+1}</span>${h(d.name)} <span class="dim">· libre en ${ymLabel(d.paidOff)}</span></span><span class="num">${fmt(pl.first[d.id]||0)}</span></div>`).join('')}</div>`
    :`<div class="muted" style="font-size:14px">No alcanza para los mínimos con tu presupuesto actual.</div>`;
-  return `<section class="an"><div class="sec-h"><h2>Plan para salir de deudas</h2><button class="muted" style="font-size:13px" data-act="income">Presupuesto ›</button></div>
+  return `<section class="an"><div class="sec-h"><h2>Plan de deudas</h2><button class="muted" style="font-size:13px" data-act="income">Presupuesto ›</button></div>
   <div class="card">
     <div class="stats" style="margin-top:0;margin-bottom:14px">
       <button class="stat" data-act="income" style="text-align:left"><div class="eyebrow">Trabajo/mes</div><div class="v">${fmt(B.sal)}</div></button>
@@ -1161,7 +1168,7 @@ function ccFace(c,big){const sk=SKINS[c.skin]||SKINS.onyx,ut=+c.limit?Math.min(1
 function ccSection(){
   const cc=db.cards.filter(c=>(c.kind||'tarjeta')==='tarjeta');
   const lim=cc.reduce((s,c)=>s+(+c.limit||0),0),bal=cc.reduce((s,c)=>s+(+c.balance||0),0),u=lim?bal/lim:0;
-  return `<section class="an"><div class="sec-h"><h2>Mis tarjetas</h2><button class="muted" style="font-size:13px" data-act="card">+ Agregar</button></div>
+  return `<section class="an"><div class="sec-h"><h2>Tarjetas</h2><button class="muted" style="font-size:13px" data-act="card">+ Agregar</button></div>
   ${cc.length?`<div class="ccstack">${cc.map(c=>{const sk=SKINS[c.skin]||SKINS.onyx,ut=+c.limit?Math.round((+c.balance||0)/c.limit*100):null;
     return `<button class="ccs" data-act="ccOpen" data-id="${c.id}" style="--a:${sk[0]};--b:${sk[1]}"><div class="ccs-h"><span><small>${h(c.issuer||'')}</small>${h(c.name)}</span><span class="ccs-r"><b class="num">${fmt(c.balance)}</b><small>${ut!=null?ut+'% usado':''}${c.dueDay?` · día ${c.dueDay}`:''}</small></span></div></button>`}).join('')}</div>
     ${lim?`<div class="card" style="padding:12px 16px"><div class="kv"><span class="muted">Uso total de crédito</span><span class="num" style="color:${u>.3?'#F59A9A':'var(--ion)'}">${Math.round(u*100)}%</span></div><div class="meter" style="margin:6px 0 8px"><i style="--w:${Math.min(100,u*100)}%;background:${u>.3?'#F08A8A':'var(--ion)'}"></i></div><div class="muted" style="font-size:12px">${u>.3?'Arriba de 30% afecta tu score.':'Debajo de 30%, bien para tu score.'} Usas ${fmt(bal)} de ${fmt(lim)}.</div></div>`:''}`
@@ -1198,15 +1205,15 @@ function viewMe(){
   return {eyebrow:'Solo para ti',title:'Mi panel',action:`<div style="display:flex;gap:8px">${eyeBtn()}<button class="iconbtn" data-act="settings" aria-label="Ajustes">${ico('gear')}</button></div>`,html:`
   <div class="metal an">
     <div class="metal-top"><span class="metal-logo">${logoSVG({id:'mt'})}</span><span class="metal-brand">ORBIT</span><span class="metal-tier">PRIVATE</span></div>
-    <div><div class="metal-l">Patrimonio real</div><div class="metal-v">${cnt(F.worth)}</div></div>
-    <div class="metal-bot"><span class="metal-name">${h(holder)}${F.house?`<small class="metal-all">Con tu casa ${fmt(F.worthAll)}</small>`:""}</span><span class="metal-net"><small>NETO / MES</small>${fmt(F.net)}</span></div>
+    <div><div class="metal-l">Net worth</div><div class="metal-v">${cnt(F.worth)}</div></div>
+    <div class="metal-bot"><span class="metal-name">${h(holder)}${F.house?`<small class="metal-all">Con casa ${fmt(F.worthAll)}</small>`:""}</span><span class="metal-net"><small>NETO / MES</small>${fmt(F.net)}</span></div>
   </div>
   <div class="wallet an">
-    ${wc('bank','wc-teal','Dinero en banco',fmt(F.sav),kv('Ahorros',fmt(F.sav))+`<button class="wc-btn" data-act="savings">Actualizar saldo</button>`)}
-    ${wc('orbit','wc-blue','Tu capital en Orbit',fmt(F.capOwn),kv('De tus ahorros',fmt(F.src.ahorro))+kv('De tarjetas',fmt(F.src.tarjetas))+kv('Prestado',fmt(placed))+kv('En espera',fmt(F.capOwn-placed)))}
+    ${wc('bank','wc-teal','Banco',fmt(F.sav),kv('Ahorros',fmt(F.sav))+`<button class="wc-btn" data-act="savings">Actualizar saldo</button>`)}
+    ${wc('orbit','wc-blue','Capital en Orbit',fmt(F.capOwn),kv('Ahorros',fmt(F.src.ahorro))+kv('Tarjetas',fmt(F.src.tarjetas))+kv('Prestado',fmt(placed))+kv('En espera',fmt(F.capOwn-placed)))}
     ${wc('cars','wc-carbon','Carros en stock',fmt(F.cars),`<button class="wc-btn" data-act="assetCars">Editar valor</button>`)}
-    ${wc('house','wc-house','Casa · equity',fmt(F.house),kv('Valor',fmt(+db.settings.houseValue||0))+kv('Hipoteca','−'+fmt(+db.settings.mortgage||0))+`<button class="wc-btn" data-act="assetHouse">Editar</button>`)}
-    ${wc('income','wc-slate','Ingreso mensual',fmt(B.sal+B.orb),kv('Trabajo',fmt(B.sal))+kv('Orbit (bruto)',fmt(B.orb))+kv('Gastos fijos','−'+fmt(B.exp))+kv('Libre para deudas',fmt(Math.max(0,B.free)))+`<button class="wc-btn" data-act="income">Editar presupuesto</button>`)}
+    ${wc('house','wc-house','Casa',fmt(F.house),kv('Valor',fmt(+db.settings.houseValue||0))+kv('Hipoteca','−'+fmt(+db.settings.mortgage||0))+`<button class="wc-btn" data-act="assetHouse">Editar</button>`)}
+    ${wc('income','wc-slate','Ingresos',fmt(B.sal+B.orb),kv('Trabajo',fmt(B.sal))+kv('Orbit',fmt(B.orb))+kv('Gastos','−'+fmt(B.exp))+kv('Libre',fmt(Math.max(0,B.free)))+`<button class="wc-btn" data-act="income">Editar presupuesto</button>`)}
     ${wc('debt','wc-graphite','Deudas',fmt(F.debt),(db.cards.length?db.cards.map(cd=>`<button class="kv" style="width:100%" data-act="${(cd.kind||'tarjeta')==='tarjeta'?'ccOpen':'card'}" data-id="${cd.id}"><span>${h(cd.name)} <small style="opacity:.6">${+cd.apr?pct(cd.apr):'0%'}</small></span><span class="num">${fmt(cd.balance)}</span></button>`).join(''):'<div class="kv"><span>Sin deudas</span></div>')+kv('Interés al mes',fmt(F.cost))+`<button class="wc-btn" data-act="card">Agregar deuda</button>`)}
   </div>
   <section class="an"><div class="sec-h"><h2>Este mes</h2><span class="muted" style="font-size:12.5px">${ymLong(curYM())}</span></div>
@@ -1228,7 +1235,7 @@ function viewMe(){
   ${ccSection()}
   ${debtPlanSection()}
   ${projSection()}
-  ${H.length?`<section class="an"><div class="sec-h"><h2>Tu ganancia por mes</h2></div><div class="card">${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capMe')}</div></section>`:''}
+  ${H.length?`<section class="an"><div class="sec-h"><h2>Ganancia mensual</h2></div><div class="card">${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capMe')}</div></section>`:''}
   <div class="btns an" style="display:grid;grid-template-columns:1fr 1fr 1fr"><button class="btn" data-act="profit">Préstamos</button><button class="btn" data-act="excel">Excel</button><button class="btn pri" data-act="adminPdf">${ico('pdf')}PDF</button></div>`};
 }
 function animateIn(){
@@ -1620,7 +1627,7 @@ async function exportExcel(){
   add('Pagos a inversionistas',db.payouts.map(p=>({Persona:inv(p.investorId)?.name,Mes:ymLabel(p.period),Rendimiento:p.gross,Deducciones:(p.deductions||[]).map(d=>d.concept+' '+d.amount).join(', '),Neto:p.net,Estado:STATUS_L[p.status]||p.status,Fecha:p.date,'Método':p.method,Destino:p.dest})));
   add('Movimientos de capital',db.movements.map(m=>({Persona:inv(m.investorId)?.name,Tipo:m.type,Monto:m.amount,Fecha:m.date,Origen:m.source?(m.source==='ahorro'?'Ahorros':db.cards.find(c=>c.id===m.source)?.name||''):'',Nota:m.note||''})));
   add('Deudas',db.cards.map(c=>({Nombre:c.name,Banco:c.issuer||'',Tipo:KIND_L[c.kind||'tarjeta'],Saldo:c.balance,'APR %':c.apr,'Límite':c.limit||'','Pago mínimo':c.minPay||'','Día de pago':c.dueDay||'','Promo 0% hasta':c.promoEnd||''})));
-  {const F=finances();add('Patrimonio',[{Concepto:'Ahorros en banco',Monto:F.sav},{Concepto:'Tu capital en Orbit',Monto:F.capOwn},{Concepto:'Carros en stock',Monto:F.cars},{Concepto:'Casa (valor)',Monto:+db.settings.houseValue||0},{Concepto:'Hipoteca',Monto:-(+db.settings.mortgage||0)},{Concepto:'Deudas',Monto:-F.debt},{Concepto:'Patrimonio real (sin casa)',Monto:F.worth},{Concepto:'Patrimonio con casa',Monto:F.worthAll}])}
+  {const F=finances();add('Patrimonio',[{Concepto:'Ahorros en banco',Monto:F.sav},{Concepto:'Capital en Orbit',Monto:F.capOwn},{Concepto:'Carros en stock',Monto:F.cars},{Concepto:'Casa (valor)',Monto:+db.settings.houseValue||0},{Concepto:'Hipoteca',Monto:-(+db.settings.mortgage||0)},{Concepto:'Deudas',Monto:-F.debt},{Concepto:'Patrimonio real (sin casa)',Monto:F.worth},{Concepto:'Patrimonio con casa',Monto:F.worthAll}])}
   add('Movimientos tarjetas',db.cards.flatMap(c=>(c.txns||[]).map(t=>({Tarjeta:c.name,Tipo:t.type,Monto:t.amount,Fecha:t.date,Nota:t.note||''}))));
   const out=X.write(wb,{bookType:'xlsx',type:'array'});
   shareFile(new Blob([out],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),`Orbit-${today()}.xlsx`);
