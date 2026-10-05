@@ -146,6 +146,7 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
   background:radial-gradient(80% 70% at 50% 62%,rgba(79,168,255,.22),transparent 70%),linear-gradient(160deg,#1A2130,#090C12);border:1px solid rgba(255,255,255,.12);box-shadow:0 22px 40px -24px #000,0 1px 0 rgba(255,255,255,.14) inset}
 .carc::before{content:"";position:absolute;inset:auto 0 0 0;height:40%;background:repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 18px);pointer-events:none}
 .carc-top{display:flex;justify-content:space-between;align-items:baseline;font:700 15px var(--display)}.carc-d{font:600 10px var(--body);letter-spacing:.14em;text-transform:uppercase;opacity:.6}
+.car-def{mix-blend-mode:screen;filter:none!important;height:auto!important;aspect-ratio:493/260;object-fit:contain!important;margin:4px -6px 0!important;width:calc(100% + 12px)!important;max-width:none}
 .car-img{width:100%;height:150px;object-fit:contain;display:block;margin:6px 0 2px;filter:drop-shadow(0 10px 14px rgba(0,0,0,.6))}
 .car-svg{width:100%;height:auto;display:block;margin:8px 0 4px;filter:drop-shadow(0 6px 10px rgba(0,0,0,.6))}
 .carc-bot{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.carc-bot small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.16em;opacity:.6;margin-bottom:5px}.carc-bot b{font:700 14px var(--display)}
@@ -334,7 +335,7 @@ form{display:flex;flex-direction:column;gap:12px}
 </div>
 
 <script src="jspdf.umd.min.js"></script>
-<script>window.XLSX_SRC='xlsx.full.min.js'</script>
+<script>window.XLSX_SRC='xlsx.full.min.js';window.CAR_SRC='car.webp'</script>
 <script>
 (()=>{
 'use strict';
@@ -707,7 +708,7 @@ function houseSVG(id){return `<svg class="car-svg" viewBox="0 0 400 170" aria-hi
 </svg>`}
 function assetsSection(){const F=finances(),hv=+db.settings.houseValue||0,mg=+db.settings.mortgage||0,eq=hv-mg,ef=hv?Math.max(0,Math.min(1,eq/hv)):0;
   return `<section class="an"><div class="sec-h"><h2>Assets</h2></div><div class="cars">
-  <button class="carc" data-act="assetCars"><div class="carc-top"><span>Carros</span><span class="carc-d">En stock</span></div>${db.settings.carImg?`<img class="car-img" src="${db.settings.carImg}" alt="">`:carSVG('cv')}
+  <button class="carc" data-act="assetCars"><div class="carc-top"><span>Carros</span><span class="carc-d">En stock</span></div>${db.settings.carImg?`<img class="car-img" src="${db.settings.carImg}" alt="">`:`<img class="car-img car-def" src="${CAR_SRC}" alt="">`}
     <div class="carc-bot" style="grid-template-columns:1fr"><div><small>INVERTIDO</small><b class="num" style="font-size:22px">${fmt(F.cars)}</b></div></div></button>
   <button class="carc" data-act="assetHouse"><div class="carc-top"><span>Casa</span><span class="carc-d">${hv?'Aparte':'Toca para agregar'}</span></div>${houseSVG('hv')}
     <div class="carc-bot"><div><small>EQUITY</small><b class="num" style="color:var(--ion)">${fmt(eq)}</b></div><div><small>VALOR</small><b class="num">${fmt(hv)}</b></div><div style="text-align:right"><small>HIPOTECA</small><b class="num debt">${fmt(mg)}</b></div></div>
