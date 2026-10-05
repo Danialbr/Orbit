@@ -18,7 +18,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@500;600&display=swap">
 <style>
 /* Layout: one phone column, glass header, fixed tab bar. Manrope throughout, tabular figures. Single dark look by design. */
 :root{
@@ -27,10 +27,11 @@
   --fg:#E9EEF5; --muted:#8693A8; --dim:#5A6577;
   --ion:#46E3C6; --ion-2:#4FA8FF; --ion-ink:#04140F;
   --ok:#3DD68C; --warn:#F2B84B; --bad:#FF6B6B; --reinv:#A08CFF; --idle:#7D8AA0;
-  --display:'Manrope',ui-sans-serif,-apple-system,system-ui,sans-serif;
-  --body:'Manrope',-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;
-  --mono:'Manrope',-apple-system,system-ui,sans-serif;
-  --r:18px;
+  --display:'Geist',ui-sans-serif,-apple-system,system-ui,sans-serif;
+  --body:'Geist',-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;
+  --mono:'Geist',-apple-system,system-ui,sans-serif;
+  --code:'Geist Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --r:14px;
   color-scheme:dark;
 }
 html,body{background:var(--ink);color:var(--fg)}
@@ -74,7 +75,7 @@ section{display:flex;flex-direction:column;gap:10px}
 .hero{position:relative;overflow:hidden;border:1px solid transparent;
   background:linear-gradient(160deg,#121A27,#0B1018) padding-box,linear-gradient(135deg,rgba(70,227,198,.6),rgba(79,168,255,.18) 45%,rgba(150,175,210,.14)) border-box}
 .hero::after{content:"";position:absolute;right:-60px;top:-70px;width:220px;height:220px;border-radius:50%;border:1px solid rgba(70,227,198,.18);box-shadow:0 0 0 26px rgba(70,227,198,.03),0 0 0 54px rgba(79,168,255,.025);pointer-events:none}
-.big{font:600 34px/1.05 var(--display);letter-spacing:-.03em;font-variant-numeric:tabular-nums;margin-top:6px}
+.big{font:600 34px/1.05 var(--display);letter-spacing:-.045em;font-variant-numeric:tabular-nums;margin-top:6px}
 .big.ion{background:linear-gradient(90deg,var(--ion),var(--ion-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px}
 .stat .v{font:500 14.5px/1.2 var(--mono);font-variant-numeric:tabular-nums;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -139,8 +140,22 @@ tr:first-child td{border-top:0}
 table.tight th,table.tight td{padding-inline:8px}table.tight{font-size:12.5px}
 tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 
+/* credit cards */
+.cc-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin-inline:-16px;padding:2px 16px 8px;scrollbar-width:none}.cc-row::-webkit-scrollbar{display:none}
+.cc{flex:0 0 78%;scroll-snap-align:center;aspect-ratio:1.586;border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;text-align:left;color:#fff;position:relative;overflow:hidden;
+  background:radial-gradient(120% 80% at 100% 0%,rgba(255,255,255,.18),transparent 50%),linear-gradient(135deg,var(--a),var(--b));border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 36px -20px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.25) inset}
+.cc::after{content:"";position:absolute;inset:0;opacity:.25;background:repeating-linear-gradient(115deg,rgba(255,255,255,.05) 0 1px,transparent 1px 4px);pointer-events:none}
+.cc-top{display:flex;justify-content:space-between;font:600 10px/1 var(--body);letter-spacing:.18em;text-transform:uppercase;opacity:.85}
+.cc-chip{width:34px;height:25px;border-radius:5px;margin-top:14px;background:linear-gradient(135deg,#E9EDF2,#9AA3AF);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.cc-name{font:600 15px/1.2 var(--display);margin-top:auto;letter-spacing:-.01em}
+.cc-bal{font:600 24px/1.1 var(--display);letter-spacing:-.04em;margin-top:2px}
+.cc-bar{height:3px;border-radius:3px;background:rgba(255,255,255,.22);margin-top:8px;overflow:hidden}.cc-bar i{display:block;height:100%;width:var(--w);background:#fff}
+.cc-bot{display:flex;justify-content:space-between;margin-top:8px;font:500 11px/1 var(--code);opacity:.85}
+.presets{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.preset{height:58px;border-radius:12px;padding:8px 12px;text-align:left;color:#fff;font:600 10px/1.3 var(--body);letter-spacing:.12em;text-transform:uppercase;background:linear-gradient(135deg,var(--a),var(--b));border:2px solid transparent}
+.preset b{display:block;font:600 13.5px/1.2 var(--display);letter-spacing:0;text-transform:none;margin-top:3px}.preset.on{border-color:#fff}
 /* panel: metal card + wallet stack */
-.metal{position:relative;aspect-ratio:1.586;max-width:100%;border-radius:22px;padding:20px 22px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;color:#EAF7F4;isolation:isolate;
+.metal{position:relative;aspect-ratio:1.586;max-width:100%;border-radius:16px;padding:20px 22px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;color:#EAF7F4;isolation:isolate;
   background:radial-gradient(120% 90% at 0% 0%,#1E5B55 0%,transparent 55%),radial-gradient(90% 80% at 100% 100%,#1C3E78 0%,transparent 60%),linear-gradient(135deg,#0F2B2E,#0B1426 60%,#080C16);
   border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 60px -28px rgba(0,0,0,.9),0 0 0 1px rgba(70,227,198,.08) inset,0 1px 0 rgba(255,255,255,.18) inset}
 .metal::before{content:"";position:absolute;inset:0;z-index:-1;opacity:.35;background:repeating-linear-gradient(100deg,rgba(255,255,255,.035) 0 1px,transparent 1px 3px)}
@@ -149,12 +164,12 @@ tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 .metal-top{display:flex;align-items:center;gap:10px}.metal-logo{width:30px;height:30px;display:block}.metal-logo svg{width:100%;height:100%}
 .metal-brand{font:800 15px/1 var(--display);letter-spacing:.42em}.metal-tier{margin-left:auto;font:700 9.5px/1 var(--body);letter-spacing:.3em;opacity:.65}
 .metal-l{font:600 10.5px/1 var(--body);letter-spacing:.2em;text-transform:uppercase;opacity:.7}
-.metal-v{font:700 38px/1.1 var(--display);letter-spacing:-.03em;margin-top:6px;background:linear-gradient(90deg,#FFFFFF,#BFF6EA 60%,#9CCBFF);-webkit-background-clip:text;background-clip:text;color:transparent}
+.metal-v{font:600 38px/1.1 var(--display);letter-spacing:-.05em;margin-top:6px;background:linear-gradient(90deg,#FFFFFF,#BFF6EA 60%,#9CCBFF);-webkit-background-clip:text;background-clip:text;color:transparent}
 .metal-v .num{font:inherit}
-.metal-bot{display:flex;justify-content:space-between;align-items:flex-end}.metal-name{font:600 12px/1 var(--mono);letter-spacing:.22em;opacity:.8}
+.metal-bot{display:flex;justify-content:space-between;align-items:flex-end}.metal-name{font:500 12px/1 var(--code);letter-spacing:.22em;opacity:.8}
 .metal-net{text-align:right;font:700 15px/1.1 var(--display)}.metal-net small{display:block;font:600 8.5px/1 var(--body);letter-spacing:.2em;opacity:.6;margin-bottom:4px}
 .wallet{display:flex;flex-direction:column;margin-top:-6px}
-.wc{position:relative;border-radius:20px;padding:0 18px;margin-top:-14px;cursor:pointer;border:1px solid rgba(255,255,255,.1);box-shadow:0 -10px 24px -14px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.12) inset;transition:transform .35s cubic-bezier(.2,.8,.2,1),margin .35s}
+.wc{position:relative;border-radius:14px;padding:0 18px;margin-top:-14px;cursor:pointer;border:1px solid rgba(255,255,255,.1);box-shadow:0 -10px 24px -14px rgba(0,0,0,.8),0 1px 0 rgba(255,255,255,.12) inset;transition:transform .35s cubic-bezier(.2,.8,.2,1),margin .35s}
 .wc:first-child{margin-top:0}
 .wc-h{display:flex;justify-content:space-between;align-items:center;height:64px;gap:10px}
 .wc-t{font:700 14px var(--display);letter-spacing:-.01em}.wc-a{font:700 17px var(--display)}
@@ -482,7 +497,7 @@ function sampleDB(){
         mama={id:'inv_mama',name:'Mamá',rate:0,owner:false,phone:'',note:'Participación sin capital'},
         abuela={id:'inv_abuela',name:'Abuela',rate:2,owner:false,phone:'',note:'',payMethod:'Zelle',payDest:'abuela@correo.com'};
   tio.payMethod='Wire';tio.payDest='Chase ****4471';
-  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Chase Sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300},{id:'c_amex',name:'Amex Blue',kind:'tarjeta',balance:4000,apr:22,minPay:0,promoEnd:'2027-03-31'},{id:'c_auto',name:'Toyota',kind:'auto',balance:9000,apr:5.9,minPay:350}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});
+  d.investors.push(yo,tio,ana,mama,abuela);d.cards=[{id:'c_chase',name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta',balance:15000,apr:24.9,minPay:300,limit:20000,dueDay:18,last4:'4471'},{id:'c_fu',name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta',balance:4000,apr:0,promoEnd:'2027-03-31',apr:21.5,limit:9000,dueDay:3,last4:'2210'},{id:'c_fs',name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta',balance:600,apr:19.9,limit:1500,dueDay:12,last4:'8803'},{id:'c_hd',name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta',balance:1200,apr:0,limit:3500,dueDay:25,last4:'1937'}];Object.assign(d.settings,{savings:6000,salary:5200,expenses:3100});
   d.movements.push({id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-10',note:'Ahorros',source:'ahorro'},{id:uid(),investorId:yo.id,type:'aporte',amount:15000,date:'2026-03-12',note:'Chase Sapphire',source:'c_chase'},{id:uid(),investorId:abuela.id,type:'aporte',amount:10000,date:'2026-03-14',note:'Aporte inicial'},
     {id:uid(),investorId:tio.id,type:'aporte',amount:34000,date:'2026-03-15',note:'Aporte inicial'},
     {id:uid(),investorId:ana.id,type:'aporte',amount:8000,date:'2026-07-01',note:''});
@@ -611,6 +626,8 @@ function myCard(){
     </div></button>`;
 }
 /* ============ debt payoff plan ============ */
+const SKINS={citi:['#F06A1E','#9E3A0A'],sapphire:['#163B78','#071530'],freedom:['#2A72D6','#0E3474'],student:['#1C93B4','#0B4A63'],onyx:['#2B2F38','#0E1015'],teal:['#1A6B62','#0B2E2E']};
+const PRESETS=[{name:'Home Depot',issuer:'Citibank',skin:'citi',kind:'tarjeta'},{name:'Freedom Unlimited',issuer:'Chase',skin:'freedom',kind:'tarjeta'},{name:'Freedom Student',issuer:'Chase',skin:'student',kind:'tarjeta'},{name:'Sapphire',issuer:'Chase',skin:'sapphire',kind:'tarjeta'}];
 const KIND_L={tarjeta:'Tarjeta',prestamo:'Préstamo',auto:'Auto',otro:'Otra deuda'};
 function budget(){const st=db.settings,F=finances(),sal=+st.salary||0,exp=+st.expenses||0,orb=st.useOrbit===false?0:Math.max(0,F.net+F.cost);
   // money left each month after living expenses; card interest is handled inside the simulation
@@ -693,10 +710,15 @@ function financesCard(){const F=finances();
   ${db.cards.length?`<div class="list">${db.cards.map(c=>`<button class="row" data-act="card" data-id="${c.id}"><div class="main"><div class="t">${h(c.name)}</div><div class="s">${pct(c.apr)} anual · ${fmt((+c.balance||0)*(+c.apr||0)/1200)}/mes de interés</div></div><div class="r"><span class="num">${fmt(c.balance)}</span></div></button>`).join('')}</div>`:''}
   <div class="muted" style="font-size:12px">"Si pagas TDC hoy" = ahorros + tu capital en Orbit − deuda de tarjetas. Actualiza el saldo de cada tarjeta cuando pagues.</div></section>`}
 function sheetCard(id){const c=id?db.cards.find(x=>x.id===id):null;
-  openSheet(`<h3>${c?'Deuda':'Nueva deuda'}</h3><div class="sub">Tarjetas, préstamos o cualquier deuda. Tasa 0 si no cobra interés.</div><form data-form="card" data-id="${c?.id||''}">
-    <div class="grid2">${fld('Nombre',`<input id="cname" name="name" value="${h(c?.name||'')}" placeholder="Ej. Chase Sapphire">`)}${fld('Tipo',`<select id="ckind" name="kind">${Object.entries(KIND_L).map(([k,v])=>`<option value="${k}" ${(c?.kind||'tarjeta')===k?'selected':''}>${v}</option>`).join('')}</select>`)}</div>
+  openSheet(`<h3>${c?'Deuda':'Nueva deuda'}</h3><div class="sub">Tarjetas, préstamos o cualquier deuda. Interés 0 si no cobra.</div>
+  ${c?'':`<div class="presets">${PRESETS.filter(p=>!db.cards.some(x=>x.name===p.name)).map((p,k)=>`<button type="button" class="preset" data-act="preset" data-v="${k}" style="--a:${SKINS[p.skin][0]};--b:${SKINS[p.skin][1]}">${h(p.issuer)}<b>${h(p.name)}</b></button>`).join('')}</div>`}
+  <form data-form="card" data-id="${c?.id||''}">
+    <input type="hidden" name="skin" value="${c?.skin||'onyx'}"><input type="hidden" name="issuer" value="${h(c?.issuer||'')}">
+    <div class="grid2">${fld('Nombre',`<input id="cname" name="name" value="${h(c?.name||'')}" placeholder="Ej. Sapphire">`)}${fld('Tipo',`<select id="ckind" name="kind">${Object.entries(KIND_L).map(([k,v])=>`<option value="${k}" ${(c?.kind||'tarjeta')===k?'selected':''}>${v}</option>`).join('')}</select>`)}</div>
     <div class="grid2">${fld('Saldo actual',money('balance',c?c.balance:''))}${fld('Interés anual (APR) %',`<input id="capr" name="apr" inputmode="decimal" value="${c?c.apr:''}" placeholder="0 = sin interés">`)}</div>
-    <div class="grid2">${fld('Pago mínimo/mes',money('minPay',c?.minPay||''),'Vacío: 2% del saldo')}${fld('Promo 0% hasta',`<input id="cpromo" name="promoEnd" type="date" value="${c?.promoEnd||''}">`,'Opcional')}</div>
+    <div class="grid2">${fld('Límite de crédito',money('limit',c?.limit||''),'Para ver cuánto usas')}${fld('Día de pago',`<input id="cdue" name="dueDay" inputmode="numeric" value="${c?.dueDay||''}" placeholder="1–31">`)}</div>
+    <div class="grid2">${fld('Pago mínimo/mes',money('minPay',c?.minPay||''),'Vacío: 2% del saldo')}${fld('Promo 0% hasta',`<input id="cpromo" name="promoEnd" type="date" value="${c?.promoEnd||''}">`)}</div>
+    ${fld('Últimos 4 dígitos',`<input id="clast4" name="last4" inputmode="numeric" maxlength="4" value="${h(c?.last4||'')}" placeholder="Opcional">`)}
     <div class="btns"><button class="btn pri wide" type="submit">Guardar</button>${c?`<button type="button" class="btn danger" data-act="delCard" data-id="${c.id}" data-confirm="1">Eliminar</button>`:''}</div></form>`)}
 function sheetSavings(){openSheet(`<h3>Ahorros en el banco</h3><div class="sub">Lo que tienes fuera de Orbit. Solo lo ves tú.</div><form data-form="savings">${fld('Saldo',money('savings',db.settings.savings||''))}<button class="btn pri" type="submit">Guardar</button></form>`)}
 function viewProfit(){
@@ -979,6 +1001,21 @@ function viewPresent(id){
 
 /* ============ Mi panel: private widgets ============ */
 const cnt=(v,cls='')=>`<span class="num ${cls}" data-count="${r2(v)}">${fmt(v)}</span>`;
+function ccSection(){
+  const cc=db.cards.filter(c=>(c.kind||'tarjeta')==='tarjeta');
+  const lim=cc.reduce((s,c)=>s+(+c.limit||0),0),bal=cc.reduce((s,c)=>s+(+c.balance||0),0),u=lim?bal/lim:0;
+  return `<section class="an"><div class="sec-h"><h2>Mis tarjetas</h2><button class="muted" style="font-size:13px" data-act="card">+ Agregar</button></div>
+  ${cc.length?`<div class="cc-row">${cc.map(c=>{const sk=SKINS[c.skin]||SKINS.onyx,ut=+c.limit?Math.min(1,(+c.balance||0)/c.limit):null;
+    return `<button class="cc" data-act="card" data-id="${c.id}" style="--a:${sk[0]};--b:${sk[1]}">
+      <div class="cc-top"><span class="cc-iss">${h(c.issuer||KIND_L[c.kind||'tarjeta'])}</span><span class="cc-apr">${+c.apr?pct(c.apr)+' APR':'0% APR'}</span></div>
+      <div class="cc-chip"></div>
+      <div class="cc-name">${h(c.name)}</div>
+      <div class="cc-bal">${fmt(c.balance)}</div>
+      ${ut!=null?`<div class="cc-bar"><i style="--w:${ut*100}%"></i></div>`:''}
+      <div class="cc-bot"><span class="cc-num">•••• ${h(c.last4||'0000')}</span><span>${ut!=null?Math.round(ut*100)+'% usado':''}${c.dueDay?` · paga el ${c.dueDay}`:''}</span></div></button>`}).join('')}</div>
+    ${lim?`<div class="card" style="padding:12px 16px"><div class="kv"><span class="muted">Uso total de crédito</span><span class="num" style="color:${u>.3?'#F59A9A':'var(--ion)'}">${Math.round(u*100)}%</span></div><div class="muted" style="font-size:12px">${u>.3?'Arriba de 30% baja tu score. Bájalo pagando primero la más usada.':'Debajo de 30%, bien para tu score.'} Usas ${fmt(bal)} de ${fmt(lim)}.</div></div>`:''}`
+  :`<div class="list"><div class="empty">Agrega tus tarjetas: Home Depot (Citi), Freedom Unlimited, Freedom Student y Sapphire están listas para un toque.</div></div>`}</section>`;
+}
 function viewMe(){
   const F=finances(),P=portfolio(),t=totals(),H=myHistory(),m=myMonth(curYM()),o=owner(),B=budget();
   const acc=H.length?H[H.length-1].acc:0,placed=o?placedNow(o):0;
@@ -1012,6 +1049,7 @@ function viewMe(){
     <div class="stat"><div class="eyebrow">Prestado</div><div class="v">${cnt(P.lent)}</div></div>
     <div class="stat"><div class="eyebrow">Capital total</div><div class="v">${cnt(t.capital)}</div></div>
   </div></section>
+  ${ccSection()}
   ${debtPlanSection()}
   ${H.length?`<section class="an"><div class="sec-h"><h2>Tu ganancia por mes</h2></div><div class="card">${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capMe')}</div></section>`:''}
   <div class="btns an" style="display:grid;grid-template-columns:1fr 1fr"><button class="btn" data-act="profit">Por préstamo ›</button><button class="btn pri" data-act="adminPdf">${ico('pdf')}Reporte PDF</button></div>`};
@@ -1266,6 +1304,7 @@ const ACTIONS={
   pdf:e=>exportPDF(inv(e.dataset.id)),
   settings:()=>push({type:'set'}),
   income:()=>sheetIncome(),
+  preset:e=>{const p=PRESETS.filter(x=>!db.cards.some(c=>c.name===x.name))[+e.dataset.v],f=$('form[data-form=card]');f.name.value=p.name;f.skin.value=p.skin;f.issuer.value=p.issuer;f.kind.value=p.kind;document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('on',b===e));f.balance.focus()},
   wcard:e=>{const open=e.classList.contains('open');document.querySelectorAll('.wc.open').forEach(x=>x.classList.remove('open'));if(!open)e.classList.add('open')},
   strategy:e=>{db.settings.strategy=e.dataset.v;save();render()},
   adminPdf:()=>exportAdminPDF(),
@@ -1312,7 +1351,7 @@ document.addEventListener('submit',ev=>{
   }
   if(k==='payout'){savePayout(f);return}
   if(k==='income'){Object.assign(db.settings,{salary:r2(num(f.salary.value)),expenses:r2(num(f.expenses.value)),useOrbit:f.useOrbit.checked});save();closeSheet();render();return}
-  if(k==='card'){const c=f.dataset.id?db.cards.find(x=>x.id===f.dataset.id):null,d={name:f.name.value.trim()||'Deuda',kind:f.kind.value,balance:r2(num(f.balance.value)),apr:num(f.apr.value),minPay:r2(num(f.minPay.value))||0,promoEnd:f.promoEnd.value||''};if(c)Object.assign(c,d);else db.cards.push({id:'c_'+uid(),...d});save();closeSheet();render();return}
+  if(k==='card'){const c=f.dataset.id?db.cards.find(x=>x.id===f.dataset.id):null,d={name:f.name.value.trim()||'Deuda',kind:f.kind.value,balance:r2(num(f.balance.value)),apr:num(f.apr.value),minPay:r2(num(f.minPay.value))||0,promoEnd:f.promoEnd.value||'',limit:r2(num(f.limit.value))||0,dueDay:parseInt(f.dueDay.value,10)||0,last4:f.last4.value.replace(/\D/g,'').slice(0,4),skin:f.skin.value||'onyx',issuer:f.issuer.value};if(c)Object.assign(c,d);else db.cards.push({id:'c_'+uid(),...d});save();closeSheet();render();return}
   if(k==='savings'){db.settings.savings=r2(num(f.savings.value));save();closeSheet();render();return}
   if(k==='loan'){
     const principal=r2(num(f.principal.value)),rate=num(f.rate.value),payDay=parseInt(f.payDay.value,10),term=parseInt(f.term.value,10)||0;
@@ -1367,6 +1406,7 @@ function exportICS(){
   let n=0;
   db.loans.filter(l=>!l.closed).forEach(l=>{ev('cobro-'+l.id,`Orbit · Cobrar a ${borName(l)} ${fmt(loanInt(l,outNow(l)))}`,+l.payDay,'Marca el cobro en Orbit');n++});
   db.investors.filter(i=>!i.owner&&monthlyNow(i)>0).forEach(i=>{const days=db.loans.filter(l=>!l.closed&&involved(l,i)).map(l=>+l.payDay);const d=+i.payDay||Math.max(...days);ev('pago-'+i.id,`Orbit · Pagar a ${i.name} ${fmt(monthlyNow(i))}`,d,'Registra el pago en Orbit');n++});
+  db.cards.filter(c=>+c.dueDay&&+c.balance>0).forEach(c=>{ev('tdc-'+c.id,`Orbit · Pagar ${c.name}`,+c.dueDay,'Pago de tarjeta');n++});
   if(!n){toast('No hay préstamos activos');return}
   shareFile(new Blob([L.concat('END:VCALENDAR').join('\r\n')],{type:'text/calendar'}),'orbit-recordatorios.ics');
 }
