@@ -139,34 +139,19 @@ tr:first-child td{border-top:0}
 table.tight th,table.tight td{padding-inline:8px}table.tight{font-size:12.5px}
 tr.tap{cursor:pointer} tr.tap:active td{background:var(--panel-2)}
 
-/* panel widgets */
-.w{display:block;text-align:left;width:100%;position:relative;overflow:hidden;background:linear-gradient(160deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:16px}
-.wgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.wgrid.one{grid-template-columns:1fr}
-.w .eyebrow{font-size:9.5px}
-.w-v{font:700 21px/1.15 var(--display);letter-spacing:-.02em;margin-top:8px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.w-v .num{font-weight:700}
-.w-sub{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.35}
-.w-hero{padding:20px;border:1px solid transparent;background:linear-gradient(160deg,#0F2A24,#0A1310) padding-box,linear-gradient(135deg,rgba(61,214,140,.75),rgba(70,227,198,.2) 50%,rgba(150,175,210,.12)) border-box}
-.w-hero .big{color:var(--ok);font-size:36px}
-.w-hero.neg{background:linear-gradient(160deg,#2A1414,#130A0A) padding-box,linear-gradient(135deg,rgba(255,107,107,.75),rgba(150,175,210,.12)) border-box}.w-hero.neg .big{color:var(--bad)}
-.w-hero::after{content:"";position:absolute;inset:-40% -20% auto auto;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(61,214,140,.22),transparent 70%);animation:breathe 5s ease-in-out infinite}
-.w-green{box-shadow:inset 0 0 0 1px rgba(61,214,140,.25)}.w-green .w-v{color:var(--ok)}
-.w-red{box-shadow:inset 0 0 0 1px rgba(255,107,107,.28)}.w-red .w-v{color:var(--bad)}
-.w-ion .w-v{color:var(--ion)}
-.w-v.green{color:var(--ok)}.w-v.red{color:var(--bad)}
-.w-green::before,.w-red::before,.w-ion::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:3px;border-radius:3px;background:currentColor}
-.w-green::before{color:var(--ok)}.w-red::before{color:var(--bad)}.w-ion::before{color:var(--ion)}
-.w-ringbox{display:flex;gap:10px;align-items:center}.w-ringbox>div{min-width:0}
-.wring{width:64px;height:64px;flex:none;transform:rotate(-90deg)}
-.wbar{display:flex;gap:3px;height:12px;border-radius:12px;overflow:hidden;background:var(--raise);margin-top:12px}
-.wbar i{display:block;height:100%;width:var(--w);border-radius:3px}.wbar .g{background:linear-gradient(90deg,#2BB673,var(--ok))}.wbar .r{background:linear-gradient(90deg,#E04F5F,var(--bad))}
-.w-in{animation:win .55s cubic-bezier(.2,.8,.2,1) both}
-.w-in .wring-a{animation:ringdraw 1.1s .2s cubic-bezier(.3,.7,.2,1) both}
-.w-in .wbar i{animation:grow 1s .25s cubic-bezier(.3,.7,.2,1) both}
-@keyframes win{from{opacity:0;transform:translateY(14px) scale(.98)}}
-@keyframes ringdraw{from{stroke-dasharray:0 var(--c)}}
+/* panel */
+.debt{color:#F08A8A}
+.comp{display:flex;gap:3px;height:6px;margin-top:16px;border-radius:6px;overflow:hidden;background:var(--raise)}
+.comp i{display:block;height:100%;width:var(--w);border-radius:2px;opacity:.9}
+.meter{width:100%;height:4px;border-radius:4px;background:var(--raise);overflow:hidden}.meter i{display:block;height:100%;width:var(--w);border-radius:4px}
+.stat .v .num{font:inherit}
+.an-in{animation:anIn .6s cubic-bezier(.2,.8,.2,1) both}
+.an-in .comp i,.an-in .meter i{animation:grow 1.1s .2s cubic-bezier(.3,.7,.2,1) both}
+.an-in .ring-a{animation:ringdraw 1.2s .15s cubic-bezier(.3,.7,.2,1) both}
+@keyframes anIn{from{opacity:0;transform:translateY(12px)}}
 @keyframes grow{from{width:0}}
-@keyframes breathe{50%{transform:scale(1.15);opacity:.7}}
+@keyframes ringdraw{from{stroke-dasharray:0 var(--c)}}
+.ring-a{filter:drop-shadow(0 0 6px rgba(70,227,198,.45))}
 /* calendar */
 .calnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .calnav h2{margin:0;font:600 18px/1 var(--display);text-transform:capitalize}
@@ -894,40 +879,52 @@ function viewPresent(id){
 const cnt=(v,cls='')=>`<span class="num ${cls}" data-count="${r2(v)}">${fmt(v)}</span>`;
 function viewMe(){
   const F=finances(),P=portfolio(),t=totals(),H=myHistory(),m=myMonth(curYM()),o=owner();
-  const acc=H.length?H[H.length-1].acc:0,capOwn=F.capOwn,fromCards=F.src.tarjetas,fromSav=F.src.ahorro,share=capOwn>0?Math.min(1,fromCards/Math.max(capOwn,fromSav+fromCards)):0;
-  const months=F.debt>0&&F.net>0?Math.ceil(F.debt/F.net):null,placed=o?placedNow(o):0;
-  const R=(f,col)=>{const r=34,c=2*Math.PI*r;return `<svg viewBox="0 0 84 84" class="wring"><circle cx="42" cy="42" r="${r}" fill="none" stroke="rgba(150,175,210,.12)" stroke-width="8"/><circle class="wring-a" cx="42" cy="42" r="${r}" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${c*f} ${c}" style="--c:${c}"/></svg>`};
+  const acc=H.length?H[H.length-1].acc:0,capOwn=F.capOwn,sav=F.sav,debt=F.debt,gross=sav+capOwn||1;
+  const months=debt>0&&F.net>0?Math.ceil(debt/F.net):null,placed=o?placedNow(o):0;
+  const r=40,c=2*Math.PI*r,frac=m.est>0?Math.max(0,Math.min(1,F.net/m.est)):0;
+  const srcRows=[{n:'Tus ahorros',v:F.src.ahorro,col:'var(--ion)'},...db.cards.map(cd=>({n:cd.name,v:F.src.byCard[cd.id]||0,col:'var(--ion-2)',sub:'Tarjeta'}))].filter(x=>x.v>0);
+  const srcTot=srcRows.reduce((s,x)=>s+x.v,0)||1;
   return {eyebrow:'Solo para ti',title:'Mi panel',action:`<div style="display:flex;gap:8px">${eyeBtn()}<button class="iconbtn" data-act="settings" aria-label="Ajustes">${ico('gear')}</button></div>`,html:`
-  <div class="w w-hero ${F.worth<0?'neg':''}"><div class="eyebrow">Patrimonio real · si pagas tus tarjetas hoy</div>
-    <div class="big">${cnt(F.worth)}</div>
-    <div class="w-sub">Ahorros ${fmt(F.sav)} + tu capital en Orbit ${fmt(capOwn)} − tarjetas ${fmt(F.debt)}</div></div>
-  <div class="wgrid">
-    <button class="w w-green" data-act="savings"><div class="eyebrow">Dinero en banco</div><div class="w-v">${cnt(F.sav)}</div><div class="w-sub">Toca para actualizar</div></button>
-    <button class="w w-red" data-act="card"><div class="eyebrow">Deuda tarjetas</div><div class="w-v">${cnt(F.debt)}</div><div class="w-sub">${db.cards.length} tarjeta${db.cards.length===1?'':'s'} · ${fmt(F.cost)}/mes interés</div></button>
-    <div class="w w-ion"><div class="eyebrow">Total prestado</div><div class="w-v">${cnt(P.lent)}</div><div class="w-sub">${P.n} préstamos · ${P.clients} clientes</div></div>
-    <div class="w"><div class="eyebrow">Capital total</div><div class="w-v">${cnt(t.capital)}</div><div class="w-sub">En espera ${fmt(t.free)}</div></div>
+  <div class="card hero an">
+    <div class="eyebrow">Patrimonio real</div>
+    <div class="big ion">${cnt(F.worth)}</div>
+    <div class="muted" style="font-size:12.5px;margin-top:6px">Lo que te queda si pagas tus tarjetas hoy</div>
+    <div class="comp"><i style="--w:${sav/gross*100}%;background:var(--ion)"></i><i style="--w:${capOwn/gross*100}%;background:var(--ion-2)"></i></div>
+    <div class="stats">
+      <button class="stat" data-act="savings" style="text-align:left"><div class="eyebrow">Ahorros ›</div><div class="v">${cnt(sav)}</div></button>
+      <div class="stat"><div class="eyebrow">En Orbit</div><div class="v">${cnt(capOwn)}</div></div>
+      <button class="stat" data-act="card" style="text-align:left"><div class="eyebrow">Tarjetas ›</div><div class="v debt">${cnt(debt)}</div></button>
+    </div>
   </div>
-  <div class="w"><div style="display:flex;justify-content:space-between;align-items:baseline"><div class="eyebrow">Tu capital en Orbit</div><span class="num">${fmt(capOwn)}</span></div>
-    <div class="wbar"><i class="g" style="--w:${capOwn>0?fromSav/(fromSav+fromCards||1)*100:0}%"></i><i class="r" style="--w:${capOwn>0?fromCards/(fromSav+fromCards||1)*100:0}%"></i></div>
-    <div class="legend"><span><i class="dot" style="color:var(--ok)"></i>De tus ahorros ${fmt(fromSav)}</span><span><i class="dot" style="color:var(--bad)"></i>De tarjetas ${fmt(fromCards)}</span><span>Prestado ${fmt(placed)}</span></div></div>
-  <div class="wgrid one">
-    <div class="w w-ringbox">${R(m.est>0?Math.min(1,F.net/m.est):0,'var(--ok)')}<div><div class="eyebrow">Ganancia neta/mes</div><div class="w-v ${F.net<0?'red':'green'}">${cnt(F.net)}</div><div class="w-sub">Bruta ${fmt(m.est)} − TDC ${fmt(F.cost)}</div></div></div>
-    <div class="w w-ringbox">${R(share,'var(--bad)')}<div><div class="eyebrow">Financiado con TDC</div><div class="w-v">${Math.round(share*100)}%</div><div class="w-sub">de tu capital en Orbit salió de tarjetas</div></div></div>
-  </div>
-  <div class="wgrid">
-    <div class="w"><div class="eyebrow">Acumulado</div><div class="w-v green">${cnt(acc)}</div><div class="w-sub">${H.filter(x=>!x.current).length} meses cerrados</div></div>
-    <div class="w"><div class="eyebrow">TDC pagadas en</div><div class="w-v">${months?months+' mes'+(months>1?'es':''):F.debt>0?'—':'Sin deuda'}</div><div class="w-sub">${months?'usando toda tu ganancia neta':F.debt>0?'Tu ganancia neta no alcanza':'Todo tuyo'}</div></div>
-  </div>
-  ${H.length?`<div class="w"><div class="eyebrow" style="margin-bottom:8px">Tu ganancia por mes</div>${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capMe')}</div>`:''}
-  ${db.cards.length?`<section><div class="sec-h"><h2>Tarjetas</h2><button class="muted" style="font-size:13px" data-act="card">+ Tarjeta</button></div><div class="list">${db.cards.map(c=>`<button class="row" data-act="card" data-id="${c.id}"><span class="bar" style="color:var(--bad)"></span><div class="main"><div class="t">${h(c.name)}</div><div class="s">${pct(c.apr)} anual · ${fmt((+c.balance||0)*(+c.apr||0)/1200)}/mes</div></div><div class="r"><span class="num" style="color:var(--bad)">${fmt(c.balance)}</span></div></button>`).join('')}</div></section>`:''}
-  <div class="btns" style="display:grid;grid-template-columns:1fr 1fr"><button class="btn" data-act="profit">Mis ganancias ›</button><button class="btn pri" data-act="adminPdf">${ico('pdf')}Reporte PDF</button></div>`};
+  <section class="an"><div class="sec-h"><h2>Este mes</h2><span class="muted" style="font-size:12.5px">${ymLong(curYM())}</span></div>
+  <div class="card month">
+    <div class="ring"><svg viewBox="0 0 92 92"><defs><linearGradient id="rgm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#46E3C6"/><stop offset="1" stop-color="#4FA8FF"/></linearGradient></defs><circle cx="46" cy="46" r="${r}" fill="none" stroke="rgba(150,175,210,.12)" stroke-width="7"/><circle class="ring-a" cx="46" cy="46" r="${r}" fill="none" stroke="url(#rgm)" stroke-width="7" stroke-linecap="round" stroke-dasharray="${c*frac} ${c}" style="--c:${c}"/></svg><div class="c"><div><b>${Math.round(frac*100)}%</b><span>te queda</span></div></div></div>
+    <div>
+      <div class="kv"><span class="muted">Ganancia bruta</span>${cnt(m.est)}</div>
+      <div class="kv"><span class="muted">Interés de tarjetas</span><span class="num debt">−${fmt(F.cost)}</span></div>
+      <div class="kv" style="border-top:1px solid var(--line);margin-top:4px;padding-top:8px"><span style="font-weight:600">Ganancia neta</span><span class="num" style="color:var(--ion);font-weight:700">${fmt(F.net)}</span></div>
+    </div>
+  </div></section>
+  <section class="an"><div class="stats card" style="margin-top:0">
+    <div class="stat"><div class="eyebrow">Acumulado</div><div class="v" style="color:var(--ion)">${cnt(acc)}</div></div>
+    <div class="stat"><div class="eyebrow">Prestado</div><div class="v">${cnt(P.lent)}</div></div>
+    <div class="stat"><div class="eyebrow">Capital total</div><div class="v">${cnt(t.capital)}</div></div>
+  </div></section>
+  ${srcRows.length?`<section class="an"><div class="sec-h"><h2>De dónde salió tu capital</h2><span class="muted num" style="font-size:12.5px">Prestado ${fmt(placed)}</span></div><div class="list">
+    ${srcRows.map(x=>`<div class="row" style="flex-wrap:wrap;row-gap:8px"><div class="main"><div class="t">${h(x.n)}</div><div class="s">${x.sub?x.sub+' · ':''}${Math.round(x.v/srcTot*100)}% de tu capital</div></div><div class="r"><span class="num">${fmt(x.v)}</span></div><div class="meter"><i style="--w:${x.v/srcTot*100}%;background:${x.col}"></i></div></div>`).join('')}
+  </div></section>`:''}
+  <section class="an"><div class="sec-h"><h2>Tarjetas de crédito</h2><button class="muted" style="font-size:13px" data-act="card">+ Agregar</button></div>
+  ${db.cards.length?`<div class="list">${db.cards.map(cd=>`<button class="row" data-act="card" data-id="${cd.id}"><div class="main"><div class="t">${h(cd.name)}</div><div class="s">${pct(cd.apr)} anual · ${fmt((+cd.balance||0)*(+cd.apr||0)/1200)} de interés al mes</div></div><div class="r"><span class="num debt">${fmt(cd.balance)}</span></div></button>`).join('')}
+    <div class="row" style="justify-content:space-between;font-size:13px"><span class="muted">${months?'Libre de deuda en':'Con tu ganancia actual'}</span><b>${months?months+' mes'+(months>1?'es':''):debt>0?'no alcanza':'—'}</b></div></div>`
+  :`<div class="list"><div class="empty">Si usaste tarjetas para prestar, agrégalas para ver tu ganancia real.</div></div>`}</section>
+  ${H.length?`<section class="an"><div class="sec-h"><h2>Tu ganancia por mes</h2></div><div class="card">${barsSVG(H.map(x=>({label:ymLabel(x.ym),short:shortM(x.ym),value:Math.max(0,x.value),est:x.current})),'capMe')}</div></section>`:''}
+  <div class="btns an" style="display:grid;grid-template-columns:1fr 1fr"><button class="btn" data-act="profit">Por préstamo ›</button><button class="btn pri" data-act="adminPdf">${ico('pdf')}Reporte PDF</button></div>`};
 }
 function animateIn(){
-  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  document.querySelectorAll('#view .w').forEach((el,k)=>{el.style.animationDelay=(k*55)+'ms';el.classList.add('w-in')});
-  if(reduce)return;
-  document.querySelectorAll('#view [data-count]').forEach(el=>{const to=+el.dataset.count,t0=performance.now(),d=900;
-    const step=now=>{const k=Math.min(1,(now-t0)/d),e=1-Math.pow(1-k,3);el.textContent=fmt(to*e);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  document.querySelectorAll('#view .an').forEach((el,k)=>{el.style.animationDelay=(k*70)+'ms';el.classList.add('an-in')});
+  document.querySelectorAll('#view [data-count]').forEach(el=>{const to=+el.dataset.count,t0=performance.now(),d=1000;
+    const step=now=>{const k=Math.min(1,(now-t0)/d),e=1-Math.pow(1-k,4);el.textContent=fmt(to*e);if(k<1)requestAnimationFrame(step)};requestAnimationFrame(step)});
 }
 function viewSettings(){
   const lb=db.settings.lastBackup;
