@@ -950,7 +950,7 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
     const glow = new THREE.Mesh(new THREE.CylinderGeometry(2200, 2200, 700, 64, 1, true), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, side: THREE.BackSide, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
     glow.position.y = 180; glow.renderOrder = 1; S.add(glow) }
   // la colonia vive en un atardecer/noche: de día se mantiene el tono dorado del ocaso para que el cielo siga siendo de espacio
-  { const tick = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; window.__azHour = h >= 6 && h < 20 ? 20.4 : h };
+  { const tick = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; window.__azHour = h >= 6 && h < 18 ? 18.2 : h };   // de día: luz de atardecer, nunca suelo negro
     tick(); setInterval(tick, 30000) }
   // el halo de Saturno aclaraba todo el cielo: lo bajo
   // Saturno queda, pero en penumbra: las constelaciones mandan en el cielo
@@ -1056,6 +1056,40 @@ document.body.appendChild(ov);
 const ifr = ov.querySelector('iframe');
 let ovT = null;
 ov.querySelector('button').onclick = () => { ov.style.opacity = '0'; ov.style.pointerEvents = 'none'; go('all') };
+
+/* ---------- toro dorado (Quaternius, CC0) frente a Wall Street ---------- */
+import('./jsm/loaders/GLTFLoader.js').then(({ GLTFLoader }) => new GLTFLoader().load('toro.glb', g => {
+  const b = BLD.wall, root = g.scene, gold = new THREE.MeshStandardMaterial({ color: 0xC9A13A, metalness: 1, roughness: .3 });
+  root.traverse(o => { if (o.isMesh) { o.material = gold; o.castShadow = true; o.frustumCulled = false } });
+  const clip = g.animations.find(a => a.name === 'Attack_Headbutt') || g.animations[0];
+  if (clip) { const mx = new THREE.AnimationMixer(root); mx.clipAction(clip).play(); mx.setTime(clip.duration * .35) }   // pose de embestida, quieta
+  const bb = new THREE.Box3().setFromObject(root), sz = bb.getSize(new THREE.Vector3());
+  root.scale.setScalar(6 / Math.max(sz.x, sz.z));
+  const ped = new THREE.Group(); ped.position.set(0, .3, OD / 2 + 10.5); b.g.add(ped);
+  box(8, 1.2, 4.2, granite, 0, .6, 0, ped); box(8.6, .2, 4.8, stoneM, 0, 1.25, 0, ped);
+  root.position.y = 1.35; root.rotation.y = -Math.PI / 2 + .35; ped.add(root);
+})).catch(() => {});
+
+/* ---------- pasada de look: metal con reflejos y colores sobrios ---------- */
+{
+  // mapa de entorno: reflejos suaves del cielo de atardecer en todo lo metálico
+  const pm = new THREE.PMREMGenerator(R), es = new THREE.Scene();
+  const c = document.createElement('canvas'); c.width = 4; c.height = 256; const x = c.getContext('2d'); const gr = x.createLinearGradient(0, 0, 0, 256);
+  gr.addColorStop(0, '#0b0a1a'); gr.addColorStop(.42, '#3a2a55'); gr.addColorStop(.5, '#c98a6a'); gr.addColorStop(.56, '#4a3a3a'); gr.addColorStop(1, '#16141c');
+  x.fillStyle = gr; x.fillRect(0, 0, 4, 256); const tx = new THREE.CanvasTexture(c); tx.colorSpace = THREE.SRGBColorSpace;
+  es.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.MeshBasicMaterial({ map: tx, side: THREE.BackSide })));
+  S.environment = pm.fromScene(es, .02).texture;
+  // blancos de juguete → titanio; colores chillones → apagados
+  const titan = new THREE.Color(0xb9bec8), grey = new THREE.Color(0x5b6170), hsl = {};
+  const seen = new Set();
+  S.traverse(o => { if (!o.isMesh || !o.material || seen.has(o.material)) return; const m = o.material; seen.add(m);
+    if (!m.isMeshStandardMaterial || m.transparent || m === SKY) return;
+    m.envMapIntensity = .55;
+    m.color.getHSL(hsl);
+    if (hsl.l > .86 && hsl.s < .2) { m.color.copy(titan); m.metalness = Math.max(m.metalness, .55); m.roughness = Math.min(m.roughness, .38) }
+    else if (hsl.s > .55 && !m.map) m.color.lerp(grey, .35);
+  });
+}
 
 /* ---------- las 5 apps desde Arizona ---------- */
 {
