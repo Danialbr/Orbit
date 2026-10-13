@@ -925,7 +925,7 @@ const OW = 20, OD = 16, POD = 7.4, NFL = 5;
   b.func = topY;
   finish('wall', topY + 17, topY + 18);
   // vista desde la izquierda para que Mi Orbit no tape el edificio
-  V.wall = () => { const h = topY + 18; return camFit(b.x, h / 2 - (ph() ? 2 : 0), b.z, ph() ? h * .62 : h * .66, new THREE.Vector3(-.62, .28, .9).normalize()) };
+  V.wall = () => { const h = topY + 18; return camFit(b.x, h / 2 - (ph() ? 2 : 0), b.z, ph() ? h * .62 : h * .66, new THREE.Vector3(-.04, .3, 1).normalize()) };   // recta: pasa entre Orbit y Mi Orbit
 }
 
 /* ---------- Córtex: el cielo es tu red neuronal ---------- */
