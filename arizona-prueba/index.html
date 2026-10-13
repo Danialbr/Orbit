@@ -981,7 +981,7 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
     uniforms: { t: SKYT, px: { value: R.getPixelRatio() } }, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending,
     vertexShader: `attribute float sz; attribute float ph; attribute vec3 color; uniform float t; uniform float px; varying vec3 vC; varying float vA; varying float vS;
       void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vC = color; vA = .75 + .25 * sin(t * 1.6 + ph);
-      vS = max(2.5 * px, sz * px * (2100.0 / -mv.z)); gl_PointSize = vS; gl_Position = projectionMatrix * mv; }`,
+      vS = max(3.2 * px, sz * px * (2100.0 / -mv.z)); gl_PointSize = vS; gl_Position = projectionMatrix * mv; }`,
     // núcleo gaussiano (visible aun en puntos de 2–3 px) + destellos en cruz solo en las estrellas grandes
     fragmentShader: `varying vec3 vC; varying float vA; varying float vS; void main(){ vec2 u = (gl_PointCoord - .5) * 2.0; float d = length(u); if (d > 1.0) discard;
       float core = exp(-d * d * 7.0), halo = pow(1.0 - d, 3.0) * .25;
@@ -1012,9 +1012,9 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
       else v.set(gauss(), Math.random(), gauss()).normalize();
       if (v.y < -.02) v.y = -v.y * .5 + .01;
       const rr = 1000 + Math.random() * 380; dp[i * 3] = v.x * rr;   // delante de Saturno y sus anillos dp[i * 3 + 1] = v.y * rr - 80; dp[i * 3 + 2] = v.z * rr;
-      const c = warm[(Math.random() * warm.length) | 0], b = .65 + Math.pow(Math.random(), 2) * .9;
+      const c = warm[(Math.random() * warm.length) | 0], b = .95 + Math.pow(Math.random(), 2) * 1.1;
       dc[i * 3] = c[0] * b; dc[i * 3 + 1] = c[1] * b; dc[i * 3 + 2] = c[2] * b;
-      ds[i] = 1.5 + Math.pow(Math.random(), 5) * 6; dph[i] = Math.random() * 6.28 }
+      ds[i] = 2.2 + Math.pow(Math.random(), 4) * 8; dph[i] = Math.random() * 6.28 }
     const dg = new THREE.BufferGeometry();
     dg.setAttribute('position', new THREE.BufferAttribute(dp, 3)); dg.setAttribute('color', new THREE.BufferAttribute(dc, 3));
     dg.setAttribute('sz', new THREE.BufferAttribute(ds, 1)); dg.setAttribute('ph', new THREE.BufferAttribute(dph, 1));
@@ -1128,8 +1128,16 @@ import('./jsm/loaders/GLTFLoader.js').then(({ GLTFLoader }) => new GLTFLoader().
     if (hsl2.l > .5) o.material = glassC;                                               // cascarones claros → cristal oscuro con ventanas
     else if (hsl2.s < .3) { o.material = m.clone(); o.material.color.multiplyScalar(.6); o.material.metalness = Math.max(o.material.metalness, .6) }
   }));
-  // cristal de las oficinas: ahumado, se sigue viendo la gente adentro
-  if (typeof glassM !== 'undefined') { glassM.color.set(0x5a6a88); glassM.opacity = .22 }
+  // por fuera no se ve nada adentro: cristal oscuro con ventanas; al tocar el edificio se abre y se ve la gente
+  const SHELL = {};   // edificio -> { glass:[mesh, matAbierto], panels:[], fls:[] }
+  Object.entries(FL).forEach(([key, f]) => { const bk = key.split(':')[0]; const s = SHELL[bk] = SHELL[bk] || { glass: [], panels: [], fls: [] };
+    s.fls.push(f.fl);
+    f.fg.children.forEach(o => { if (o.isMesh && o.material && o.material.transparent && !o.material.map) s.glass.push([o, o.material]) });
+    if (f.w && f.d && (bk === 'wall' || bk === 'cf')) {   // pisos rectangulares: tapa de cristal al frente
+      const p = new THREE.Mesh(new THREE.BoxGeometry(f.w - .6, f.h - .45, .1), glassC); p.position.set(0, .45 + (f.h - .45) / 2, f.d / 2 - .3); f.fg.add(p); s.panels.push(p) } });
+  window.__shell = open => Object.entries(SHELL).forEach(([bk, s]) => { const o = bk === open;
+    s.glass.forEach(([m, mat]) => m.material = o ? mat : glassC); s.panels.forEach(p => p.visible = !o); s.fls.forEach(fl => fl.visible = o) });
+  window.__shell(null);
   // baliza roja en la cima de cada edificio
   Object.values(BLD).forEach(b => { const top = (b.top || b.func || 20);
     const sp = new THREE.Mesh(new THREE.CylinderGeometry(.06, .3, 6, 6), new THREE.MeshStandardMaterial({ color: 0x20242c, metalness: .9, roughness: .2 })); sp.position.y = top + 3; b.g.add(sp);
@@ -1150,6 +1158,7 @@ chips.insertAdjacentHTML('beforeend', '<button class="chip" data-k="wall">Wall S
 const _goW = go;
 go = function (k) {
   _goW(k); clearTimeout(ovT);
+  if (window.__shell) window.__shell(BLD[k.split(':')[0]] ? k.split(':')[0] : null);   // solo el edificio enfocado se abre
   if (k !== 'cortex') { ov.style.opacity = '0'; ov.style.pointerEvents = 'none' }
   CON.want = k === 'cortex' ? 1 : 0;
   if (k === 'cortex') {
