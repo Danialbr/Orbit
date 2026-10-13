@@ -957,7 +957,7 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
   { const tick = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; window.__azHour = h >= 6 && h < 18 ? 18.2 : h };   // de día: luz de atardecer, nunca suelo negro
     tick(); setInterval(tick, 30000);
     // niebla cálida: el suelo lejano se funde con el resplandor del horizonte en vez de quedar negro
-    const fogFix = () => { if (S.fog) { S.fog.color.set(0x9a6468); S.fog.near = 180; S.fog.far = 620 } };
+    const fogFix = () => { if (S.fog) { S.fog.color.set(0x9a6468); S.fog.near = 180; S.fog.far = 620 } sat.traverse(o => { if (o.isSprite) o.material.opacity = .12 }) };
     fogFix(); setInterval(fogFix, 1000) }
   // el halo de Saturno aclaraba todo el cielo: lo bajo
   // Saturno queda, pero en penumbra: las constelaciones mandan en el cielo
