@@ -983,7 +983,7 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
   // las líneas solo aparecen al tocar el cielo
   lines.material.opacity = 0; CON.lines = lines;
   // vía láctea: banda densa inclinada + estrellas sueltas + bruma suave (decorativo)
-  { const phone = innerWidth < 700, M = phone ? 7000 : 12000, F = phone ? 1800 : 3000, H = 700;
+  { const phone = innerWidth < 700, M = phone ? 9000 : 16000, F = phone ? 1800 : 3000, H = 700;
     const tot = M + F, dp = new Float32Array(tot * 3), dc = new Float32Array(tot * 3), ds = new Float32Array(tot), dph = new Float32Array(tot);
     // eje elegido para que la banda nazca bajo en el horizonte de enfrente (a la derecha de Saturno) y suba sobre la colonia
     const ax = new THREE.Vector3(.785, .155, .48).normalize(), u = new THREE.Vector3(1, -.3, -.1).cross(ax).normalize(), w = ax.clone().cross(u), v = new THREE.Vector3();
@@ -995,9 +995,9 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
       else v.set(gauss(), Math.random(), gauss()).normalize();
       if (v.y < -.02) v.y = -v.y * .5 + .01;
       const rr = 1000 + Math.random() * 380; dp[i * 3] = v.x * rr;   // delante de Saturno y sus anillos dp[i * 3 + 1] = v.y * rr - 80; dp[i * 3 + 2] = v.z * rr;
-      const c = warm[(Math.random() * warm.length) | 0], b = .35 + Math.pow(Math.random(), 3) * .75;
+      const c = warm[(Math.random() * warm.length) | 0], b = .65 + Math.pow(Math.random(), 2) * .9;
       dc[i * 3] = c[0] * b; dc[i * 3 + 1] = c[1] * b; dc[i * 3 + 2] = c[2] * b;
-      ds[i] = 1 + Math.pow(Math.random(), 6) * 7; dph[i] = Math.random() * 6.28 }
+      ds[i] = 1.5 + Math.pow(Math.random(), 5) * 6; dph[i] = Math.random() * 6.28 }
     const dg = new THREE.BufferGeometry();
     dg.setAttribute('position', new THREE.BufferAttribute(dp, 3)); dg.setAttribute('color', new THREE.BufferAttribute(dc, 3));
     dg.setAttribute('sz', new THREE.BufferAttribute(ds, 1)); dg.setAttribute('ph', new THREE.BufferAttribute(dph, 1));
