@@ -861,8 +861,6 @@ const OW = 20, OD = 16, POD = 7.4, NFL = 5;
     box(1.6, .35, 1.6, stoneM, x, POD - .65, OD / 2 + 1.4, b.g); box(1.5, .3, 1.5, stoneM, x, .95, OD / 2 + 1.4, b.g) }
   box(OW + 1, 1, 3.4, stoneM, 0, POD - .2, OD / 2 + .9, b.g);
   sign(b.g, 'WALL STREET', '#C9A45C', 0, POD - .2, OD / 2 + 2.62, OW - 2, .9, { bg: '#d9d0bf', fg: '#3a3428', font: '600 110px Georgia,serif' });
-  const tri = new THREE.Shape(); tri.moveTo(-OW / 2 - .5, 0); tri.lineTo(OW / 2 + .5, 0); tri.lineTo(0, 2.6); tri.closePath();
-  const ped = new THREE.Mesh(new THREE.ExtrudeGeometry(tri, { depth: 3.4, bevelEnabled: false }), stoneM); ped.position.set(0, POD + .3, OD / 2 - .8); b.g.add(ped);
   // estandartes (se pueden ocultar para ver la fachada solo de piedra)
   const ban = new THREE.Group(); b.g.add(ban); B.wsBanners = ban;
   const banTex = (() => { const c = document.createElement('canvas'); c.width = 128; c.height = 320; const x = c.getContext('2d');
@@ -926,7 +924,8 @@ const OW = 20, OD = 16, POD = 7.4, NFL = 5;
   shade(b.g);
   b.func = topY;
   finish('wall', topY + 17, topY + 18);
-  V.wall = () => bcam('wall');
+  // vista desde la izquierda para que Mi Orbit no tape el edificio
+  V.wall = () => { const h = topY + 18; return camFit(b.x, h / 2 - (ph() ? 2 : 0), b.z, ph() ? h * .62 : h * .66, new THREE.Vector3(-.62, .28, .9).normalize()) };
 }
 
 /* ---------- Córtex: el cielo es tu red neuronal ---------- */
