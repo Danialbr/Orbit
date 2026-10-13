@@ -938,17 +938,18 @@ const OW = 20, OD = 16, POD = 7.4, NFL = 5;
 // detrás del horizonte del planeta, donde la cámara de la colonia sí lo ve
 const SKY = new THREE.Group(); SKY.position.set(-120, -260, -1500); SKY.scale.setScalar(4.6); S.add(SKY);
 {
-  const PALS = [0x5ce1ff, 0x2f8bff, 0x8a6bff, 0x38ffd8, 0x7fb8ff, 0xb48cff, 0x00c8ff, 0x4f7dff, 0x9ff3ff];
+  // tonos saturados: se leen sobre el cielo de día y brillan de noche
+  const PALS = [0x00b8ff, 0x1d5cff, 0x6a3dff, 0x00d6b0, 0x2f8bff, 0x8a4dff, 0x0096ff, 0x3a4dff, 0x00e0ff];
   const n = CX.n.length, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), tc = new THREE.Color();
   CX.n.forEach(([x, y, z, r], i) => { pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; tc.setHex(PALS[r % PALS.length]).toArray(col, i * 3) });
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   const sprite = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
     [[0, '#fff'], [.18, 'rgba(255,255,255,.9)'], [.45, 'rgba(255,255,255,.18)'], [1, 'rgba(255,255,255,0)']].forEach(([o, c2]) => gr.addColorStop(o, c2)); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c) })();
-  SKY.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 7, map: sprite, vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false })));
+  SKY.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 9, map: sprite, vertexColors: true, transparent: true, depthWrite: false, fog: false, toneMapped: false })));
   const lp = new Float32Array(CX.l.length * 6), lc = new Float32Array(CX.l.length * 6);
-  CX.l.forEach(([s, t], i) => { for (let k = 0; k < 3; k++) { lp[i * 6 + k] = pos[s * 3 + k]; lp[i * 6 + 3 + k] = pos[t * 3 + k]; lc[i * 6 + k] = col[s * 3 + k] * .4; lc[i * 6 + 3 + k] = col[t * 3 + k] * .4 } });
+  CX.l.forEach(([s, t], i) => { for (let k = 0; k < 3; k++) { lp[i * 6 + k] = pos[s * 3 + k]; lp[i * 6 + 3 + k] = pos[t * 3 + k]; lc[i * 6 + k] = col[s * 3 + k] * .7; lc[i * 6 + 3 + k] = col[t * 3 + k] * .7 } });
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(lp, 3)); lg.setAttribute('color', new THREE.BufferAttribute(lc, 3));
-  SKY.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .3, blending: THREE.AdditiveBlending, depthWrite: false, fog: false, toneMapped: false })));
+  SKY.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .5, depthWrite: false, fog: false, toneMapped: false })));
   const hit = new THREE.Mesh(new THREE.SphereGeometry(150, 16, 12), new THREE.MeshBasicMaterial({ visible: false })); SKY.add(hit);
   pick.push([hit, 'cortex']);
   labels.push(['CÓRTEX<i>toca el cielo para entrar a la red</i>', new THREE.Vector3(-120, 380, -1500), 'all', '']);
