@@ -943,7 +943,7 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
   // velo nocturno entre el cielo y las constelaciones: oscurece el fondo sin tocar el planeta
   // degradado: transparente en el horizonte (deja el resplandor cálido) y espacio profundo hacia arriba
   const veilTex = (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 512; const x = c.getContext('2d'); const gr = x.createLinearGradient(0, 512, 0, 0);
-    gr.addColorStop(0, 'rgba(3,2,10,.2)'); gr.addColorStop(.5, 'rgba(3,2,10,.12)'); gr.addColorStop(.55, 'rgba(3,2,10,.55)'); gr.addColorStop(.63, 'rgba(3,2,10,.9)'); gr.addColorStop(1, 'rgba(3,2,10,.96)');
+    gr.addColorStop(0, 'rgba(3,2,10,.2)'); gr.addColorStop(.5, 'rgba(3,2,10,.1)'); gr.addColorStop(.515, 'rgba(3,2,10,.45)'); gr.addColorStop(.545, 'rgba(3,2,10,.88)'); gr.addColorStop(1, 'rgba(3,2,10,.96)');
     x.fillStyle = gr; x.fillRect(0, 0, 4, 512); return new THREE.CanvasTexture(c) })();
   const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 32), new THREE.MeshBasicMaterial({ map: veilTex, transparent: true, side: THREE.BackSide, fog: false, depthWrite: false }));
   veil.renderOrder = 1; S.add(veil);
