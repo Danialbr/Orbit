@@ -950,7 +950,7 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
     const glow = new THREE.Mesh(new THREE.CylinderGeometry(2200, 2200, 700, 64, 1, true), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, side: THREE.BackSide, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
     glow.position.y = 180; glow.renderOrder = 1; S.add(glow) }
   // la colonia vive en un atardecer/noche: de día se mantiene el tono dorado del ocaso para que el cielo siga siendo de espacio
-  { const tick = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; window.__azHour = h >= 7 && h < 18.4 ? 18.6 : h };
+  { const tick = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; window.__azHour = h >= 6 && h < 20 ? 20.4 : h };
     tick(); setInterval(tick, 30000) }
   // el halo de Saturno aclaraba todo el cielo: lo bajo
   // Saturno queda, pero en penumbra: las constelaciones mandan en el cielo
