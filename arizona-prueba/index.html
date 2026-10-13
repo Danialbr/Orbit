@@ -963,12 +963,13 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
   g.setAttribute('sz', new THREE.BufferAttribute(sz, 1)); g.setAttribute('ph', new THREE.BufferAttribute(ph, 1));
   const stars = new THREE.Points(g, new THREE.ShaderMaterial({
     uniforms: { t: SKYT, px: { value: R.getPixelRatio() } }, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending,
-    vertexShader: `attribute float sz; attribute float ph; attribute vec3 color; uniform float t; uniform float px; varying vec3 vC; varying float vA;
+    vertexShader: `attribute float sz; attribute float ph; attribute vec3 color; uniform float t; uniform float px; varying vec3 vC; varying float vA; varying float vS;
       void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vC = color; vA = .75 + .25 * sin(t * 1.6 + ph);
-      gl_PointSize = sz * px * (2100.0 / -mv.z); gl_Position = projectionMatrix * mv; }`,
-    fragmentShader: `varying vec3 vC; varying float vA; void main(){ vec2 u = (gl_PointCoord - .5) * 2.0; float d = length(u); if (d > 1.0) discard;
-      float core = smoothstep(.28, .0, d), halo = pow(1.0 - d, 3.0) * .45;
-      float spk = (max(0.0, 1.0 - abs(u.y) * 18.0) + max(0.0, 1.0 - abs(u.x) * 18.0)) * (1.0 - d) * .35;
+      vS = max(2.5 * px, sz * px * (2100.0 / -mv.z)); gl_PointSize = vS; gl_Position = projectionMatrix * mv; }`,
+    // núcleo gaussiano (visible aun en puntos de 2–3 px) + destellos en cruz solo en las estrellas grandes
+    fragmentShader: `varying vec3 vC; varying float vA; varying float vS; void main(){ vec2 u = (gl_PointCoord - .5) * 2.0; float d = length(u); if (d > 1.0) discard;
+      float core = exp(-d * d * 7.0), halo = pow(1.0 - d, 3.0) * .25;
+      float spk = (max(0.0, 1.0 - abs(u.y) * 18.0) + max(0.0, 1.0 - abs(u.x) * 18.0)) * (1.0 - d) * .35 * smoothstep(9.0, 16.0, vS);
       gl_FragColor = vec4(vC * (core + halo + spk) * vA, 1.0); }` }));
   stars.renderOrder = 3; SKY.add(stars);
   // constelaciones: solo el trazo principal de cada estrella (hacia su vecina más conectada), finito y tenue
