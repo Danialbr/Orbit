@@ -950,9 +950,10 @@ const SKYT = { value: 0 };
   const deg = new Array(n).fill(0); CX.l.forEach(([s, t]) => { deg[s]++; deg[t]++ });
   // dirección del grafo → acimut completo y elevación entre ~6° y ~78°; los grupos siguen juntos como constelaciones
   const maxR = Math.max(...CX.n.map(([x, y, z]) => Math.hypot(x, y, z)));
-  CX.n.forEach(([x, y, z, r], i) => { const len = Math.hypot(x, y, z) || 1, az = Math.atan2(z, x) * 1.0, el = .1 + (y / len * .5 + .5) * 1.25, rr = 900 + len / maxR * 350;
+  // franja que la cámara sí ve: 210° de frente (hacia Saturno) y de 3° a 42° sobre el horizonte
+  CX.n.forEach(([x, y, z, r], i) => { const len = Math.hypot(x, y, z) || 1, az = -Math.PI / 2 + Math.atan2(z, x) / Math.PI * 1.83, el = .05 + (y / len * .5 + .5) * .68, rr = 900 + len / maxR * 350;
     pos[i * 3] = rr * Math.cos(el) * Math.cos(az); pos[i * 3 + 1] = rr * Math.sin(el) - 60; pos[i * 3 + 2] = rr * Math.cos(el) * Math.sin(az);
-    tc.setHex(TINT[r % TINT.length]).toArray(col, i * 3); sz[i] = 3 + Math.sqrt(deg[i]) * 2.2; ph[i] = Math.random() * 6.28 });
+    tc.setHex(TINT[r % TINT.length]).toArray(col, i * 3); sz[i] = 4 + Math.sqrt(deg[i]) * 2.6; ph[i] = Math.random() * 6.28 });
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   g.setAttribute('sz', new THREE.BufferAttribute(sz, 1)); g.setAttribute('ph', new THREE.BufferAttribute(ph, 1));
@@ -969,11 +970,21 @@ const SKYT = { value: 0 };
   // constelaciones: solo el trazo principal de cada estrella (hacia su vecina más conectada), finito y tenue
   const best = new Array(n).fill(-1); CX.l.forEach(([s, t]) => { if (best[s] < 0 || deg[t] > deg[best[s]]) best[s] = t; if (best[t] < 0 || deg[s] > deg[best[t]]) best[t] = s });
   const seen = new Set(), lp = [];
-  best.forEach((t, s) => { if (t < 0) return; const k = s < t ? s + '-' + t : t + '-' + s; if (seen.has(k)) return; seen.add(k);
+  const far = (a, b) => Math.hypot(pos[a * 3] - pos[b * 3], pos[a * 3 + 1] - pos[b * 3 + 1], pos[a * 3 + 2] - pos[b * 3 + 2]) > 230;   // sin rayas que crucen el cielo
+  best.forEach((t, s) => { if (t < 0 || far(s, t)) return; const k = s < t ? s + '-' + t : t + '-' + s; if (seen.has(k)) return; seen.add(k);
     lp.push(pos[s * 3], pos[s * 3 + 1], pos[s * 3 + 2], pos[t * 3], pos[t * 3 + 1], pos[t * 3 + 2]) });
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
   const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x9fc8ff, transparent: true, opacity: .34, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
   lines.renderOrder = 2; SKY.add(lines);
+  // polvo de estrellas de fondo (decorativo, tenue) para que todo el cielo se sienta estrellado
+  { const m = 2600, dp = new Float32Array(m * 3), dc = new Float32Array(m * 3), ds = new Float32Array(m), dph = new Float32Array(m);
+    for (let i = 0; i < m; i++) { const az = Math.random() * Math.PI * 2, el = Math.pow(Math.random(), .8) * 1.45, rr = 1500 + Math.random() * 600;
+      dp[i * 3] = rr * Math.cos(el) * Math.cos(az); dp[i * 3 + 1] = rr * Math.sin(el) - 80; dp[i * 3 + 2] = rr * Math.cos(el) * Math.sin(az);
+      const b = .35 + Math.random() * .4; dc[i * 3] = b * .9; dc[i * 3 + 1] = b * .95; dc[i * 3 + 2] = b; ds[i] = 1.2 + Math.random() * 2.2; dph[i] = Math.random() * 6.28 }
+    const dg = new THREE.BufferGeometry();
+    dg.setAttribute('position', new THREE.BufferAttribute(dp, 3)); dg.setAttribute('color', new THREE.BufferAttribute(dc, 3));
+    dg.setAttribute('sz', new THREE.BufferAttribute(ds, 1)); dg.setAttribute('ph', new THREE.BufferAttribute(dph, 1));
+    const dust = new THREE.Points(dg, stars.material); dust.renderOrder = 2; SKY.add(dust) }
   // zona tocable: solo el casquete alto del cielo (tocar el suelo no abre la red)
   const hit = new THREE.Mesh(new THREE.SphereGeometry(1500, 24, 12, 0, Math.PI * 2, 0, Math.PI * .42), new THREE.MeshBasicMaterial({ visible: false, side: THREE.BackSide })); SKY.add(hit);
   pick.push([hit, 'cortex']);
