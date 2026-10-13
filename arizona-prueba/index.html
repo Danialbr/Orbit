@@ -935,13 +935,15 @@ const OW = 20, OD = 16, POD = 7.4, NFL = 5;
 }
 
 /* ---------- Córtex: el cielo es tu red neuronal ---------- */
-// detrás del horizonte del planeta, donde la cámara de la colonia sí lo ve
-const SKY = new THREE.Group(); SKY.position.set(-120, -260, -1500); SKY.scale.setScalar(4.6); S.add(SKY);
+// a la derecha de Saturno, delante de él, para que nada lo tape desde la colonia
+const SKY = new THREE.Group(); SKY.position.set(430, 140, -1250); SKY.scale.setScalar(3.6); S.add(SKY);
 const SKYT = { value: 0 };
 {
   // velo nocturno entre el cielo y las constelaciones: oscurece el fondo sin tocar el planeta
-  const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 16), new THREE.MeshBasicMaterial({ color: 0x05030c, transparent: true, opacity: .42, side: THREE.BackSide, fog: false, depthWrite: false }));
+  const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 16), new THREE.MeshBasicMaterial({ color: 0x05030c, transparent: true, opacity: .62, side: THREE.BackSide, fog: false, depthWrite: false }));
   veil.renderOrder = 1; S.add(veil);
+  // el halo de Saturno aclaraba todo el cielo: lo bajo
+  sat.traverse(o => { if (o.isSprite) o.material.opacity = .3 });
   // estrellas: blancas con un toque de color por región; tamaño según conexiones; titilan suave
   const TINT = [0xcfe8ff, 0xc6d4ff, 0xdcccff, 0xc8fff0, 0xd2e2ff, 0xe4d2ff, 0xbfeaff, 0xccd2ff, 0xd8f6ff];
   const n = CX.n.length, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), sz = new Float32Array(n), ph = new Float32Array(n), tc = new THREE.Color();
@@ -971,9 +973,26 @@ const SKYT = { value: 0 };
   lines.renderOrder = 2; SKY.add(lines);
   const hit = new THREE.Mesh(new THREE.SphereGeometry(150, 16, 12), new THREE.MeshBasicMaterial({ visible: false })); SKY.add(hit);
   pick.push([hit, 'cortex']);
-  labels.push(['CÓRTEX<i>toca el cielo para entrar a la red</i>', new THREE.Vector3(-120, 380, -1500), 'all', '']);
+  labels.push(['CÓRTEX<i>toca las estrellas para entrar a la red</i>', new THREE.Vector3(430, 640, -1250), 'all', '']);
 }
-V.cortex = () => ({ p: new THREE.Vector3(-40, 80, 60), c: new THREE.Vector3(-120, -260, -1500) });
+V.cortex = () => ({ p: new THREE.Vector3(60, 70, 40), c: new THREE.Vector3(430, 140, -1250) });
+
+/* ---------- sol y luna lejanos que siguen tu hora ---------- */
+const SUNMOON = (() => {
+  const disc = (stops, size) => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); const gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+    stops.forEach(([o, s]) => gr.addColorStop(o, s)); x.fillStyle = gr; x.fillRect(0, 0, 128, 128);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, fog: false, toneMapped: false })); sp.scale.setScalar(size); sp.renderOrder = 1; S.add(sp); return sp };
+  const sunD = disc([[0, '#fff6e0'], [.22, '#ffe2a8'], [.3, 'rgba(255,190,120,.55)'], [1, 'rgba(255,150,90,0)']], 420);
+  const moon = new THREE.Mesh(new THREE.SphereGeometry(48, 40, 24), new THREE.MeshStandardMaterial({ color: 0xd8dbe4, roughness: 1, emissive: 0x6a7080, emissiveIntensity: .55, fog: false }));
+  moon.renderOrder = 1; S.add(moon);
+  const moonGlow = disc([[0, 'rgba(210,225,255,.35)'], [.4, 'rgba(160,190,255,.12)'], [1, 'rgba(160,190,255,0)']], 300);
+  const arc = (a, out) => out.set(-1700 * Math.cos(a), -120 + 950 * Math.sin(a), -2050);
+  return t => {
+    const d = new Date(), h = window.__azHour ?? d.getHours() + d.getMinutes() / 60;
+    arc((h - 6) / 12 * Math.PI, sunD.position); arc((h - 18) / 12 * Math.PI, moon.position); moonGlow.position.copy(moon.position);
+    sunD.visible = sunD.position.y > -200; moon.visible = moonGlow.visible = moon.position.y > -200;
+  };
+})();
 
 /* ---------- capa del córtex ---------- */
 const ov = document.createElement('div');
@@ -1014,7 +1033,7 @@ panel.addEventListener('click', e => { if (e.target.dataset.act === 'danifx') re
   if (e.target.dataset.act === 'wsban') { B.wsBanners.visible = !B.wsBanners.visible; e.target.textContent = B.wsBanners.visible ? 'Fachada: solo piedra' : 'Fachada: estandartes' } });
 
 const _flowsW = flows;
-flows = function (t, dt) { _flowsW(t, dt); SKY.rotation.y = Math.sin(t * .00003) * .25; SKYT.value = t / 1000 };
+flows = function (t, dt) { _flowsW(t, dt); SKY.rotation.y = Math.sin(t * .00003) * .25; SKYT.value = t / 1000; if (!(flows._sm > t)) { flows._sm = t + 2000; SUNMOON(t) } };
 
 /* ---------- etiquetas y tarjetas sin encimarse ---------- */
 // prioridad: tarjetas de edificio > nombres grandes > el resto; la de menor prioridad se oculta si choca
