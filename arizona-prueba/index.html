@@ -941,8 +941,17 @@ const SKYT = { value: 0 };
 const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía láctea, 1 = se dibuja la red
 {
   // velo nocturno entre el cielo y las constelaciones: oscurece el fondo sin tocar el planeta
-  const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 16), new THREE.MeshBasicMaterial({ color: 0x04030b, transparent: true, opacity: .84, side: THREE.BackSide, fog: false, depthWrite: false }));
+  const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 16), new THREE.MeshBasicMaterial({ color: 0x03020a, transparent: true, opacity: .94, side: THREE.BackSide, fog: false, depthWrite: false }));
   veil.renderOrder = 1; S.add(veil);
+  // resplandor cálido del horizonte (atardecer perpetuo bajo el cielo de espacio)
+  { const c = document.createElement('canvas'); c.width = 4; c.height = 256; const x = c.getContext('2d'); const gr = x.createLinearGradient(0, 256, 0, 0);
+    gr.addColorStop(0, 'rgba(255,150,90,.55)'); gr.addColorStop(.25, 'rgba(230,100,120,.32)'); gr.addColorStop(.55, 'rgba(120,60,160,.14)'); gr.addColorStop(1, 'rgba(40,20,80,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 4, 256);
+    const glow = new THREE.Mesh(new THREE.CylinderGeometry(2200, 2200, 700, 64, 1, true), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, side: THREE.BackSide, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+    glow.position.y = 180; glow.renderOrder = 1; S.add(glow) }
+  // la colonia vive en un atardecer/noche: de día se mantiene el tono dorado del ocaso para que el cielo siga siendo de espacio
+  { const tick = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; window.__azHour = h >= 7 && h < 18.4 ? 18.6 : h };
+    tick(); setInterval(tick, 30000) }
   // el halo de Saturno aclaraba todo el cielo: lo bajo
   // Saturno queda, pero en penumbra: las constelaciones mandan en el cielo
   sat.traverse(o => { if (o.isSprite) o.material.opacity = .12;
@@ -1005,11 +1014,11 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
     const mw = new THREE.Points(dg, stars.material); mw.renderOrder = 2; SKY.add(mw);
     // bruma de la galaxia: manchas grandes y muy tenues a lo largo de la banda
     const hp = new Float32Array(H * 3), hc = new Float32Array(H * 3), hs = new Float32Array(H), hph = new Float32Array(H);
-    const neb = [[.32, .22, .5], [.18, .26, .52], [.42, .26, .4], [.2, .34, .45]];
+    const neb = [[.42, .2, .62], [.16, .28, .62], [.55, .22, .45], [.12, .42, .5], [.6, .32, .25]];
     for (let i = 0; i < H; i++) { const a = Math.random() * Math.PI * 2;
       v.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(w, Math.sin(a)).addScaledVector(ax, gauss() * .07).normalize(); if (v.y < 0) v.y = -v.y * .5 + .01;
       hp[i * 3] = v.x * 1420; hp[i * 3 + 1] = v.y * 1420 - 80; hp[i * 3 + 2] = v.z * 1420;
-      const c = neb[i % neb.length]; hc[i * 3] = c[0] * .14; hc[i * 3 + 1] = c[1] * .14; hc[i * 3 + 2] = c[2] * .14; hs[i] = 45 + Math.random() * 40; hph[i] = Math.random() * 6.28 }
+      const c = neb[i % neb.length]; hc[i * 3] = c[0] * .22; hc[i * 3 + 1] = c[1] * .22; hc[i * 3 + 2] = c[2] * .22; hs[i] = 60 + Math.random() * 70; hph[i] = Math.random() * 6.28 }
     const hg = new THREE.BufferGeometry();
     hg.setAttribute('position', new THREE.BufferAttribute(hp, 3)); hg.setAttribute('color', new THREE.BufferAttribute(hc, 3));
     hg.setAttribute('sz', new THREE.BufferAttribute(hs, 1)); hg.setAttribute('ph', new THREE.BufferAttribute(hph, 1));
@@ -1033,7 +1042,7 @@ const SUNMOON = (() => {
   const moonGlow = disc([[0, 'rgba(210,225,255,.35)'], [.4, 'rgba(160,190,255,.12)'], [1, 'rgba(160,190,255,0)']], 300);
   const arc = (a, out) => out.set(-1700 * Math.cos(a), -120 + 950 * Math.sin(a), -2050);
   return t => {
-    const d = new Date(), h = window.__azHour ?? d.getHours() + d.getMinutes() / 60;
+    const d = new Date(), h = d.getHours() + d.getMinutes() / 60;   // hora real (no la del ocaso fijo)
     arc((h - 6) / 12 * Math.PI, sunD.position); arc((h - 18) / 12 * Math.PI, moon.position); moonGlow.position.copy(moon.position);
     sunD.visible = sunD.position.y > -200; moon.visible = moonGlow.visible = moon.position.y > -200;
   };
