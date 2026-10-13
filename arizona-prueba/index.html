@@ -940,7 +940,7 @@ const SKY = new THREE.Group(); S.add(SKY);
 const SKYT = { value: 0 };
 {
   // velo nocturno entre el cielo y las constelaciones: oscurece el fondo sin tocar el planeta
-  const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 16), new THREE.MeshBasicMaterial({ color: 0x05030c, transparent: true, opacity: .62, side: THREE.BackSide, fog: false, depthWrite: false }));
+  const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 16), new THREE.MeshBasicMaterial({ color: 0x04030b, transparent: true, opacity: .84, side: THREE.BackSide, fog: false, depthWrite: false }));
   veil.renderOrder = 1; S.add(veil);
   // el halo de Saturno aclaraba todo el cielo: lo bajo
   // Saturno queda, pero en penumbra: las constelaciones mandan en el cielo
@@ -964,7 +964,7 @@ const SKYT = { value: 0 };
     uniforms: { t: SKYT, px: { value: R.getPixelRatio() } }, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending,
     vertexShader: `attribute float sz; attribute float ph; attribute vec3 color; uniform float t; uniform float px; varying vec3 vC; varying float vA;
       void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vC = color; vA = .75 + .25 * sin(t * 1.6 + ph);
-      gl_PointSize = sz * px * (1400.0 / -mv.z); gl_Position = projectionMatrix * mv; }`,
+      gl_PointSize = sz * px * (2100.0 / -mv.z); gl_Position = projectionMatrix * mv; }`,
     fragmentShader: `varying vec3 vC; varying float vA; void main(){ vec2 u = (gl_PointCoord - .5) * 2.0; float d = length(u); if (d > 1.0) discard;
       float core = smoothstep(.28, .0, d), halo = pow(1.0 - d, 3.0) * .45;
       float spk = (max(0.0, 1.0 - abs(u.y) * 18.0) + max(0.0, 1.0 - abs(u.x) * 18.0)) * (1.0 - d) * .35;
@@ -973,7 +973,7 @@ const SKYT = { value: 0 };
   // constelaciones: solo el trazo principal de cada estrella (hacia su vecina más conectada), finito y tenue
   const best = new Array(n).fill(-1); CX.l.forEach(([s, t]) => { if (best[s] < 0 || deg[t] > deg[best[s]]) best[s] = t; if (best[t] < 0 || deg[s] > deg[best[t]]) best[t] = s });
   const seen = new Set(), lp = [];
-  const far = (a, b) => Math.hypot(pos[a * 3] - pos[b * 3], pos[a * 3 + 1] - pos[b * 3 + 1], pos[a * 3 + 2] - pos[b * 3 + 2]) > 230;   // sin rayas que crucen el cielo
+  const far = (a, b) => Math.hypot(pos[a * 3] - pos[b * 3], pos[a * 3 + 1] - pos[b * 3 + 1], pos[a * 3 + 2] - pos[b * 3 + 2]) > 320;   // sin rayas que crucen el cielo
   best.forEach((t, s) => { if (t < 0 || far(s, t)) return; const k = s < t ? s + '-' + t : t + '-' + s; if (seen.has(k)) return; seen.add(k);
     lp.push(pos[s * 3], pos[s * 3 + 1], pos[s * 3 + 2], pos[t * 3], pos[t * 3 + 1], pos[t * 3 + 2]) });
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
