@@ -1,0 +1,192 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"></head><body><title>Estilos de Arizona</title>
+<style>
+  /* lienzo 3D a pantalla completa con selector de estilo abajo */
+  :root { --bg:#05040b; --ink:#efe6d6; --gold:#e8c37a; --glass:rgba(8,6,16,.82); color-scheme:dark; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--ink); font:14px system-ui,sans-serif; overflow:hidden; }
+  canvas { position:fixed; inset:0; touch-action:none; }
+  #t { position:fixed; top:calc(env(safe-area-inset-top,0px) + 14px); left:16px; right:16px; z-index:2; pointer-events:none; }
+  #t b { display:block; font:700 13px system-ui; letter-spacing:.24em; color:var(--gold); text-transform:uppercase; }
+  #t span { font:400 12px system-ui; color:#b9aec8; }
+  .bar { position:fixed; left:16px; right:16px; bottom:calc(env(safe-area-inset-bottom,0px) + 14px); display:flex; gap:6px; justify-content:center; flex-wrap:wrap; z-index:2; }
+  .bar a { background:var(--glass); border:1px solid rgba(232,195,122,.4); color:var(--gold); padding:9px 14px; font:700 11px system-ui; letter-spacing:.14em; text-transform:uppercase; text-decoration:none; }
+  .bar a.on { border-color:#fff; color:#fff; }
+  #err { position:fixed; left:8px; right:8px; top:70px; color:#fbb; font:12px monospace; z-index:9; }
+</style>
+<div id="t"><b id="tn"></b><span id="td"></span></div>
+<div class="bar"><a href="#A" data-o="A">A · Orgánico dorado</a><a href="#B" data-o="B">B · Retro cobre</a><a href="#C" data-o="C">C · Cristal oscuro</a></div>
+<div id="err"></div>
+<script>addEventListener('error', e => document.getElementById('err').textContent = 'Error: ' + e.message);</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/Pass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/MaskPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script>
+(function () {
+const OPT = { A: ['A · Orgánico dorado', 'Torres curvas de bronce con franjas de luz dorada y violeta, como tu primer ejemplo.'],
+              B: ['B · Retro cobre', 'Torres de cobre con platillos y domos, estilo póster retro-futurista.'],
+              C: ['C · Cristal oscuro', 'Rascacielos de cristal negro con ventanas encendidas, skyline espacial.'] };
+const opt = (location.hash.replace('#', '') || 'A').toUpperCase();
+document.getElementById('tn').textContent = OPT[opt][0]; document.getElementById('td').textContent = OPT[opt][1];
+document.querySelectorAll('.bar a').forEach(a => { a.classList.toggle('on', a.dataset.o === opt); a.onclick = e => { e.preventDefault(); location.hash = a.dataset.o; location.reload() } });
+
+const R = new THREE.WebGLRenderer({ antialias: true }); R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.setSize(innerWidth, innerHeight);
+R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = 1.05; R.outputEncoding = THREE.sRGBEncoding; document.body.prepend(R.domElement);
+const S = new THREE.Scene(); S.fog = new THREE.FogExp2(0x140c22, .0022);
+const C = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, .5, 9000);
+C.position.set(70, 34, 120); const ctl = new THREE.OrbitControls(C, R.domElement); ctl.target.set(0, 30, -10); ctl.enableDamping = true; ctl.maxPolarAngle = 1.5;
+const comp = new THREE.EffectComposer(R); comp.addPass(new THREE.RenderPass(S, C));
+comp.addPass(new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), .9, .55, .72));
+
+// ---------- cielo: espacio, vía láctea, nebulosas, planeta anillado ----------
+{ const c = document.createElement('canvas'); c.width = 4; c.height = 512; const x = c.getContext('2d'); const g = x.createLinearGradient(0, 0, 0, 512);
+  g.addColorStop(0, '#04030c'); g.addColorStop(.42, '#140c2c'); g.addColorStop(.5, '#4a2546'); g.addColorStop(.53, '#c9765a'); g.addColorStop(.56, '#3a1d33'); g.addColorStop(1, '#0b0712');
+  x.fillStyle = g; x.fillRect(0, 0, 4, 512); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding;
+  S.add(new THREE.Mesh(new THREE.SphereGeometry(4000, 48, 24), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide, fog: false }))) }
+const spr = (stops) => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  stops.forEach(([o, s]) => g.addColorStop(o, s)); x.fillStyle = g; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c) };
+{ const N = 9000, p = new Float32Array(N * 3), col = new Float32Array(N * 3), ax = new THREE.Vector3(.8, .25, .5).normalize(), u = new THREE.Vector3(1, -.3, 0).cross(ax).normalize(), w = ax.clone().cross(u), v = new THREE.Vector3();
+  for (let i = 0; i < N; i++) { const band = i < N * .7, a = Math.random() * 6.283;
+    if (band) v.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(w, Math.sin(a)).addScaledVector(ax, (Math.random() + Math.random() + Math.random() - 1.5) * .14).normalize();
+    else v.set(Math.random() - .5, Math.random(), Math.random() - .5).normalize();
+    if (v.y < 0) v.y = -v.y; const r = 3000; p[i * 3] = v.x * r; p[i * 3 + 1] = v.y * r; p[i * 3 + 2] = v.z * r;
+    const b = .5 + Math.random() * .6, k = Math.random(); col[i * 3] = b * (k < .3 ? 1 : .8); col[i * 3 + 1] = b * .85; col[i * 3 + 2] = b * (k > .6 ? 1 : .85) }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(p, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  S.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 2.2, sizeAttenuation: false, vertexColors: true, map: spr([[0, '#fff'], [.3, 'rgba(255,255,255,.6)'], [1, 'rgba(255,255,255,0)']]), transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })));
+  const neb = [[ '#6a3cc8', -900, 900, -2400, 1300], ['#2a5fd0', 900, 1100, -2300, 1100], ['#c04a8a', 200, 700, -2600, 900], ['#3aa0c8', -300, 1400, -2000, 800]];
+  neb.forEach(([c, x, y, z, s]) => { const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: spr([[0, c + '88'], [.5, c + '22'], [1, c + '00']]), transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending })); m.position.set(x, y, z); m.scale.setScalar(s); S.add(m) });
+  const pl = new THREE.Group(); pl.position.set(-700, 700, -2200); S.add(pl);
+  const pc = document.createElement('canvas'); pc.width = 512; pc.height = 256; const px = pc.getContext('2d');
+  for (let i = 0; i < 256; i++) { const h = 270 + Math.sin(i * .09) * 25 + Math.sin(i * .31) * 8; px.fillStyle = `hsl(${h},${45 + Math.sin(i * .2) * 15}%,${30 + Math.sin(i * .13) * 12}%)`; px.fillRect(0, i, 512, 1) }
+  const ptx = new THREE.CanvasTexture(pc); ptx.encoding = THREE.sRGBEncoding;
+  pl.add(new THREE.Mesh(new THREE.SphereGeometry(420, 64, 32), new THREE.MeshStandardMaterial({ map: ptx, roughness: 1, fog: false, emissive: 0x2a1240, emissiveIntensity: .35 })));
+  const ring = new THREE.Mesh(new THREE.RingGeometry(560, 900, 128), new THREE.MeshBasicMaterial({ color: 0xd9a35a, transparent: true, opacity: .55, side: THREE.DoubleSide, fog: false }));
+  ring.rotation.set(-1.25, .3, 0); pl.add(ring);
+  const pli = new THREE.DirectionalLight(0xffe0c0, 2.2); pli.position.set(600, 200, 400); pli.target = pl; pl.add(pli) }
+
+// ---------- luz y suelo ----------
+S.add(new THREE.HemisphereLight(0x8a7ab8, 0x1a1020, .55));
+const key = new THREE.DirectionalLight(0xffc89a, 1.5); key.position.set(-200, 160, 120); S.add(key);
+const env = (() => { const pm = new THREE.PMREMGenerator(R), es = new THREE.Scene(); const c = document.createElement('canvas'); c.width = 4; c.height = 128; const x = c.getContext('2d'); const g = x.createLinearGradient(0, 0, 0, 128);
+  g.addColorStop(0, '#120c26'); g.addColorStop(.45, '#5a3a7a'); g.addColorStop(.52, '#e09a6a'); g.addColorStop(1, '#1a1018'); x.fillStyle = g; x.fillRect(0, 0, 4, 128);
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; es.add(new THREE.Mesh(new THREE.SphereGeometry(10, 32, 16), new THREE.MeshBasicMaterial({ map: t, side: THREE.BackSide }))); return pm.fromScene(es, .02).texture })();
+S.environment = env;
+const ground = new THREE.Mesh(new THREE.CircleGeometry(900, 64), new THREE.MeshStandardMaterial({ color: 0x0d0a12, roughness: .9, metalness: 0, envMapIntensity: .15 })); ground.rotation.x = -Math.PI / 2; S.add(ground);
+const neon = c => new THREE.MeshBasicMaterial({ color: c, toneMapped: false });
+// caminos con luces
+const road = (pts, col) => { const cu = new THREE.CatmullRomCurve3(pts.map(([x, z]) => new THREE.Vector3(x, .4, z)));
+  S.add(new THREE.Mesh(new THREE.TubeGeometry(cu, 120, 1.6, 6, false), new THREE.MeshStandardMaterial({ color: 0x1a1620, roughness: .4, metalness: .6 })));
+  const n = 140, g = new THREE.BufferGeometry(), p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const q = cu.getPoint(i / n); p[i * 3] = q.x; p[i * 3 + 1] = 2.1; p[i * 3 + 2] = q.z }
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3)); S.add(new THREE.Points(g, new THREE.PointsMaterial({ color: col, size: .9, toneMapped: false }))) };
+
+// ventanas encendidas (textura)
+const winTex = (cols, rows, lit, warm, bg) => { const c = document.createElement('canvas'); c.width = 256; c.height = 512; const x = c.getContext('2d'); x.fillStyle = bg; x.fillRect(0, 0, 256, 512);
+  const cw = 256 / cols, rh = 512 / rows; for (let r = 0; r < rows; r++) for (let k = 0; k < cols; k++) { if (Math.random() > lit) continue;
+    x.fillStyle = warm[(Math.random() * warm.length) | 0]; x.fillRect(k * cw + cw * .22, r * rh + rh * .25, cw * .56, rh * .5) }
+  const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(3, 2.5); t.anisotropy = 8; return t };
+
+const add = (o, x = 0, y = 0, z = 0) => { o.position.set(x, y, z); S.add(o); return o };
+const lathe = (prof, m, seg = 64) => new THREE.Mesh(new THREE.LatheGeometry(prof.map(([r, y]) => new THREE.Vector2(r, y)), seg), m);
+
+/* ================= A · Orgánico dorado ================= */
+function styleA() {
+  const bronze = new THREE.MeshStandardMaterial({ color: 0x3a2a24, metalness: .85, roughness: .32 });
+  const wt = winTex(16, 40, .55, ['#ffcf7a', '#ffb45a', '#e89aff'], '#1c1418');
+  const skin = new THREE.MeshStandardMaterial({ color: 0x2a2028, metalness: .7, roughness: .3, map: wt, emissiveMap: wt, emissive: 0xffffff, emissiveIntensity: 1.1 });
+  const goldL = neon(0xffc66b), vio = neon(0xb06bff);
+  // ORBIT: torre que se ensancha arriba, con costillas helicoidales doradas
+  { const g = new THREE.Group(); add(g, -34, 0, -16);
+    const prof = []; for (let i = 0; i <= 40; i++) { const t = i / 40; prof.push([6.5 - 3.2 * Math.sin(t * Math.PI * .85) + (t > .82 ? (t - .82) * 60 : 0), t * 78]) } prof.push([0, 78]);
+    g.add(lathe(prof, skin));
+    for (let k = 0; k < 6; k++) { const pts = []; for (let i = 0; i <= 60; i++) { const t = i / 60, a = k / 6 * 6.283 + t * 2.2, r = prof[Math.round(t * 40)][0] + .4; pts.push(new THREE.Vector3(Math.cos(a) * r, t * 78, Math.sin(a) * r)) }
+      g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 80, .28, 6), k % 2 ? bronze : goldL)) }
+    const deck = lathe([[0, 0], [17, 0], [16, 2.2], [8, 3.2], [0, 3.2]], bronze); deck.position.y = 78; g.add(deck);
+    for (let i = 0; i < 64; i++) { const a = i / 64 * 6.283; const b = new THREE.Mesh(new THREE.SphereGeometry(.16, 6, 4), goldL); b.position.set(Math.cos(a) * 16.6, 79, Math.sin(a) * 16.6); g.add(b) }
+    [[0, 0, 22], [4, 2, 14], [-4, -2, 14]].forEach(([x, z, h]) => { const s = new THREE.Mesh(new THREE.CylinderGeometry(.25, 1.2, h, 8), bronze); s.position.set(x, 81 + h / 2, z); g.add(s);
+      const bc = new THREE.Mesh(new THREE.SphereGeometry(.5, 10, 8), vio); bc.position.set(x, 81 + h, z); g.add(bc) }) }
+  // MI ORBIT: torre retorcida con domo de celosía
+  { const g = new THREE.Group(); add(g, 4, 0, -30);
+    const prof = []; for (let i = 0; i <= 30; i++) { const t = i / 30; prof.push([8 - 2 * Math.sin(t * 3.14), t * 46]) } prof.push([0, 46]);
+    const m = lathe(prof, skin, 6); g.add(m);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(9, 24, 12, 0, 6.283, 0, 1.57), new THREE.MeshStandardMaterial({ color: 0x1a1218, metalness: .9, roughness: .2 })); dome.position.y = 46; g.add(dome);
+    const lat = new THREE.Mesh(new THREE.SphereGeometry(9.15, 18, 9, 0, 6.283, 0, 1.57), new THREE.MeshBasicMaterial({ color: 0xffc66b, wireframe: true, toneMapped: false, transparent: true, opacity: .55 })); lat.position.y = 46; g.add(lat);
+    for (let i = 0; i < 8; i++) { const r = new THREE.Mesh(new THREE.TorusGeometry(8.2 - 2 * Math.sin(i / 8 * 3.14), .12, 6, 64), i % 2 ? goldL : vio); r.rotation.x = Math.PI / 2; r.position.y = 3 + i * 5.4; g.add(r) } }
+  // CARFOLIO: pabellón domo con anillo de luz
+  { const g = new THREE.Group(); add(g, 38, 0, 6);
+    g.add(lathe([[0, 0], [16, 0], [16.5, 2], [14, 5], [9, 9], [0, 10]], new THREE.MeshStandardMaterial({ color: 0x3a2a26, metalness: .8, roughness: .35, map: winTex(24, 10, .7, ['#ffd08a', '#ff9a6a'], '#1a1214'), emissive: 0xffffff, emissiveMap: winTex(24, 10, .7, ['#ffd08a', '#ff9a6a'], '#1a1214'), emissiveIntensity: .9 })));
+    const r = new THREE.Mesh(new THREE.TorusGeometry(16.3, .25, 8, 96), goldL); r.rotation.x = Math.PI / 2; r.position.y = 2; g.add(r) }
+  // WALL STREET: fachada clásica en bronce oscuro con columnas iluminadas y torre fina
+  { const g = new THREE.Group(); add(g, -2, 0, 22);
+    { const pl = new THREE.Mesh(new THREE.BoxGeometry(26, 2, 14), bronze); pl.position.y = 1; g.add(pl) }
+    for (let i = 0; i < 6; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.7, .8, 12, 16), new THREE.MeshStandardMaterial({ color: 0xd8c9a8, metalness: .3, roughness: .4 })); c.position.set(-10 + i * 4, 8, 6.4); g.add(c);
+      const l = new THREE.Mesh(new THREE.BoxGeometry(.12, 12, .12), goldL); l.position.set(-10 + i * 4, 8, 7.3); g.add(l) }
+    const ent = new THREE.Mesh(new THREE.BoxGeometry(26, 2.4, 15), bronze); ent.position.y = 15.2; g.add(ent);
+    const body = new THREE.Mesh(new THREE.BoxGeometry(22, 12, 10), skin); body.position.set(0, 8, -1); g.add(body);
+    const tw = lathe([[5, 0], [4.2, 18], [2.4, 26], [0, 34]], skin, 8); tw.position.set(0, 16.4, -2); g.add(tw);
+    const bull = new THREE.Mesh(new THREE.BoxGeometry(5, 1, 2.6), new THREE.MeshStandardMaterial({ color: 0x15121a, metalness: .6, roughness: .3 })); bull.position.set(0, .5, 13); g.add(bull);
+    const b2 = new THREE.Mesh(new THREE.SphereGeometry(1.4, 16, 12), new THREE.MeshStandardMaterial({ color: 0xc9a13a, metalness: 1, roughness: .25 })); b2.scale.set(2, 1, 1); b2.position.set(0, 2.3, 13); g.add(b2) }
+  road([[-80, 60], [-30, 40], [10, 48], [60, 30], [110, 50]], 0xffb060); road([[-60, -60], [-20, -6], [30, -12], [80, -50]], 0xd08aff);
+}
+
+/* ================= B · Retro cobre ================= */
+function styleB() {
+  const copper = new THREE.MeshStandardMaterial({ color: 0xb8643a, metalness: .75, roughness: .38 });
+  const wt = winTex(20, 30, .65, ['#ffd27a', '#fff0b0'], '#6a3418');
+  const cw = new THREE.MeshStandardMaterial({ color: 0xa65a34, metalness: .6, roughness: .45, map: wt, emissiveMap: wt, emissive: 0xffffff, emissiveIntensity: .9 });
+  const teal = neon(0x5ce1c8), warm = neon(0xffd27a);
+  // ORBIT: torre aguja con platillo enorme
+  { const g = new THREE.Group(); add(g, -30, 0, -16);
+    g.add(lathe([[7, 0], [6, 30], [4, 46], [3.4, 60]], cw, 32));
+    const saucer = lathe([[0, -6], [10, -5], [20, -1], [22, 0], [20, 2], [10, 5], [0, 6]], cw, 64); saucer.position.y = 64; g.add(saucer);
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(20.8, 20.8, 1.6, 64, 1, true), teal); band.position.y = 64; g.add(band);
+    const sp = lathe([[3, 0], [2, 10], [.6, 22], [0, 26]], copper, 24); sp.position.y = 69; g.add(sp) }
+  // MI ORBIT: torre cohete
+  { const g = new THREE.Group(); add(g, 6, 0, -28);
+    g.add(lathe([[8, 0], [9, 8], [8.5, 26], [6.5, 40], [3, 50], [0, 56]], cw, 40));
+    for (let i = 0; i < 3; i++) { const r = new THREE.Mesh(new THREE.TorusGeometry(9.2 - i * .6, .35, 8, 64), teal); r.rotation.x = Math.PI / 2; r.position.y = 10 + i * 12; g.add(r) }
+    [0, 2.09, 4.19].forEach(a => { const f = new THREE.Mesh(new THREE.BoxGeometry(.6, 14, 6), copper); f.position.set(Math.cos(a) * 9, 7, Math.sin(a) * 9); f.rotation.y = -a; g.add(f) }) }
+  // CARFOLIO: domo rayado
+  { const g = new THREE.Group(); add(g, 38, 0, 6);
+    const d = new THREE.Mesh(new THREE.SphereGeometry(13, 40, 20, 0, 6.283, 0, 1.57), cw); g.add(d);
+    for (let i = 0; i < 5; i++) { const r = new THREE.Mesh(new THREE.TorusGeometry(13 * Math.cos(i * .3), .2, 6, 64), warm); r.rotation.x = Math.PI / 2; r.position.y = 13 * Math.sin(i * .3); g.add(r) } }
+  // WALL STREET: bolsa con cúpula de cobre
+  { const g = new THREE.Group(); add(g, -2, 0, 22);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(14, 15, 14, 48), cw); base.position.y = 7; g.add(base);
+    for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; const c = new THREE.Mesh(new THREE.CylinderGeometry(.6, .7, 12, 12), new THREE.MeshStandardMaterial({ color: 0xe8d8b8, roughness: .5 })); c.position.set(Math.cos(a) * 15.6, 7, Math.sin(a) * 15.6); g.add(c) }
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(14, 40, 20, 0, 6.283, 0, 1.57), copper); dome.position.y = 14; g.add(dome);
+    const lan = lathe([[3, 0], [2.6, 6], [0, 10]], cw, 16); lan.position.y = 27.6; g.add(lan) }
+  road([[-80, 60], [-30, 40], [10, 48], [60, 30], [110, 50]], 0xffd27a); road([[-60, -60], [-20, -6], [30, -12], [80, -50]], 0x5ce1c8);
+}
+
+/* ================= C · Cristal oscuro ================= */
+function styleC() {
+  const mk = (cols, rows, lit) => { const t = winTex(cols, rows, lit, ['#ffe0a8', '#bfe0ff', '#ffffff'], '#06080e');
+    return new THREE.MeshStandardMaterial({ color: 0x10141c, metalness: .9, roughness: .15, map: t, emissiveMap: t, emissive: 0xffffff, emissiveIntensity: .85 }) };
+  const edge = neon(0x7fc8ff), gold = neon(0xffc66b);
+  const tower = (x, z, w, d, h, steps, col) => { const g = new THREE.Group(); add(g, x, 0, z); let y = 0, ww = w, dd = d;
+    for (let s = 0; s < steps; s++) { const hh = h / steps * (1 - s * .12); const m = new THREE.Mesh(new THREE.BoxGeometry(ww, hh, dd), mk(Math.round(ww), Math.round(hh / 1.2), .5)); m.position.y = y + hh / 2; g.add(m);
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([a, c]) => { const l = new THREE.Mesh(new THREE.BoxGeometry(.15, hh, .15), col); l.position.set(a * ww / 2, y + hh / 2, c * dd / 2); g.add(l) });
+      y += hh; ww *= .78; dd *= .78 }
+    const sp = new THREE.Mesh(new THREE.CylinderGeometry(.08, .5, 14, 6), new THREE.MeshStandardMaterial({ color: 0x20242c, metalness: .9, roughness: .2 })); sp.position.y = y + 7; g.add(sp);
+    const bc = new THREE.Mesh(new THREE.SphereGeometry(.45, 8, 6), neon(0xff4a3a)); bc.position.y = y + 14; g.add(bc); return g };
+  tower(-34, -16, 16, 16, 92, 4, edge);       // Orbit
+  tower(4, -30, 18, 14, 56, 3, gold);         // Mi Orbit
+  { const g = new THREE.Group(); add(g, 38, 0, 6); const m = new THREE.Mesh(new THREE.BoxGeometry(30, 8, 18), mk(30, 6, .7)); m.position.y = 4; g.add(m);
+    const l = new THREE.Mesh(new THREE.BoxGeometry(30.4, .2, 18.4), edge); l.position.y = 8; g.add(l) }            // Carfolio
+  { const g = tower(-2, 22, 20, 14, 48, 3, gold);                                                                  // Wall Street
+    for (let i = 0; i < 6; i++) { const c = new THREE.Mesh(new THREE.CylinderGeometry(.55, .6, 9, 12), new THREE.MeshStandardMaterial({ color: 0xcfd4dc, metalness: .5, roughness: .3 })); c.position.set(-7.5 + i * 3, 4.5, 8); g.add(c) } }
+  [[-60, 20, 70], [70, -40, 80], [-80, -50, 60], [90, 30, 50], [20, -70, 66]].forEach(([x, z, h]) => tower(x, z, 12, 12, h, 3, edge));
+  road([[-80, 60], [-30, 40], [10, 48], [60, 30], [110, 50]], 0xffe0a8); road([[-60, -60], [-20, -6], [30, -12], [80, -50]], 0x7fc8ff);
+}
+
+({ A: styleA, B: styleB, C: styleC })[opt]();
+addEventListener('resize', () => { C.aspect = innerWidth / innerHeight; C.updateProjectionMatrix(); R.setSize(innerWidth, innerHeight); comp.setSize(innerWidth, innerHeight) });
+(function loop() { requestAnimationFrame(loop); ctl.update(); comp.render() })();
+})();
+</script>
+</body></html>
