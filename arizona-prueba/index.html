@@ -937,19 +937,38 @@ const OW = 20, OD = 16, POD = 7.4, NFL = 5;
 /* ---------- Córtex: el cielo es tu red neuronal ---------- */
 // detrás del horizonte del planeta, donde la cámara de la colonia sí lo ve
 const SKY = new THREE.Group(); SKY.position.set(-120, -260, -1500); SKY.scale.setScalar(4.6); S.add(SKY);
+const SKYT = { value: 0 };
 {
-  // tonos saturados: se leen sobre el cielo de día y brillan de noche
-  const PALS = [0x00b8ff, 0x1d5cff, 0x6a3dff, 0x00d6b0, 0x2f8bff, 0x8a4dff, 0x0096ff, 0x3a4dff, 0x00e0ff];
-  const n = CX.n.length, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), tc = new THREE.Color();
-  CX.n.forEach(([x, y, z, r], i) => { pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; tc.setHex(PALS[r % PALS.length]).toArray(col, i * 3) });
-  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const sprite = (() => { const c = document.createElement('canvas'); c.width = c.height = 64; const x = c.getContext('2d'); const gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
-    [[0, '#fff'], [.18, 'rgba(255,255,255,.9)'], [.45, 'rgba(255,255,255,.18)'], [1, 'rgba(255,255,255,0)']].forEach(([o, c2]) => gr.addColorStop(o, c2)); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); return new THREE.CanvasTexture(c) })();
-  SKY.add(new THREE.Points(g, new THREE.PointsMaterial({ size: 9, map: sprite, vertexColors: true, transparent: true, depthWrite: false, fog: false, toneMapped: false })));
-  const lp = new Float32Array(CX.l.length * 6), lc = new Float32Array(CX.l.length * 6);
-  CX.l.forEach(([s, t], i) => { for (let k = 0; k < 3; k++) { lp[i * 6 + k] = pos[s * 3 + k]; lp[i * 6 + 3 + k] = pos[t * 3 + k]; lc[i * 6 + k] = col[s * 3 + k] * .7; lc[i * 6 + 3 + k] = col[t * 3 + k] * .7 } });
-  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.BufferAttribute(lp, 3)); lg.setAttribute('color', new THREE.BufferAttribute(lc, 3));
-  SKY.add(new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .5, depthWrite: false, fog: false, toneMapped: false })));
+  // velo nocturno entre el cielo y las constelaciones: oscurece el fondo sin tocar el planeta
+  const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 16), new THREE.MeshBasicMaterial({ color: 0x05030c, transparent: true, opacity: .42, side: THREE.BackSide, fog: false, depthWrite: false }));
+  veil.renderOrder = 1; S.add(veil);
+  // estrellas: blancas con un toque de color por región; tamaño según conexiones; titilan suave
+  const TINT = [0xcfe8ff, 0xc6d4ff, 0xdcccff, 0xc8fff0, 0xd2e2ff, 0xe4d2ff, 0xbfeaff, 0xccd2ff, 0xd8f6ff];
+  const n = CX.n.length, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), sz = new Float32Array(n), ph = new Float32Array(n), tc = new THREE.Color();
+  const deg = new Array(n).fill(0); CX.l.forEach(([s, t]) => { deg[s]++; deg[t]++ });
+  CX.n.forEach(([x, y, z, r], i) => { pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; tc.setHex(TINT[r % TINT.length]).toArray(col, i * 3);
+    sz[i] = 2.2 + Math.sqrt(deg[i]) * 1.6; ph[i] = Math.random() * 6.28 });
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  g.setAttribute('sz', new THREE.BufferAttribute(sz, 1)); g.setAttribute('ph', new THREE.BufferAttribute(ph, 1));
+  const stars = new THREE.Points(g, new THREE.ShaderMaterial({
+    uniforms: { t: SKYT, px: { value: R.getPixelRatio() } }, transparent: true, depthWrite: false, fog: false, blending: THREE.AdditiveBlending,
+    vertexShader: `attribute float sz; attribute float ph; attribute vec3 color; uniform float t; uniform float px; varying vec3 vC; varying float vA;
+      void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vC = color; vA = .75 + .25 * sin(t * 1.6 + ph);
+      gl_PointSize = sz * px * (1400.0 / -mv.z); gl_Position = projectionMatrix * mv; }`,
+    fragmentShader: `varying vec3 vC; varying float vA; void main(){ vec2 u = (gl_PointCoord - .5) * 2.0; float d = length(u); if (d > 1.0) discard;
+      float core = smoothstep(.28, .0, d), halo = pow(1.0 - d, 3.0) * .45;
+      float spk = (max(0.0, 1.0 - abs(u.y) * 18.0) + max(0.0, 1.0 - abs(u.x) * 18.0)) * (1.0 - d) * .35;
+      gl_FragColor = vec4(vC * (core + halo + spk) * vA, 1.0); }` }));
+  stars.renderOrder = 3; SKY.add(stars);
+  // constelaciones: solo el trazo principal de cada estrella (hacia su vecina más conectada), finito y tenue
+  const best = new Array(n).fill(-1); CX.l.forEach(([s, t]) => { if (best[s] < 0 || deg[t] > deg[best[s]]) best[s] = t; if (best[t] < 0 || deg[s] > deg[best[t]]) best[t] = s });
+  const seen = new Set(), lp = [];
+  best.forEach((t, s) => { if (t < 0) return; const k = s < t ? s + '-' + t : t + '-' + s; if (seen.has(k)) return; seen.add(k);
+    lp.push(pos[s * 3], pos[s * 3 + 1], pos[s * 3 + 2], pos[t * 3], pos[t * 3 + 1], pos[t * 3 + 2]) });
+  const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
+  const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x9fc8ff, transparent: true, opacity: .28, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+  lines.renderOrder = 2; SKY.add(lines);
   const hit = new THREE.Mesh(new THREE.SphereGeometry(150, 16, 12), new THREE.MeshBasicMaterial({ visible: false })); SKY.add(hit);
   pick.push([hit, 'cortex']);
   labels.push(['CÓRTEX<i>toca el cielo para entrar a la red</i>', new THREE.Vector3(-120, 380, -1500), 'all', '']);
@@ -979,6 +998,7 @@ chips.insertAdjacentHTML('beforeend', '<button class="chip" data-k="wall">Wall S
 const _goW = go;
 go = function (k) {
   _goW(k); clearTimeout(ovT);
+  if (k !== 'cortex') { ov.style.opacity = '0'; ov.style.pointerEvents = 'none' }
   if (k === 'cortex') { hTitle.textContent = 'Córtex'; hint.textContent = 'ENTRANDO A LA RED…'; ovT = setTimeout(() => { if (!ifr.src) ifr.src = '../cortex/'; ov.style.pointerEvents = 'auto'; ov.style.opacity = '1' }, 1900) }
   if (k === 'wall') {
     panel.innerHTML = `<h3>Wall Street</h3><div class="sub">Diario de trading · números simbólicos del backtesting</div>
@@ -994,7 +1014,23 @@ panel.addEventListener('click', e => { if (e.target.dataset.act === 'danifx') re
   if (e.target.dataset.act === 'wsban') { B.wsBanners.visible = !B.wsBanners.visible; e.target.textContent = B.wsBanners.visible ? 'Fachada: solo piedra' : 'Fachada: estandartes' } });
 
 const _flowsW = flows;
-flows = function (t, dt) { _flowsW(t, dt); SKY.rotation.y = Math.sin(t * .00003) * .25 };
+flows = function (t, dt) { _flowsW(t, dt); SKY.rotation.y = Math.sin(t * .00003) * .25; SKYT.value = t / 1000 };
+
+/* ---------- etiquetas y tarjetas sin encimarse ---------- */
+// prioridad: tarjetas de edificio > nombres grandes > el resto; la de menor prioridad se oculta si choca
+const _placeCardsW = placeCards;
+placeCards = function () {
+  _placeCardsW();
+  const els = [...document.querySelectorAll('.cards .card'), ...document.querySelectorAll('#tags .big'), ...document.querySelectorAll('#tags > :not(.big)')];
+  const taken = [];
+  for (const el of els) {
+    el.style.visibility = '';
+    if (el.style.display === 'none' || !el.offsetParent) continue;
+    const r = el.getBoundingClientRect(); if (!r.width) continue;
+    if (taken.some(q => r.left < q.right + 4 && r.right > q.left - 4 && r.top < q.bottom + 4 && r.bottom > q.top - 4)) { el.style.visibility = 'hidden'; continue }
+    taken.push(r);
+  }
+};
 }
 
 /* labels */
