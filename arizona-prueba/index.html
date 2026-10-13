@@ -943,7 +943,7 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
   // velo nocturno entre el cielo y las constelaciones: oscurece el fondo sin tocar el planeta
   // degradado: transparente en el horizonte (deja el resplandor cálido) y espacio profundo hacia arriba
   const veilTex = (() => { const c = document.createElement('canvas'); c.width = 4; c.height = 512; const x = c.getContext('2d'); const gr = x.createLinearGradient(0, 512, 0, 0);
-    gr.addColorStop(0, 'rgba(3,2,10,.2)'); gr.addColorStop(.5, 'rgba(3,2,10,.1)'); gr.addColorStop(.515, 'rgba(3,2,10,.45)'); gr.addColorStop(.545, 'rgba(3,2,10,.88)'); gr.addColorStop(1, 'rgba(3,2,10,.96)');
+    gr.addColorStop(0, 'rgba(3,2,10,.2)'); gr.addColorStop(.5, 'rgba(3,2,10,.18)'); gr.addColorStop(.512, 'rgba(3,2,10,.62)'); gr.addColorStop(.535, 'rgba(3,2,10,.95)'); gr.addColorStop(1, 'rgba(3,2,10,.96)');
     x.fillStyle = gr; x.fillRect(0, 0, 4, 512); return new THREE.CanvasTexture(c) })();
   const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 32), new THREE.MeshBasicMaterial({ map: veilTex, transparent: true, side: THREE.BackSide, fog: false, depthWrite: false }));
   veil.renderOrder = 1; S.add(veil);
@@ -953,6 +953,20 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
     x.fillStyle = gr; x.fillRect(0, 0, 4, 256);
     const glow = new THREE.Mesh(new THREE.CylinderGeometry(2200, 2200, 700, 64, 1, true), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, side: THREE.BackSide, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
     glow.position.y = 180; glow.renderOrder = 1; S.add(glow) }
+  // auroras: cortinas de luz verde-violeta que ondulan despacio sobre el horizonte
+  { const mat = new THREE.ShaderMaterial({ uniforms: { t: SKYT }, transparent: true, depthWrite: false, fog: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending,
+      vertexShader: 'varying vec2 vU; void main(){ vU = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader: `uniform float t; varying vec2 vU;
+        void main(){ float x = vU.x, y = vU.y;
+          float wave = .5 + .5 * sin(x * 38.0 + t * .5 + sin(x * 9.0 - t * .25) * 2.6);
+          float rays = .55 + .45 * sin(x * 160.0 + sin(x * 21.0 + t * .4) * 4.0);
+          float body = smoothstep(.0, .18, y) * pow(1.0 - y, 1.6);
+          float edge = smoothstep(.12, .45, .5 + .5 * sin(x * 6.0 + t * .12));
+          vec3 col = mix(vec3(.15, 1.0, .65), vec3(.62, .32, 1.0), smoothstep(.25, .9, y));
+          gl_FragColor = vec4(col * body * wave * rays * edge * .55, 1.0); }` });
+    [[-.6, 1.1], [1.6, .9], [3.6, 1.0]].forEach(([a0, len]) => {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(1350, 1350, 520, 96, 1, true, a0, len), mat);
+      m.position.y = 330; m.renderOrder = 2; S.add(m) }) }
   // la colonia vive en un atardecer/noche: de día se mantiene el tono dorado del ocaso para que el cielo siga siendo de espacio
   { const tick = () => { const d = new Date(), h = d.getHours() + d.getMinutes() / 60; window.__azHour = h >= 6 && h < 18 ? 18.2 : h };   // de día: luz de atardecer, nunca suelo negro
     tick(); setInterval(tick, 30000);
