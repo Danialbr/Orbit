@@ -1070,11 +1070,14 @@ import('./jsm/loaders/GLTFLoader.js').then(({ GLTFLoader }) => new GLTFLoader().
   root.traverse(o => { if (o.isMesh) { o.material = gold; o.castShadow = true; o.frustumCulled = false } });
   const clip = g.animations.find(a => a.name === 'Attack_Headbutt') || g.animations[0];
   if (clip) { const mx = new THREE.AnimationMixer(root); mx.clipAction(clip).play(); mx.setTime(clip.duration * .35) }   // pose de embestida, quieta
-  const bb = new THREE.Box3().setFromObject(root), sz = bb.getSize(new THREE.Vector3());
-  root.scale.setScalar(6 / Math.max(sz.x, sz.z));
+  root.updateMatrixWorld(true);
+  const bb = new THREE.Box3().setFromObject(root, true), sz = bb.getSize(new THREE.Vector3());
+  root.scale.setScalar(6 / Math.max(sz.x, sz.z, .001));
+  root.updateMatrixWorld(true); const bb2 = new THREE.Box3().setFromObject(root, true);
+  root.position.y = 1.35 - bb2.min.y;   // apoyado sobre el pedestal
   const ped = new THREE.Group(); ped.position.set(0, .3, OD / 2 + 10.5); b.g.add(ped);
   box(8, 1.2, 4.2, granite, 0, .6, 0, ped); box(8.6, .2, 4.8, stoneM, 0, 1.25, 0, ped);
-  root.position.y = 1.35; root.rotation.y = -Math.PI / 2 + .35; ped.add(root);
+  root.rotation.y = -Math.PI / 2 + .35; ped.add(root);
 })).catch(() => {});
 
 /* ---------- pasada de look: metal con reflejos y colores sobrios ---------- */
