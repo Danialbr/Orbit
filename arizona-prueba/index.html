@@ -943,7 +943,10 @@ const SKYT = { value: 0 };
   const veil = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 16), new THREE.MeshBasicMaterial({ color: 0x05030c, transparent: true, opacity: .62, side: THREE.BackSide, fog: false, depthWrite: false }));
   veil.renderOrder = 1; S.add(veil);
   // el halo de Saturno aclaraba todo el cielo: lo bajo
-  sat.traverse(o => { if (o.isSprite) o.material.opacity = .3 });
+  // Saturno queda, pero en penumbra: las constelaciones mandan en el cielo
+  sat.traverse(o => { if (o.isSprite) o.material.opacity = .12;
+    else if (o.isMesh) { o.material.color.multiplyScalar(.38); if (o.material.emissive) o.material.emissiveIntensity = .08; if (o.material.transparent) o.material.opacity *= .45 }
+    else if (o.isLight) o.intensity *= .5 });
   // estrellas: blancas con un toque de color por región; tamaño según conexiones; titilan suave
   const TINT = [0xcfe8ff, 0xc6d4ff, 0xdcccff, 0xc8fff0, 0xd2e2ff, 0xe4d2ff, 0xbfeaff, 0xccd2ff, 0xd8f6ff];
   const n = CX.n.length, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), sz = new Float32Array(n), ph = new Float32Array(n), tc = new THREE.Color();
@@ -951,7 +954,7 @@ const SKYT = { value: 0 };
   // dirección del grafo → acimut completo y elevación entre ~6° y ~78°; los grupos siguen juntos como constelaciones
   const maxR = Math.max(...CX.n.map(([x, y, z]) => Math.hypot(x, y, z)));
   // franja que la cámara sí ve: 210° de frente (hacia Saturno) y de 3° a 42° sobre el horizonte
-  CX.n.forEach(([x, y, z, r], i) => { const len = Math.hypot(x, y, z) || 1, az = -Math.PI / 2 + Math.atan2(z, x) / Math.PI * 1.83, el = .05 + (y / len * .5 + .5) * .68, rr = 900 + len / maxR * 350;
+  CX.n.forEach(([x, y, z, r], i) => { const len = Math.hypot(x, y, z) || 1, az = -Math.PI / 2 + Math.atan2(z, x) / Math.PI * 1.83, el = .02 + (y / len * .5 + .5) * .66, rr = 900 + len / maxR * 350;
     pos[i * 3] = rr * Math.cos(el) * Math.cos(az); pos[i * 3 + 1] = rr * Math.sin(el) - 60; pos[i * 3 + 2] = rr * Math.cos(el) * Math.sin(az);
     tc.setHex(TINT[r % TINT.length]).toArray(col, i * 3); sz[i] = 4 + Math.sqrt(deg[i]) * 2.6; ph[i] = Math.random() * 6.28 });
   const g = new THREE.BufferGeometry();
