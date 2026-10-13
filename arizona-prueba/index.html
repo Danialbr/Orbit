@@ -935,8 +935,8 @@ const OW = 20, OD = 16, POD = 7.4, NFL = 5;
 }
 
 /* ---------- Córtex: el cielo es tu red neuronal ---------- */
-// a la derecha de Saturno, delante de él, para que nada lo tape desde la colonia
-const SKY = new THREE.Group(); SKY.position.set(430, 140, -1250); SKY.scale.setScalar(3.6); S.add(SKY);
+// la red envuelve todo el cielo: cada neurona es una estrella en la cúpula, cerca (900–1250) y en todas direcciones
+const SKY = new THREE.Group(); S.add(SKY);
 const SKYT = { value: 0 };
 {
   // velo nocturno entre el cielo y las constelaciones: oscurece el fondo sin tocar el planeta
@@ -948,8 +948,11 @@ const SKYT = { value: 0 };
   const TINT = [0xcfe8ff, 0xc6d4ff, 0xdcccff, 0xc8fff0, 0xd2e2ff, 0xe4d2ff, 0xbfeaff, 0xccd2ff, 0xd8f6ff];
   const n = CX.n.length, pos = new Float32Array(n * 3), col = new Float32Array(n * 3), sz = new Float32Array(n), ph = new Float32Array(n), tc = new THREE.Color();
   const deg = new Array(n).fill(0); CX.l.forEach(([s, t]) => { deg[s]++; deg[t]++ });
-  CX.n.forEach(([x, y, z, r], i) => { pos[i * 3] = x; pos[i * 3 + 1] = y; pos[i * 3 + 2] = z; tc.setHex(TINT[r % TINT.length]).toArray(col, i * 3);
-    sz[i] = 2.2 + Math.sqrt(deg[i]) * 1.6; ph[i] = Math.random() * 6.28 });
+  // dirección del grafo → acimut completo y elevación entre ~6° y ~78°; los grupos siguen juntos como constelaciones
+  const maxR = Math.max(...CX.n.map(([x, y, z]) => Math.hypot(x, y, z)));
+  CX.n.forEach(([x, y, z, r], i) => { const len = Math.hypot(x, y, z) || 1, az = Math.atan2(z, x) * 1.0, el = .1 + (y / len * .5 + .5) * 1.25, rr = 900 + len / maxR * 350;
+    pos[i * 3] = rr * Math.cos(el) * Math.cos(az); pos[i * 3 + 1] = rr * Math.sin(el) - 60; pos[i * 3 + 2] = rr * Math.cos(el) * Math.sin(az);
+    tc.setHex(TINT[r % TINT.length]).toArray(col, i * 3); sz[i] = 3 + Math.sqrt(deg[i]) * 2.2; ph[i] = Math.random() * 6.28 });
   const g = new THREE.BufferGeometry();
   g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   g.setAttribute('sz', new THREE.BufferAttribute(sz, 1)); g.setAttribute('ph', new THREE.BufferAttribute(ph, 1));
@@ -969,13 +972,13 @@ const SKYT = { value: 0 };
   best.forEach((t, s) => { if (t < 0) return; const k = s < t ? s + '-' + t : t + '-' + s; if (seen.has(k)) return; seen.add(k);
     lp.push(pos[s * 3], pos[s * 3 + 1], pos[s * 3 + 2], pos[t * 3], pos[t * 3 + 1], pos[t * 3 + 2]) });
   const lg = new THREE.BufferGeometry(); lg.setAttribute('position', new THREE.Float32BufferAttribute(lp, 3));
-  const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x9fc8ff, transparent: true, opacity: .28, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
+  const lines = new THREE.LineSegments(lg, new THREE.LineBasicMaterial({ color: 0x9fc8ff, transparent: true, opacity: .34, depthWrite: false, fog: false, blending: THREE.AdditiveBlending }));
   lines.renderOrder = 2; SKY.add(lines);
-  const hit = new THREE.Mesh(new THREE.SphereGeometry(150, 16, 12), new THREE.MeshBasicMaterial({ visible: false })); SKY.add(hit);
+  // zona tocable: solo el casquete alto del cielo (tocar el suelo no abre la red)
+  const hit = new THREE.Mesh(new THREE.SphereGeometry(1500, 24, 12, 0, Math.PI * 2, 0, Math.PI * .42), new THREE.MeshBasicMaterial({ visible: false, side: THREE.BackSide })); SKY.add(hit);
   pick.push([hit, 'cortex']);
-  labels.push(['CÓRTEX<i>toca las estrellas para entrar a la red</i>', new THREE.Vector3(430, 640, -1250), 'all', '']);
 }
-V.cortex = () => ({ p: new THREE.Vector3(60, 70, 40), c: new THREE.Vector3(430, 140, -1250) });
+V.cortex = () => ({ p: new THREE.Vector3(0, 30, 70), c: new THREE.Vector3(0, 520, -700) });
 
 /* ---------- sol y luna lejanos que siguen tu hora ---------- */
 const SUNMOON = (() => {
