@@ -1025,7 +1025,8 @@ const CON = { lines: null, v: 0, want: 0 };   // constelaciones: 0 = vía lácte
         v.copy(u).multiplyScalar(Math.cos(a)).addScaledVector(w, Math.sin(a)).addScaledVector(ax, off).normalize() }
       else v.set(gauss(), Math.random(), gauss()).normalize();
       if (v.y < -.02) v.y = -v.y * .5 + .01;
-      const rr = 1000 + Math.random() * 380; dp[i * 3] = v.x * rr;   // delante de Saturno y sus anillos dp[i * 3 + 1] = v.y * rr - 80; dp[i * 3 + 2] = v.z * rr;
+      const rr = 1000 + Math.random() * 380;   // delante de Saturno y sus anillos
+      dp[i * 3] = v.x * rr; dp[i * 3 + 1] = v.y * rr - 80; dp[i * 3 + 2] = v.z * rr;   // antes el comentario se tragaba y/z: la vía láctea caía en una raya blanca sobre el horizonte
       const c = warm[(Math.random() * warm.length) | 0], b = .95 + Math.pow(Math.random(), 2) * 1.1;
       dc[i * 3] = c[0] * b; dc[i * 3 + 1] = c[1] * b; dc[i * 3 + 2] = c[2] * b;
       ds[i] = 2.2 + Math.pow(Math.random(), 4) * 8; dph[i] = Math.random() * 6.28 }
@@ -1211,14 +1212,223 @@ const _placeCardsW = placeCards;
 placeCards = function () {
   _placeCardsW();
   const els = [...document.querySelectorAll('.cards .card'), ...document.querySelectorAll('#tags .big'), ...document.querySelectorAll('#tags > :not(.big)')];
-  const taken = [];
+  // el HUD también cuenta como ocupado: ninguna etiqueta se dibuja debajo de botones, cifras o panel
+  const taken = [...document.querySelectorAll('.money, .rk, .chip, .panel.on, .flnav.on, .dn, .brand')].map(e => e.getBoundingClientRect()).filter(r => r.width);
   for (const el of els) {
     el.style.visibility = '';
     if (el.style.display === 'none' || !el.offsetParent) continue;
-    const r = el.getBoundingClientRect(); if (!r.width) continue;
+    const r0 = el.getBoundingClientRect(); if (!r0.width) continue;
+    // las tarjetas laterales se salían de la pantalla en el teléfono: se meten al borde
+    const dx = r0.left < 8 ? 8 - r0.left : r0.right > innerWidth - 8 ? innerWidth - 8 - r0.right : 0;
+    if (dx) el.style.left = (parseFloat(el.style.left) + dx) + 'px';
+    const r = dx ? el.getBoundingClientRect() : r0;
     if (taken.some(q => r.left < q.right + 4 && r.right > q.left - 4 && r.top < q.bottom + 4 && r.bottom > q.top - 4)) { el.style.visibility = 'hidden'; continue }
     taken.push(r);
   }
+};
+
+/* ---------- teléfono y teclado: nada encimado, pisos navegables ---------- */
+document.head.insertAdjacentHTML('beforeend', `<style>
+/* centrado con desborde escondía "Colonia" fuera de la pantalla y no se podía volver */
+.chips{justify-content:flex-start}.chips .chip:first-child{margin-left:auto}.chips .chip:last-child{margin-right:auto}
+.chip:focus-visible,.rkb:focus-visible,.panel button:focus-visible,.flnav button:focus-visible{outline:2px solid #E8C37A;outline-offset:2px}
+/* entre 700 y 1400 px las cifras chocaban con los botones de apps */
+@media(min-width:700px) and (max-width:1399px){.money{top:calc(var(--sat,0px) + 64px)}}
+.flnav{position:fixed;right:calc(var(--sar,env(safe-area-inset-right,0px)) + 12px);top:50%;transform:translateY(-50%);display:none;flex-direction:column;gap:6px;z-index:5}
+.flnav.on{display:flex}
+.flnav button{width:44px;height:44px;border-radius:12px;border:1px solid rgba(200,170,110,.45);background:rgba(10,14,22,.86);color:#E8C37A;font:800 15px var(--font);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.flnav button:disabled{opacity:.3}
+@media(max-width:699px){
+ .rk{flex-wrap:nowrap!important;gap:4px}.rkb{width:38px;height:38px;padding:0;justify-content:center}.rkb span{display:none}
+ #hTitle{display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100vw - 210px)}
+ .panel h3{cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+ .panel h3::after{content:'▾';font-size:13px;color:#C8AA6E}
+ .panel.min h3::after{content:'▴'}
+ .panel.min{max-height:none}.panel.min>:not(h3):not(.sub){display:none}.panel.min .sub{margin:0}
+ .flnav{top:auto;bottom:calc(var(--sab,env(safe-area-inset-bottom,0px)) + 160px);transform:none}
+ .panel.on:not(.min)~.flnav{display:none}}
+</style>`);
+// sin texto visible en el teléfono: el nombre va en aria-label
+document.querySelectorAll('.rkb').forEach(b => b.setAttribute('aria-label', b.textContent.trim()));
+
+// en el teléfono el panel abierto tapaba el edificio: no se podían tocar pisos ni girar. Abre plegado; tocar el título lo despliega.
+panel.addEventListener('click', e => { if (e.target.closest('h3')) panel.classList.toggle('min') });
+const fold = () => panel.classList.toggle('min', ph() && panel.classList.contains('on') && focus !== 'cortex');   // en Córtex no hay nada detrás: se deja abierto con "Entrar a la red"
+const _piF = personInfo;
+personInfo = o => { const r = _piF(o); if (r) fold(); return r };
+
+// pisos: ▲ ▼ y flechas del teclado recorren los pisos del edificio enfocado; ⌂ / Esc regresa
+const flnav = document.createElement('div'); flnav.className = 'flnav';
+flnav.innerHTML = '<button data-s="1" aria-label="Piso de arriba">▲</button><button data-s="-1" aria-label="Piso de abajo">▼</button><button data-s="0" aria-label="Volver">⌂</button>';
+panel.after(flnav);
+const wy = m => m.getWorldPosition(new THREE.Vector3());
+const floorsOf = bk => roomPick.filter(r => r[1].split(':')[0] === bk).sort((a, b) => wy(a[0]).y - wy(b[0]).y || wy(a[0]).x - wy(b[0]).x).map(r => r[1]);
+function stepFl(s) {
+  const bk = focus.split(':')[0], fs = floorsOf(bk); if (!fs.length) return false;
+  if (!s) { go(focus.includes(':') ? bk : 'all'); return true }
+  const i = fs.indexOf(focus);
+  // un piso cerrado (Sótano privado) devuelve al edificio: se salta al siguiente; si pide contraseña, se espera
+  for (let j = i < 0 ? (s > 0 ? 0 : -1) : i + s; j >= 0 && j < fs.length; j += s) {
+    go(fs[j]); if (focus === fs[j] || document.querySelector('.pinm')?.closest('.on')) return true;
+  }
+  return false;
+}
+function syncFl() {
+  const bk = focus.split(':')[0], fs = floorsOf(bk), i = fs.indexOf(focus);
+  flnav.classList.toggle('on', fs.length > 0);
+  flnav.children[0].disabled = i >= fs.length - 1; flnav.children[1].disabled = i <= 0;
+}
+flnav.addEventListener('click', e => { const b = e.target.closest('button'); if (b) stepFl(+b.dataset.s) });
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input,textarea,select')) return;
+  const s = { ArrowUp: 1, PageUp: 1, ArrowDown: -1, PageDown: -1, Escape: 0 }[e.key];
+  if (s !== undefined && (s || focus !== 'all') && stepFl(s)) e.preventDefault();
+});
+const _goF = go;
+// dentro de un piso el resplandor de pisos y cristal blanqueaba la oficina: se baja solo ahí
+go = function (k) { _goF(k); fold(); syncFl(); bloom.strength = k.includes(':') ? .1 : .4 };
+
+// dentro del córtex en capa, su enlace "← ARIZONA" quedaba encima de "✕ CERRAR" y abría Arizona dentro de Arizona
+ifr.addEventListener('load', () => { try { ifr.contentDocument.querySelectorAll('a[href*="arizona"]').forEach(a => a.style.display = 'none') } catch (e) {} });
+}
+
+/* ================= pasada de diseño: cristal dorado, dock, cifras vivas, cámara de cine ================= */
+{
+const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
+document.head.insertAdjacentHTML('beforeend', `<style>
+:root{--g1:#C9A45C;--g2:#E8C37A;--glass:rgba(12,13,20,.62);--edge-hi:rgba(232,195,122,.75);
+ --sl:env(safe-area-inset-left,0px);--sr:env(safe-area-inset-right,0px)}
+/* cristal con filo dorado: el borde es un degradado (brilla arriba, se apaga abajo) */
+.gl,.money>div:not(.mgrid),.chips,.panel,.rkb,.card,.dn,.flnav button{background:linear-gradient(var(--glass),var(--glass)) padding-box,linear-gradient(180deg,var(--edge-hi),rgba(232,195,122,.08) 60%,rgba(232,195,122,.22)) border-box!important;
+ border:1px solid transparent!important;-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);box-shadow:0 10px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,240,210,.06)}
+.hud{padding-left:calc(16px + var(--sl));padding-right:calc(16px + var(--sr))}
+.brand b{font-size:21px;letter-spacing:-.02em;background:linear-gradient(180deg,#fff,#E9DCC2);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* cifras: etiqueta en minúscula, número grande y tabular */
+.money{gap:6px}
+.mgrid>div{border-radius:14px;padding:9px 11px 8px}
+.mgrid{display:contents}
+.mgrid>div{background:linear-gradient(var(--glass),var(--glass)) padding-box,linear-gradient(180deg,var(--edge-hi),rgba(232,195,122,.08) 60%,rgba(232,195,122,.22)) border-box;border:1px solid transparent;-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%);box-shadow:0 10px 30px rgba(0,0,0,.35);min-width:0;overflow:hidden}
+.money small{font:600 10.5px/1.1 var(--font)!important;letter-spacing:.01em!important;color:#BFA571!important;margin-bottom:5px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.money b{font:800 18px/1 var(--font)!important;letter-spacing:-.02em;color:#F7EEDC!important}.money b.ion{color:var(--g2)!important;text-shadow:0 0 18px rgba(232,195,122,.35)}
+.money em{font-size:10px!important;color:#9AA2B4!important;margin-top:4px!important}
+@media(min-width:700px){.mgrid>div{min-width:124px;padding:9px 14px 8px}.money b{font-size:21px!important}}
+/* teléfono: una sola fila; tocar despliega las cuatro cifras */
+.mtog{display:none}
+@media(max-width:699px){
+ .money{display:block!important;pointer-events:auto;left:calc(12px + var(--sl));right:calc(12px + var(--sr))}
+ .mtog{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:6px 14px;border-radius:16px;color:inherit;font:inherit;text-align:left;cursor:pointer}
+ .mtog .k{flex:1;min-width:0}.mtog small{display:block}.mtog b{font-size:20px!important}
+ .mtog .s{font:600 11px var(--font);color:#9AA2B4;text-align:right;white-space:nowrap}.mtog .s b{display:block;font-size:13px!important;color:#E9DCC2!important;margin-top:3px}
+ .mtog .cv{width:18px;height:18px;flex:none;color:var(--g2);transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+ .money.open .cv{transform:rotate(180deg)}
+ .money .mgrid{background:none!important;border:0!important;padding:0!important;border-radius:0}
+ .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px;max-height:0;opacity:0;overflow:hidden;transition:max-height .4s cubic-bezier(.2,.8,.2,1),opacity .3s,margin .3s}
+ .money.open .mgrid{max-height:190px;opacity:1;margin-top:6px}
+ .rkb{width:44px!important;height:44px!important;border-radius:14px!important}
+}
+/* dock inferior */
+.chips{left:50%!important;right:auto!important;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 20px - var(--sl) - var(--sr));
+ bottom:calc(var(--sab,env(safe-area-inset-bottom,0px)) + 10px)!important;padding:5px!important;gap:2px!important;border-radius:26px;scroll-snap-type:x proximity}
+@media(max-width:699px){.chips .chip{padding:0 11px!important;font-size:12.5px!important}.chips{-webkit-mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent);mask-image:linear-gradient(90deg,transparent,#000 14px,#000 calc(100% - 14px),transparent)}}
+.chips .chip:first-child,.chips .chip:last-child{margin:0!important}
+.chip{position:relative;height:44px!important;padding:0 14px!important;border:0!important;background:transparent!important;border-radius:21px!important;color:#AEB5C4!important;font:700 13.5px var(--font)!important;
+ scroll-snap-align:center;cursor:pointer;transition:color .25s,background .35s,transform .15s;-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+.chip:hover{color:#F3E9D6!important}
+.chip:active{transform:scale(.94)}
+.chip.on{color:#1A140A!important;background:linear-gradient(180deg,#F1D18F,#C9A45C)!important;box-shadow:0 4px 18px rgba(201,164,92,.45),inset 0 1px 0 rgba(255,255,255,.5)}
+.chip.ping::after{content:'';position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 0 0 rgba(232,195,122,.7);animation:ping .6s ease-out}
+@keyframes ping{to{box-shadow:0 0 0 12px rgba(232,195,122,0)}}
+/* botones de apps, panel, pisos */
+.rkb{border-radius:14px!important;transition:transform .15s,box-shadow .25s}.rkb:hover{box-shadow:0 0 0 1px var(--edge-hi),0 8px 24px rgba(201,164,92,.25)}.rkb:active{transform:scale(.93)}
+.panel{border-radius:22px!important;left:calc(12px + var(--sl))!important;right:calc(12px + var(--sr))!important;bottom:calc(var(--sab,env(safe-area-inset-bottom,0px)) + 72px)!important;transform:translateY(18px) scale(.98);transition:transform .45s cubic-bezier(.16,1,.3,1),opacity .3s}
+.panel.on{transform:none}
+.panel h3{font-size:19px!important;letter-spacing:-.01em}.kv .n{font-size:14.5px}
+.lockb{height:46px!important;border-radius:14px!important;background:linear-gradient(180deg,rgba(232,195,122,.22),rgba(201,164,92,.08))!important;transition:transform .15s}.lockb:active{transform:scale(.97)}
+@media(min-width:700px){.panel{left:auto!important;right:calc(16px + var(--sr))!important;bottom:84px!important}.panel.on~.flnav{right:calc(424px + var(--sr))!important}}
+.flnav{right:calc(12px + var(--sr))!important}.flnav button{border-radius:14px!important}
+.dn{border-radius:999px!important;padding:6px 11px!important;right:calc(12px + var(--sr))!important}
+/* etiquetas 3D: cristal oscuro con texto claro, una sola familia */
+.tag{background:rgba(12,13,20,.78)!important;color:#F3E9D6!important;border:1px solid rgba(232,195,122,.38)!important;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-size:10.5px!important}
+.tag i{color:var(--g2)!important}.tag em{color:#BFA571!important}
+.card{border-radius:14px!important}
+.card::before{content:'';position:absolute;left:12px;right:12px;top:-1px;height:2px;border-radius:2px;background:var(--c);box-shadow:0 0 12px var(--c)}
+/* entrada: la marca sobre un resplandor dorado, no negro plano */
+.load{z-index:100;background:radial-gradient(120% 60% at 50% 115%,rgba(201,164,92,.28),transparent 60%),radial-gradient(80% 50% at 50% 0%,#141026,#04060B 70%)!important}
+.load .lw::after{content:'';width:140px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,#E8C37A,transparent);background-size:200% 100%;animation:ldr 1.2s linear infinite}
+@keyframes ldr{from{background-position:100% 0}to{background-position:-100% 0}}
+@media(prefers-reduced-motion:reduce){.chip.ping::after,.load .lw::after{animation:none}.panel{transition:opacity .2s}}
+</style>`);
+
+/* HUD de cifras: plegable en el teléfono y con números que cuentan hacia arriba (corre después de que el HUD se arma) */
+setTimeout(() => {
+  const H = document.querySelector('.money'); if (!H) return;
+  const LAB = { mC: 'Generado este mes', mI: 'A inversionistas', mM: 'Tu margen', mS: 'Ventas Carfolio' };
+  [...H.children].forEach(d => { const b = d.querySelector('b'); if (b && LAB[b.id]) d.querySelector('small').textContent = LAB[b.id] });
+  const grid = document.createElement('div'); grid.className = 'mgrid'; grid.id = 'mgrid'; grid.append(...H.children);
+  const tog = document.createElement('button'); tog.type = 'button'; tog.className = 'mtog gl'; tog.setAttribute('aria-expanded', 'false'); tog.setAttribute('aria-controls', 'mgrid');
+  tog.innerHTML = '<span class="k"><small>Tu margen este mes</small><b id="tM">$0</b></span><span class="s">Generado<b id="tC">$0</b></span><svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+  H.append(tog, grid);
+  const posDn = () => { const d = document.querySelector('.dn'); if (d) d.style.top = (H.getBoundingClientRect().bottom + 8) + 'px' };
+  tog.onclick = () => { const o = H.classList.toggle('open'), d = document.querySelector('.dn'); tog.setAttribute('aria-expanded', o); if (d) d.style.visibility = o ? 'hidden' : '' };   // la hora no tapa las cifras abiertas
+  setTimeout(posDn, 60); addEventListener('resize', () => setTimeout(posDn, 60));
+  // count-up: cada cifra viaja desde su valor anterior (0 al entrar) hasta el nuevo
+  const show = (el, v, dec) => { el._w = '$' + v.toLocaleString('en-US', { minimumFractionDigits: dec, maximumFractionDigits: dec }); el.textContent = el._w };
+  const watch = (src, mirror) => {
+    const run = () => { const s = src.textContent; if (s === src._w) return;
+      if (!/\d/.test(s)) { src._w = s; if (mirror) mirror.textContent = s; return }
+      const to = +s.replace(/[^0-9.\-]/g, ''), from = src._v || 0, dec = s.includes('.') ? 2 : 0, t0 = performance.now(), dur = RM ? 0 : (from ? 500 : 1400);
+      src._v = to; cancelAnimationFrame(src._r);
+      const step = now => { const k = dur ? Math.min(1, (now - t0) / dur) : 1, v = from + (to - from) * (1 - Math.pow(1 - k, 4));
+        show(src, v, dec); if (mirror) mirror.textContent = src._w; if (k < 1) src._r = requestAnimationFrame(step) };
+      src._r = requestAnimationFrame(step) };
+    new MutationObserver(run).observe(src, { childList: true, characterData: true, subtree: true }); run() };
+  watch(document.getElementById('mM'), document.getElementById('tM'));
+  watch(document.getElementById('mC'), document.getElementById('tC'));
+  watch(document.getElementById('mI')); watch(document.getElementById('mS'));
+}, 0);
+
+/* dock: la píldora activa siempre a la vista + pulso al tocar */
+chips.addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; b.classList.remove('ping'); void b.offsetWidth; b.classList.add('ping'); try { navigator.vibrate && navigator.vibrate(8) } catch (_) {} });
+const _goD = go;
+go = function (k) { _goD(k); const a = chips.querySelector('.chip.on'); if (a) a.scrollIntoView({ block: 'nearest', inline: 'center', behavior: RM ? 'auto' : 'smooth' }) };
+
+/* etiquetas: si la tarjeta del edificio ya dice su nombre, el globo con el mismo nombre sobra */
+const _pcD = placeCards;
+placeCards = function () {
+  _pcD();
+  if (focus !== 'all') return;
+  const names = new Set([...document.querySelectorAll('.cards .card')].filter(c => c.style.display !== 'none' && c.style.visibility !== 'hidden').map(c => c.querySelector('h4')?.textContent.trim().toLowerCase()));
+  document.querySelectorAll('#tags .tag').forEach(t => { if (names.has(t.textContent.trim().toLowerCase())) t.style.visibility = 'hidden' });
+};
+
+/* escena: resplandor del horizonte sin quemar, bloom calibrado, ventanas que brillan */
+bloom.threshold = .9; bloom.radius = .55;
+S.traverse(o => { const g = o.geometry && o.geometry.parameters;
+  if (o.isMesh && g && g.radiusTop === 2200 && o.material.blending === THREE.AdditiveBlending) o.material.opacity = .5 });
+Object.values(BLD).forEach(b => b.g && b.g.traverse(o => { const m = o.isMesh && o.material;
+  if (m && m.isMeshStandardMaterial && m.map && !m.emissiveMap) { m.emissiveMap = m.map; m.emissive = new THREE.Color(0xffe2b0); m.emissiveIntensity = .55; m.needsUpdate = true } }));
+
+/* teléfono: la cámara de la colonia se encuadra en el piso (los distritos llenan la mitad de abajo) */
+const _all = V.all;
+V.all = () => ph() ? camFit(-6, 12, 6, 56, new THREE.Vector3(.12, .7, 1).normalize()) : _all();
+if (focus === 'all') { const v = V.all(); C.position.copy(v.p); ctl.target.copy(v.c) }
+
+/* vuelo de cámara: entra y sale suave con un arco leve; en reposo, órbita lenta de ida y vuelta */
+const eio = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+let idleAt = performance.now();
+['pointerdown', 'wheel', 'keydown'].forEach(ev => addEventListener(ev, () => { idleAt = performance.now() }, { passive: true }));
+const _flD = flows, _ax = new THREE.Vector3(0, 1, 0), _o = new THREE.Vector3();
+flows = function (t, dt) {
+  _flD(t, dt);
+  if (tween) { idleAt = t; const k = Math.min(1, (t - tween.t0) / 1400), e = eio(k);
+    C.position.lerpVectors(tween.fp, tween.tp, e); ctl.target.lerpVectors(tween.fc, tween.tc, e);
+    C.position.y += Math.sin(Math.PI * k) * tween.fp.distanceTo(tween.tp) * .06 }
+  // la niebla empieza detrás de lo que miras: nada de bruma sobre el primer plano
+  if (S.fog) { S.fog.near = Math.max(180, C.position.distanceTo(ctl.target) + 40); S.fog.far = S.fog.near + 520 }
+  const idle = t - idleAt - 9000;
+  if (!RM && !tween && focus === 'all' && idle > 0) {
+    const a = Math.sin(idle * .00012) * .00045 * Math.min(1, idle / 3000) * Math.min(dt * 60, 3);
+    _o.copy(C.position).sub(ctl.target).applyAxisAngle(_ax, a); C.position.copy(ctl.target).add(_o) }
 };
 }
 
