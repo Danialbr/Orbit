@@ -1202,7 +1202,7 @@ go = function (k) {
 };
 // entrar: salto a velocidad de la luz (la cámara se lanza a las estrellas) y se abre la red completa
 let warp = 0;
-function enterCortex() { if (RM) { panel.classList.remove('on'); return ovOpen() } warp = performance.now(); hint.textContent = 'ENTRANDO A LA RED…'; panel.classList.remove('on');
+function enterCortex() { if (matchMedia('(prefers-reduced-motion: reduce)').matches) { panel.classList.remove('on'); return ovOpen() } warp = performance.now(); hint.textContent = 'ENTRANDO A LA RED…'; panel.classList.remove('on');
   ovT = setTimeout(ovOpen, 1300);
   setTimeout(() => { warp = 0; C.fov = 38; C.updateProjectionMatrix() }, 2400) }
 panel.addEventListener('click', e => { if (e.target.dataset.act === 'enter') return enterCortex(); if (e.target.dataset.act === 'danifx') return window.azLaunch ? azLaunch('../danifx/', 'DANIFX') : (location.href = '../danifx/');
