@@ -1087,7 +1087,7 @@ ov.querySelector('button').onclick = () => { ovClose(); go('all') };
 addEventListener('keydown', e => { if (e.key === 'Escape' && !ov.inert) { e.stopImmediatePropagation(); ovClose(); go('all') } }, true);
 
 /* ---------- toro dorado (Quaternius, CC0) frente a Wall Street ---------- */
-import('./jsm/loaders/GLTFLoader.js').then(({ GLTFLoader }) => new GLTFLoader().load('toro.glb?v=2'), g => {
+import('./jsm/loaders/GLTFLoader.js').then(({ GLTFLoader }) => new GLTFLoader().load('toro.glb?v=2', g => {
   const b = BLD.wall, root = g.scene, gold = new THREE.MeshStandardMaterial({ color: 0xC9A13A, metalness: 1, roughness: .3 });
   root.traverse(o => { if (o.isMesh) { o.material = gold; o.castShadow = true; o.frustumCulled = false } });
   const clip = g.animations.find(a => a.name === 'Attack_Headbutt') || g.animations[0];
