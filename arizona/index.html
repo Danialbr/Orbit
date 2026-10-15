@@ -198,7 +198,7 @@ import {UnrealBloomPass} from './jsm/postprocessing/UnrealBloomPass.js';
 import {OutputPass} from './jsm/postprocessing/OutputPass.js';
 
 /* ---------- data (read-only, same storage as Orbit) ---------- */
-let db={};try{db=JSON.parse(localStorage.getItem('orbita.db.v1')||'{}')}catch(e){}
+let db={};try{db=JSON.parse(localStorage.getItem('orbita.db.v1')||'{}',(k,v)=>typeof v==='string'&&!/^data:image\//.test(v)?v.replace(/[<>"`]/g,''):v)}catch(e){}
 db.loans=db.loans||[];db.investors=db.investors||[];db.borrowers=db.borrowers||[];db.payments=db.payments||[];db.settings=db.settings||{};
 const r2=n=>Math.round((+n||0)*100)/100,fmt=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(r2(n));
 const pv=db.settings.privacy||'all',hideN=pv==='nums'||pv==='both',hideA=pv==='names'||pv==='both';
@@ -226,14 +226,14 @@ const invPlaced=i=>active.reduce((s,l)=>s+l.funding.filter(f=>f.investorId===i.i
 const invList=db.investors.filter(i=>!i.owner).map(i=>{const cap=capOf(i);return {id:i.id,name:i.name,cap,wait:Math.max(0,cap-invPlaced(i))}});
 const CF0=(()=>{try{return JSON.parse(localStorage.getItem('carfolio.world')||'null')}catch(e){return null}})();
 const AZC={white:0xEEF1F5,silver:0xB9C0CA,gray:0x6B7280,black:0x1A1C22,red:0xD3302F,wine:0x7A1F2B,orange:0xE8732C,yellow:0xE8C547,green:0x2E8B57,blue:0x2F6BD8,navy:0x1F2E5A,brown:0x7A4E2D,beige:0xD8C3A0};const CHEX=(id,d)=>AZC[id]??d;
-const CF={scraper:[],service:{toOrder:[],ordered:[],repair:[],repairC:[]},showroom:[],garage:[],sales:[],totals:{},deployed:0,profit:0,salesAll:0};CF.connected=!!(CF0&&CF0.vehicles);
+const CF={scraper:[],service:{toOrder:[],ordered:[],repair:[],repairC:[]},showroom:[],garage:[],sold:[],sales:[],totals:{},deployed:0,profit:0,salesAll:0};CF.connected=!!(CF0&&CF0.vehicles);
 if(CF.connected){const nmv=v=>[v.year,v.make,v.model].filter(Boolean).join(' ')||'Carro';const cc=x=>(+x||0)/100;const byId={};CF0.vehicles.forEach(v=>byId[v.id]=v);
  CF0.vehicles.forEach(v=>{const t=nmv(v),cost=cc(v.buyCents)+cc(v.extraCents),est=cc(v.estCents);
   if(v.status!=='SOLD')CF.deployed+=cost;
   if(v.status==='READY'||v.status==='LISTED')CF.showroom.push({t,p:est||cost,st:v.status==='LISTED'?'Publicado':'Listo',c:v.color});
   else if(v.status==='IN_REPAIR'){CF.service.repair.push(t);CF.service.repairC.push(v.color)}
   else if(v.status==='PURCHASED')CF.garage.push({t,st:'Recién comprado',p:cost,c:v.color})});
- CF.totals=CF0.totals||{};(CF0.sales||[]).forEach(s=>{const v=byId[s.vehicleId];CF.salesAll+=cc(s.priceCents);if(v)CF.profit+=cc(s.priceCents)-cc(v.buyCents)-cc(v.extraCents)});
+ CF.totals=CF0.totals||{};(CF0.sales||[]).forEach(s=>{const v=byId[s.vehicleId];CF.salesAll+=cc(s.priceCents);if(v){CF.profit+=cc(s.priceCents)-cc(v.buyCents)-cc(v.extraCents);CF.sold.push({t:nmv(v),p:cc(s.priceCents),g:cc(s.priceCents)-cc(v.buyCents)-cc(v.extraCents),c:v.color,d:s.date||s.soldAt||s.createdAt||''})}});
  CF.service.ordered=(CF0.expenses||[]).filter(e=>byId[e.vehicleId]&&byId[e.vehicleId].status==='IN_REPAIR').slice(0,4).map(e=>(e.description||e.category||'Gasto')+' · '+nmv(byId[e.vehicleId]));
  CF.sales=(CF0.sales||[]).map(s=>({t:byId[s.vehicleId]?nmv(byId[s.vehicleId]):'Venta',p:cc(s.priceCents),mine:cc(s.mineCents),date:s.date}))}
 
@@ -610,11 +610,16 @@ const waiting=invList.filter(i=>i.wait>1);
 {const b=BLD.orbit,py=1+FLH*4;b.func=py;finish('orbit',orbitTower(b,py))}
 /* CARFOLIO building */
 {const b=building('cf','Carfolio',HEX.cf[0],HEX.cf[1]-1,0xE2483B);b.func=dealerShell(b)}
+/* vendidos: estacionados frente al dealer, los más recientes al centro */
+{const g=BLD.cf.g;B.soldCars=[];[...CF.sold].sort((a,b)=>String(b.d).localeCompare(String(a.d))).slice(0,5).forEach((c,k)=>{const x=-8+k*4.6,z=11;
+ [-1,1].forEach(sd=>box(.12,.02,4.2,mat(0xE2483B,.5),x+sd*2.3,.03,z,g));
+ const m=carM(CHEX(c.c,0xE9EEF5));m.scale.setScalar(.72);m.position.set(x,0,z);m.rotation.y=Math.PI;m.userData.sold=1;g.add(m);B.soldCars.push(m);
+ B.soldLbl=B.soldLbl||[];B.soldLbl.push([m,c])})}
 /* Showroom */
 {const f=room('cf','Showroom',COL.show,-8.5,1,0,{w:17,d:16,side:'l',noSide:1,floorCol:0xf0eef2,floorR:.25,floorM:.1});
  {const s=Screen(4.6,2.2,CUR,drawShow);s.position.set(-3.4,1.9,-5.6);s.rotation.y=.2;f.add(s);[-1.9,1.9].forEach(dx=>box(.08,.8,.08,deskLeg,-3.4+dx,.4,-5.6,f))}
- B.cars=[];CF.showroom.slice(0,3).forEach((c,k)=>{const x=[-3.4,3.2,0][k],z=[0,-.6,4][k];const tt=new THREE.Mesh(new THREE.CylinderGeometry(2.5,2.5,.12,48),mat(0x2a2233,.4,.4));tt.position.set(x,.06,z);f.add(tt);const rg=new THREE.Mesh(new THREE.TorusGeometry(2.5,.05,6,64),neon(0xFF5A7A));rg.rotation.x=Math.PI/2;rg.position.set(x,.13,z);f.add(rg);
-  const m=carM(CHEX(c.c,[0xE9EEF5,0x2FA69A,0xC9A45C][k%3]));m.position.set(x,.12,z);m.scale.setScalar(.82);m.userData.by=.12;m.userData.bs=.82;f.add(m);B.cars.push(m);const a=new THREE.Object3D();a.position.set(0,2.3,0);m.add(a);labels.push([`${c.t}<i>${money(c.p)}</i>`,a,CUR,''])});
+ B.cars=[];[...CF.showroom,...CF.garage.map(c=>({...c,st:'En garage'}))].slice(0,3).forEach((c,k)=>{const x=[-3.4,3.2,0][k],z=[0,-.6,4][k];const tt=new THREE.Mesh(new THREE.CylinderGeometry(2.5,2.5,.12,48),mat(0x2a2233,.4,.4));tt.position.set(x,.06,z);f.add(tt);const rg=new THREE.Mesh(new THREE.TorusGeometry(2.5,.05,6,64),neon(0xFF5A7A));rg.rotation.x=Math.PI/2;rg.position.set(x,.13,z);f.add(rg);
+  const m=carM(CHEX(c.c,[0xE9EEF5,0x2FA69A,0xC9A45C][k%3]));m.position.set(x,.12,z);m.scale.setScalar(.82);m.userData.by=.12;m.userData.bs=.82;f.add(m);B.cars.push(m);const a=new THREE.Object3D();a.position.set(0,2.3,0);m.add(a);labels.push([`${c.t}<i>${c.st==='En garage'?'En garage · ':''}${money(c.p)}</i>`,a,CUR,''])});
  const s=person(f,5.4,3.6,-Math.PI*.75,{pose:'wave',bot:true,glow:0xFF5A7A,accent:0xC9485B});B.seller=s;let si=0;
  agent(s,'Agente de Ventas','Futuro agente · showroom',[()=>{const c=CF.showroom[si++%Math.max(1,CF.showroom.length)];return c?`Mostrando ${c.t} · ${money(c.p)}`:'Esperando clientes'},'Respondiendo mensajes de compradores','Negociando precio','Preparando papeles'],()=>[['Listos para vender',CF.showroom.length],['Ventas (sesión)',money(SHOW.total),'ion']]);
  tagOn(s,'★ Ventas',2.3);plant(f,6.4,-5.6)}
@@ -1547,6 +1552,7 @@ let NIGHT=0;
   chip.textContent=lab.split(' ')[0]+' '+n.toLocaleTimeString('es',{hour:'numeric',minute:'2-digit'})};
  apply();setInterval(apply,30000)}
 
+(B.soldLbl||[]).forEach(([m,c],i)=>{const l=xlabel(m,i%2?3.2:2.2,'flt sold',()=>focus==='cf');l.d.innerHTML=`<b>${nm(c.t)}</b><i>VENDIDO · ${money(c.p)}${c.g?` · ${c.g>0?'+':''}${money(c.g)}`:''}</i>`});
 /* ---------- 2. tu flota (Carfolio) estacionada frente a Mi Orbit, con su color real ---------- */
 {const fleet=((typeof CF0!=='undefined'&&CF0&&CF0.vehicles)||[]).filter(v=>v.status!=='SOLD').slice(0,8);
  const g=HG.me,n=Math.max(fleet.length,3),SP=2.5,Z=11.1,lineM=new THREE.MeshBasicMaterial({color:0xf3ead8});
@@ -1562,7 +1568,7 @@ let NIGHT=0;
  const anc=new THREE.Object3D();anc.position.set(0,2.6,Z);g.add(anc);const fl={a:anc,d:document.createElement('div'),when:()=>focus==='all'};fl.d.className='flt btn';fl.d.innerHTML=`<b>🚗 MI FLOTA · ${fleet.length}</b><i>toca para ver</i>`;if(!fleet.length)fl.when=()=>false;document.getElementById('tags').appendChild(fl.d);XL.push(fl);
  V.flota=()=>camFit(0,.6,Z+.5,ph()?6.8:9,new THREE.Vector3(0,.24,1).normalize());
  fl.d.addEventListener('click',e=>{e.stopPropagation();go('flota');hTitle.textContent='Mi flota · Carfolio';hint.textContent='TUS CARROS DE CARFOLIO'});
- XL.forEach(l=>{if(l!==fl&&l.d.classList.contains('flt'))l.when=()=>focus==='flota'||focus==='me'});
+ XL.forEach(l=>{if(l!==fl&&l.d.classList.contains('flt')&&!l.d.classList.contains('sold'))l.when=()=>focus==='flota'||focus==='me'});
  XT.push(()=>{const on=NIGHT>.5;for(const h of lamps)h.visible=on})}
 
 /* ---------- 3. cuenta regresiva al próximo pago · fuego si está atrasado ---------- */
