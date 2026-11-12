@@ -62,6 +62,10 @@ button{cursor:pointer;border:0;background:none}
 .top .wrap{display:flex;align-items:center;gap:10px;min-height:58px;padding-block:8px}
 .top h1{margin:0;font:600 20px/1.15 var(--display);letter-spacing:-.02em;text-wrap:balance}
 .top .ttl{flex:1;min-width:0}
+/* el título nunca queda debajo de los botones: se recorta con … y en teléfonos angostos el botón de agregar es solo el ícono */
+.top h1:not(.pname),.top .eyebrow{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#topAct{flex:none}
+@media(max-width:430px){.top .addbtn{font-size:0;gap:0;width:38px;padding:0;justify-content:center}.top .addbtn svg{width:18px;height:18px}}
 .iconbtn{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:var(--panel-2);border:1px solid var(--line);color:var(--fg);flex:none}
 .iconbtn svg{width:20px;height:20px}
 .addbtn{height:38px;padding:0 14px;border-radius:12px;display:flex;align-items:center;gap:6px;font-weight:600;font-size:14px;color:var(--ion-ink);background:linear-gradient(135deg,var(--ion),var(--ion-2));box-shadow:0 6px 24px -8px rgba(70,227,198,.6)}
@@ -683,7 +687,7 @@ function render(){
   $('#view').innerHTML=(db.settings.sample?`<div class="banner"><span>Estás viendo datos de ejemplo</span><button data-act="clearSample">Empezar con mis datos</button></div>`:'')+out.html;
 }
 const eyeBtn=()=>`<button class="iconbtn" data-act="discreet" aria-label="${db.settings.discreet?'Mostrar ganancias':'Ocultar ganancias'}" style="${db.settings.discreet?'color:var(--warn)':''}">${ico(db.settings.discreet?'eyeOff':'eye')}</button>`;
-const addBtn=(act,label)=>`<button class="addbtn" data-act="${act}">${ico('plus','stroke-width="2.4"')}${label}</button>`;
+const addBtn=(act,label)=>`<button class="addbtn" data-act="${act}" aria-label="Agregar ${label}">${ico('plus','stroke-width="2.4"')}${label}</button>`;
 
 function niceStep(v){if(v<=0)return 1;const e=Math.pow(10,Math.floor(Math.log10(v))),f=v/e;return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*e}
 // single-series monthly bars; tap a bar to read its value
