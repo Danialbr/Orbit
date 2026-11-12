@@ -61,8 +61,8 @@
 <div id="cine" hidden>● MODO CINE</div>
 
 <script>window.onerror = (m) => { document.getElementById('stats').textContent = 'Error: ' + m; };</script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="../vendor/three147/three.min.js"></script>
+<script src="../vendor/three147/controls/OrbitControls.js"></script>
 <script>
 (function () {
 const st = document.getElementById('stats');
@@ -86,11 +86,18 @@ renderer.setSize(innerWidth, innerHeight);
 renderer.setClearColor(0x02060d);
 document.body.prepend(renderer.domElement);
 const scene = new THREE.Scene();
+{ // fondo: azul profundo que se apaga hacia los bordes (dibujado dentro de la escena, sin transparencias)
+  const c = document.createElement('canvas'); c.width = c.height = 256; const x = c.getContext('2d'); const g = x.createRadialGradient(128, 118, 0, 128, 128, 180);
+  g.addColorStop(0, '#0b1a34'); g.addColorStop(.5, '#050c1c'); g.addColorStop(1, '#02060d'); x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+  scene.background = new THREE.CanvasTexture(c); }
 const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 1, 2000);
-camera.position.set(0, 40, mobile ? 330 : 270);
+const CEN = new THREE.Vector3(); nodes.forEach(n => CEN.add(n.p)); CEN.divideScalar(N || 1);
+const RAD = (() => { const d = nodes.map(n => n.p.distanceTo(CEN)).sort((a, b) => a - b); return d[Math.floor(d.length * .97)] || 120; })();
+const fitDist = () => { const vf = camera.fov * Math.PI / 360, hf = Math.atan(Math.tan(vf) * camera.aspect); return RAD / Math.sin(Math.min(vf, hf)) * (camera.aspect < 1 ? .74 : .9); };
+camera.position.set(CEN.x, CEN.y + RAD * .22, CEN.z + fitDist());
 const ctl = new THREE.OrbitControls(camera, renderer.domElement);
 ctl.enableDamping = true; ctl.dampingFactor = .08; ctl.rotateSpeed = .6;
-ctl.autoRotate = !calm; ctl.autoRotateSpeed = .45; ctl.minDistance = 30; ctl.maxDistance = 700;
+ctl.autoRotate = !calm; ctl.autoRotateSpeed = .45; ctl.minDistance = 30; ctl.maxDistance = 900; ctl.target.copy(CEN);
 
 const glowVS = `attribute float size; attribute vec3 tint; attribute float energy; varying vec3 vC; varying float vE; varying float vF; varying float vS;
   uniform float px; void main(){ vec4 mv = modelViewMatrix * vec4(position,1.0); vC = tint; vE = energy; vS = size;
@@ -140,8 +147,18 @@ scene.add(neurons);
 const regions = D.r.map((name, r) => {
   const ms = nodes.filter(n => n.r === r); if (ms.length < 4) return null;
   const c = new THREE.Vector3(); ms.forEach(n => c.add(n.p)); c.divideScalar(ms.length);
-  return { name, p: c, size: ms.length };
+  const rad = Math.sqrt(ms.reduce((a, n) => a + n.p.distanceToSquared(c), 0) / ms.length);
+  return { name, p: c, size: ms.length, r, rad };
 }).filter(Boolean);
+
+// nebulosa suave detrás de cada región: se lee de un vistazo qué zona es cuál
+{
+  const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d'); const g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(.35, 'rgba(255,255,255,.16)'); g.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+  const tex = new THREE.CanvasTexture(c);
+  regions.forEach(rg => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, color: PAL[rg.r % PAL.length], transparent: true, opacity: .16, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false }));
+    sp.position.copy(rg.p); sp.scale.setScalar(Math.max(40, rg.rad * 3.4)); sp.renderOrder = -1; scene.add(sp); });
+}
 
 // sinapsis: una sola geometría de líneas
 const lPos = new Float32Array(L * 6), lCol = new Float32Array(L * 6);
@@ -185,7 +202,7 @@ const topHubs = [...nodes].sort((a, b) => b.deg - a.deg).slice(0, mobile ? 9 : 1
 let shown = [];
 function setLabels(ids, selId) {
   labelsEl.textContent = '';
-  const mk = (cls, text, p) => { const el = document.createElement('div'); el.className = cls; el.textContent = text; labelsEl.appendChild(el); return { p, el }; };
+  const mk = (cls, text, p) => { const el = document.createElement('div'); el.className = cls; el.textContent = text; labelsEl.appendChild(el); return { p, el, rg: cls.includes('rg') }; };
   shown = [
     ...(selId == null ? regions.map(r => mk('lb rg', r.name, r.p)) : []),
     ...ids.map(id => mk('lb' + (id === selId ? ' sel' : selId != null ? ' nb' : ''),
@@ -252,11 +269,11 @@ q.addEventListener('keydown', e => {
   const hit = nodes.filter(n => n.label.toLowerCase().includes(s)).sort((a, b) => b.deg - a.deg)[0];
   if (hit) { pick(hit.id); q.blur(); } else st.innerHTML = `sin coincidencias para <em>${esc(q.value.trim())}</em>`;
 });
-const home = { c: camera.position.clone(), t: new THREE.Vector3() };
+const home = { c: camera.position.clone(), t: CEN.clone() };
 document.getElementById('r').onclick = () => { pick(null); fly = { t: 0, fromT: ctl.target.clone(), toT: home.t.clone(), fromC: camera.position.clone(), toC: home.c.clone() }; };
 st.innerHTML = `<em>${N}</em> neuronas · <em>${L}</em> sinapsis · <em>${D.r.length}</em> regiones`;
 
-addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); });
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); frame._hb = undefined; shown.forEach(s => { s.w = 0; }); });
 
 // ---------- bucle ----------
 let last = performance.now(), spawn = 0, idleAt = performance.now(), cineNext = 0;
@@ -314,13 +331,17 @@ function frame(now) {
   renderer.render(scene, camera);
 
   // etiquetas sin encimarse: la primera (o la de mayor rango) gana el espacio
-  const boxes = [];
+  const boxes = [], hudBottom = (frame._hb ??= (document.getElementById('stats').getBoundingClientRect().bottom + 6));
   for (const s of shown) {
     const xy = project(s.p);
     let ok = !!xy;
     if (ok) {
-      const w = s.w || (s.w = s.el.offsetWidth + 14), x = xy[0] + 8, y = xy[1] - 8;
-      ok = !boxes.some(b => x < b[0] + b[2] && x + w > b[0] && Math.abs(y - b[1]) < 17);
+      const w = s.w || (s.w = s.el.offsetWidth + 14), y = xy[1] - 8;
+      // regiones centradas sobre su zona; ninguna etiqueta se sale de la pantalla ni se mete bajo la barra
+      let x = s.rg ? xy[0] - w / 2 : xy[0] + 8;
+      if (!s.rg && x + w > innerWidth - 6) x = xy[0] - w - 4;
+      x = Math.max(6, Math.min(innerWidth - w - 6, x));
+      ok = y > hudBottom && y < innerHeight - 30 && !boxes.some(b => x < b[0] + b[2] && x + w > b[0] && Math.abs(y - b[1]) < 19);
       if (ok) { boxes.push([x, y, w]); s.el.style.transform = `translate(${x}px, ${y}px)`; }
     }
     s.el.style.visibility = ok ? '' : 'hidden';
